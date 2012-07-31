@@ -43,18 +43,18 @@ func (s *seed) String() string {
 type table struct {
 	key     []string
 	columns []string
-	source source
+	source  source
 }
 
-func (t* table) String() string {
+func (t *table) String() string {
 	return fmt.Sprint(t.key, "=>", t.columns)
 }
 
 type rule struct {
-	value string
+	value    string
 	supplies []string
 	requires []string
-	source source
+	source   source
 }
 
 func (r *rule) String() string {
@@ -72,13 +72,13 @@ func newSeed() *seed {
 type parsefn func(p *parser) parsefn
 
 type parser struct {
-	s *seed
+	s     *seed
 	items chan item
-	i item // the last item
+	i     item // the last item
 }
 
 func (p *parser) nextItem() item {
-	p.i = <- p.items
+	p.i = <-p.items
 	return p.i
 }
 
@@ -178,39 +178,39 @@ func parseSchema(items chan item) (schema *table, ok bool) {
 func parseArray(items chan item) (array []string, ok bool) {
 	parseinfo("parseArray")
 
-	i := <- items
+	i := <-items
 	if i.typ != itemBeginArray {
 		fmt.Println("parseSchema: expected [, got", i.val)
 		return nil, false
 	}
 
-	i = <- items
+	i = <-items
 	if i.typ != itemIdentifier {
 		fmt.Println("parseSchema: expected identifier, got", i.val)
 		return nil, false
 	}
 	array = append(array, i.val)
 
-	i = <- items
+	i = <-items
 	for {
 		switch i.typ {
 		case itemEndArray:
 			return array, true
 		case itemArrayDelimter:
-			i = <- items
+			i = <-items
 			if i.typ != itemIdentifier {
 				fmt.Println("parseSchema: expected identifier, got", i.val)
 				return nil, false
 			}
 			array = append(array, i.val)
 		}
-		i = <- items
+		i = <-items
 	}
 	return nil, false
 }
 
 // output <name> <schema>
-func parseOutput(p * parser) parsefn {
+func parseOutput(p *parser) parsefn {
 	parseinfo("parseOutput")
 
 	i := p.nextItem()

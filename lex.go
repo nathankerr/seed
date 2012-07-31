@@ -26,8 +26,8 @@ func (s source) String() string {
 
 // item represents a token or text string returned from the scanner.
 type item struct {
-	typ itemType
-	val string
+	typ    itemType
+	val    string
 	source source
 }
 
