@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	// "log"
 )
 
 func parseinfo(args ...interface{}) {
@@ -10,35 +10,62 @@ func parseinfo(args ...interface{}) {
 }
 
 type seed struct {
-	inputs  map[string]*tableSchema
-	outputs map[string]*tableSchema
-	tables  map[string]*tableSchema
-	rules   []string
+	inputs  map[string]*table
+	outputs map[string]*table
+	tables  map[string]*table
+	rules   []*rule
 }
 
 func (s *seed) String() string {
-	return fmt.Sprint("inputs: ", s.inputs, "\noutputs: ", s.outputs, "\ntables: ", s.tables, "\nrules: ", s.rules)
+	str := "inputs:"
+	for k, v := range s.inputs {
+		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
+	}
+
+	str += "\noutputs:"
+	for k, v := range s.outputs {
+		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
+	}
+
+	str += "\ntables:"
+	for k, v := range s.tables {
+		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
+	}
+
+	str += "\nrules:"
+	for k, v := range s.rules {
+		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
+	}
+
+	return str
 }
 
-func (s* seed) addRule(destination, operation, source string) {
-	rule := fmt.Sprint(destination, " ", operation, " ", source)
-	s.rules = append(s.rules, rule)
-}
-
-type tableSchema struct {
+type table struct {
 	key     []string
 	columns []string
+	source source
 }
 
-func (t* tableSchema) String() string {
+func (t* table) String() string {
 	return fmt.Sprint(t.key, "=>", t.columns)
+}
+
+type rule struct {
+	value string
+	supplies []string
+	requires []string
+	source source
+}
+
+func (r *rule) String() string {
+	return r.value
 }
 
 func newSeed() *seed {
 	return &seed{
-		inputs:  make(map[string]*tableSchema),
-		outputs: make(map[string]*tableSchema),
-		tables:  make(map[string]*tableSchema),
+		inputs:  make(map[string]*table),
+		outputs: make(map[string]*table),
+		tables:  make(map[string]*table),
 	}
 }
 
@@ -67,9 +94,7 @@ func parse(name, input string) *seed {
 	for state := parseSeed; state != nil; {
 		state = state(p)
 	}
-	log.Println("parser stopped running")
-
-	fmt.Println(p.s)
+	// log.Println("parser stopped running")
 
 	return p.s
 }
@@ -119,16 +144,18 @@ func parseInput(p *parser) parsefn {
 		fmt.Println("parseInput: input", name, "already exists")
 		return nil
 	}
+
+	schema.source = i.source
 	p.s.inputs[name] = schema
 
 	return parseSeed
 }
 
 // [key] [columns]
-func parseSchema(items chan item) (schema *tableSchema, ok bool) {
+func parseSchema(items chan item) (schema *table, ok bool) {
 	parseinfo("parseSchema")
 
-	schema = new(tableSchema)
+	schema = new(table)
 
 	key, ok := parseArray(items)
 	if !ok {
@@ -203,6 +230,8 @@ func parseOutput(p * parser) parsefn {
 		fmt.Println("parseOutput: input", name, "already exists")
 		return nil
 	}
+
+	schema.source = i.source
 	p.s.outputs[name] = schema
 
 	return parseSeed
@@ -229,6 +258,8 @@ func parseTable(p *parser) parsefn {
 		fmt.Println("parseTable: input", name, "already exists")
 		return nil
 	}
+
+	schema.source = i.source
 	p.s.tables[name] = schema
 
 	return parseSeed
@@ -247,14 +278,19 @@ func parseRule(p *parser) parsefn {
 		return nil
 	}
 
-	// source
-	source := p.nextItem()
-	if source.typ != itemIdentifier {
-		fmt.Println("parseRule: expected itemIdentifier, got ", source)
+	// expression
+	expr := p.nextItem()
+	if expr.typ != itemIdentifier {
+		fmt.Println("parseRule: expected itemIdentifier, got ", expr)
 		return nil
 	}
 
-	p.s.addRule(destination.val, operation.val, source.val)
+	r := new(rule)
+	r.value = fmt.Sprint(destination.val, " ", operation.val, " ", expr.val)
+	r.supplies = append(r.supplies, destination.val)
+	r.requires = append(r.requires, expr.val)
+	r.source = destination.source
+	p.s.rules = append(p.s.rules, r)
 
 	return parseSeed
 }

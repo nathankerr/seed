@@ -2,5 +2,7 @@
 input put [key] [value]
 table store [key] [value]
 
-store <+ in
-put <+ out
+store <+ put
+
+output out [key] [value]
+output outer [key] [value]

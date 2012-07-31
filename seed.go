@@ -11,7 +11,9 @@ func main() {
 		panic(err)
 	}
 
-	parse("kvs.seed", string(kvs))
+	seed := parse("kvs.seed", string(kvs))
+
+	fmt.Println(seed)
 
 	// l := lex("kvs.seed", string(kvs))
 
@@ -28,5 +30,5 @@ func main() {
 // 		}
 // 	}
 
-	fmt.Println("Done")
+	// fmt.Println("Done")
 }

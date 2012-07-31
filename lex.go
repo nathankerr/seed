@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	// "log"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -15,10 +15,20 @@ func lexinfo(args ...interface{}) {
 	// log.Println(args...)
 }
 
+type source struct {
+	name string
+	line int
+}
+
+func (s source) String() string {
+	return fmt.Sprint(s.name, ":", s.line)
+}
+
 // item represents a token or text string returned from the scanner.
 type item struct {
 	typ itemType
 	val string
+	source source
 }
 
 func (i item) String() string {
@@ -99,7 +109,7 @@ func (l *lexer) backup() {
 
 // emit passes an item back to the client.
 func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.input[l.start:l.pos]}
+	l.items <- item{t, l.input[l.start:l.pos], l.source()}
 	l.start = l.pos
 }
 
@@ -130,10 +140,15 @@ func (l *lexer) lineNumber() int {
 	return 1 + strings.Count(l.input[:l.pos], "\n")
 }
 
+// returns a source struct for the line we are on
+func (l *lexer) source() source {
+	return source{l.name, l.lineNumber()}
+}
+
 // error returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{itemError, fmt.Sprintf(format, args...)}
+	l.items <- item{itemError, fmt.Sprintf(format, args...), l.source()}
 	return nil
 }
 
@@ -156,7 +171,7 @@ func (l *lexer) run() {
 	for state := lexToken; state != nil; {
 		state = state(l)
 	}
-	log.Println("lexer stopped running")
+	// log.Println("lexer stopped running")
 	l.emit(itemEOF)
 }
 
