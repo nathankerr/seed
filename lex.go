@@ -11,8 +11,8 @@ import (
 	"unicode/utf8"
 )
 
-func info(args ...interface{}) {
-	//log.Println(args...)
+func lexinfo(args ...interface{}) {
+	// log.Println(args...)
 }
 
 // item represents a token or text string returned from the scanner.
@@ -42,6 +42,7 @@ const (
 	itemIdentifier // keywords and names
 	itemBeginArray
 	itemEndArray
+	itemArrayDelimter
 	itemOperationInsert
 	itemMethodDelimiter
 	// keywords
@@ -173,7 +174,7 @@ func lex(name, input string) *lexer {
 // state functions
 
 func lexToken(l *lexer) stateFn {
-	info("lexToken")
+	lexinfo("lexToken")
 	switch r := l.next(); {
 	case r == eof:
 		return nil
@@ -202,7 +203,7 @@ func lexToken(l *lexer) stateFn {
 }
 
 func lexComment(l *lexer) stateFn {
-	info("lexComment")
+	lexinfo("lexComment")
 	i := strings.Index(l.input[l.pos:], "\n")
 	l.pos += i + len("\n")
 	l.ignore()
@@ -211,7 +212,7 @@ func lexComment(l *lexer) stateFn {
 
 // lexIdentifier scans an alphanumeric or field.
 func lexIdentifier(l *lexer) stateFn {
-	info("lexIdentifier")
+	lexinfo("lexIdentifier")
 Loop:
 	for {
 		switch r := l.next(); {
@@ -236,7 +237,7 @@ Loop:
 }
 
 func lexOperation(l *lexer) stateFn {
-	info("lexOperation")
+	lexinfo("lexOperation")
 	switch r := l.next(); {
 	case r == '+':
 		l.emit(itemOperationInsert)

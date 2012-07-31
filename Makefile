@@ -1,6 +1,6 @@
 .PHONY: all
 all:
-	go fmt
+	# go fmt
 	go build -o seed
 	./seed
 

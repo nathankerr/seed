@@ -1,5 +1,6 @@
 # here is a comment
-input in [key] [value]
+input put [key] [value]
 table store [key] [value]
 
-store <+ in.payloads
+store <+ in
+put <+ out

@@ -11,20 +11,22 @@ func main() {
 		panic(err)
 	}
 
-	l := lex("kvs.seed", string(kvs))
+	parse("kvs.seed", string(kvs))
 
-	go l.run()
+	// l := lex("kvs.seed", string(kvs))
 
-Loop:
-	for {
-		select {
-		case item := <-l.items:
-			if item.typ == itemEOF {
-				break Loop
-			}
-			fmt.Println(item)
-		}
-	}
+	// go l.run()
+
+// Loop:
+// 	for {
+// 		select {
+// 		case item := <-l.items:
+// 			if item.typ == itemEOF {
+// 				break Loop
+// 			}
+// 			fmt.Println(item)
+// 		}
+// 	}
 
 	fmt.Println("Done")
 }
