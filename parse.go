@@ -9,66 +9,6 @@ func parseinfo(args ...interface{}) {
 	//log.Println(args...)
 }
 
-type seed struct {
-	inputs  map[string]*table
-	outputs map[string]*table
-	tables  map[string]*table
-	rules   []*rule
-}
-
-func (s *seed) String() string {
-	str := "inputs:"
-	for k, v := range s.inputs {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
-	}
-
-	str += "\noutputs:"
-	for k, v := range s.outputs {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
-	}
-
-	str += "\ntables:"
-	for k, v := range s.tables {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
-	}
-
-	str += "\nrules:"
-	for k, v := range s.rules {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
-	}
-
-	return str
-}
-
-type table struct {
-	key     []string
-	columns []string
-	source  source
-}
-
-func (t *table) String() string {
-	return fmt.Sprint(t.key, "=>", t.columns)
-}
-
-type rule struct {
-	value    string
-	supplies []string
-	requires []string
-	source   source
-}
-
-func (r *rule) String() string {
-	return r.value
-}
-
-func newSeed() *seed {
-	return &seed{
-		inputs:  make(map[string]*table),
-		outputs: make(map[string]*table),
-		tables:  make(map[string]*table),
-	}
-}
-
 type parsefn func(p *parser) parsefn
 
 type parser struct {

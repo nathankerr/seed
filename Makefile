@@ -2,7 +2,7 @@
 all:
 	# go fmt
 	go build -o seed
-	./seed
+	./seed kvs.seed
 
 .PHONY: clean
 clean:
