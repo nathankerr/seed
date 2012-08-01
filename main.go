@@ -13,10 +13,15 @@ import (
 // - apply bud -> bud transforms
 // - write bud to ruby
 func main() {
+	var outputdir = flag.String("o", "bud", "directory name to create and output the bud source")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage:\n  %s [options] [input files]\nOptions:\n", os.Args[0])
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 
 	if flag.NArg() < 1 {
-		fmt.Println("USAGE: seed [seed files]")
+		flag.Usage()
 		os.Exit(1)
 	}
 
@@ -37,7 +42,7 @@ func main() {
 	buds = applyBudTransforms(buds, nil)
 
 	// write bud to ruby
-	err = buds.toRuby("buds")
+	err = buds.toRuby(*outputdir)
 	if err != nil {
 		panic(err)
 	}
