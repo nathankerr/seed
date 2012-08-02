@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -39,29 +40,84 @@ func seedTableToBudTable(name string, typ budTableType, t *table) *budTable {
 	return b
 }
 
+// generateProtocol needs to have been ran first
 func generateServer(seeds seedCollection, buds budCollection) budCollection {
 	for name, seed := range seeds {
 		bud := newBud()
 		name = strings.Title(name) + "Server"
 
+		// replace the inputs with channels and scratches
+		// this removes the need to rewrite the rules
+		for iname, table := range seed.inputs {
+			input := seedTableToBudTable(iname, budScratch, table)
+			bud.collections[iname] = input
+
+			cname := iname + "_channel"
+			channel := seedTableToBudTable(cname, budChannel, table)
+			bud.collections[cname] = channel
+
+			rewrite := newRule()
+			rewrite.value = fmt.Sprintf("%s <= %s.payloads", iname, cname)
+			rewrite.source = table.source
+			bud.rules = append(bud.rules, rewrite)
+		}
+
+		// replace the output with a channel and a scratch
+		for oname, table := range seed.outputs {
+			output := seedTableToBudTable(oname, budScratch, table)
+			bud.collections[oname] = output
+
+			cname := oname + "_channel"
+			channel := seedTableToBudTable(cname, budChannel, table)
+			bud.collections[cname] = channel
+
+			rewrite := newRule()
+			rewrite.value = fmt.Sprintf("%s <~ %s.payloads", cname, oname)
+			rewrite.source = table.source
+			bud.rules = append(bud.rules, rewrite)
+		}
+
+		for tname, table := range seed.tables {
+			btable := seedTableToBudTable(tname, budPersistant, table)
+			bud.collections[tname] = btable
+		}
+
+		for _, r := range seed.rules {
+			bud.rules = append(bud.rules, r)
+		}
+
+		buds[name] = bud
+	}
+
+	return buds
+}
+
+// clients only need the interfaces themselves
+func generateClient(seeds seedCollection, buds budCollection) budCollection {
+	for name, seed := range seeds {
+		bud := newBud()
+		name = strings.Title(name) + "Client"
+
 		for sname, stable := range seed.inputs {
-			btable := seedTableToBudTable(sname, budChannel, stable)
-			bud.collections[sname] = btable
+			input := seedTableToBudTable(sname, budInterface, stable)
+			input.input = true
+			bud.collections[sname] = input
+
+			cname := sname + "_channel"
+			channel := seedTableToBudTable(cname, budChannel, stable)
+			bud.collections[name] = channel
+
+			transfer := newRule()
+			transfer.source = stable.source
+			transfer.value = name + " <~ " + sname
+			bud.rules = append(bud.rules, transfer)
+
 		}
 
 		for sname, stable := range seed.outputs {
-			btable := seedTableToBudTable(sname, budChannel, stable)
+			btable := seedTableToBudTable(sname, budInterface, stable)
+			btable.input = false
 			bud.collections[sname] = btable
-		}
-
-		for sname, stable := range seed.tables {
-			btable := seedTableToBudTable(sname, budPersistant, stable)
-			bud.collections[sname] = btable
-		}
-
-		for _, rule := range seed.rules {
-			rule.value += ".payloads"
-			bud.rules = append(bud.rules, rule)
 		}
 
 		buds[name] = bud

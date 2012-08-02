@@ -11,7 +11,7 @@ seed: *.go
 	go build -o seed
 	-rm -rf bud
 	./seed kvs.seed
-	cat bud/kvsserver.rb
+	cat bud/kvsclient.rb
 
 .PHONY: clean
 clean:

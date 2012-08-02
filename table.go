@@ -29,6 +29,8 @@ type budTableType int
 const (
 	budPersistant budTableType = iota
 	budChannel
+	budInterface
+	budScratch
 )
 
 type budTable struct {
@@ -37,6 +39,7 @@ type budTable struct {
 	key     []string
 	columns []string
 	source  source
+	input   bool // only used if typ is budInterface
 }
 
 func newBudTable() *budTable {
@@ -51,6 +54,15 @@ func (t *budTable) String() string {
 		declaration += "table"
 	case budChannel:
 		declaration += "channel"
+	case budInterface:
+		declaration += "interface "
+		if t.input {
+			declaration += "input"
+		} else {
+			declaration += "output"
+		}
+	case budScratch:
+		declaration += "scratch"
 	default:
 		panic("budTable:String: unknown table type: " + string(t.typ))
 	}

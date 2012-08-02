@@ -36,8 +36,7 @@ func main() {
 	seeds = applySeedTransforms(seeds, nil)
 
 	// apply seed -> bud transforms
-	var s2b []seedToBudTransform
-	s2b = append(s2b, generateServer)
+	s2b := []seedToBudTransform{generateServer, generateClient}
 	buds := applySeedToBudTransforms(seeds, s2b)
 
 	// apply bud -> bud transforms
