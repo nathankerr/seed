@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"strings"
 )
 
@@ -24,7 +24,7 @@ func seedTableToBudTable(name string, typ budTableType, t *table) *budTable {
 
 	if b.typ == budChannel {
 		key := []string{"@address"}
-		for _, tkey := range(t.key) {
+		for _, tkey := range t.key {
 			key = append(key, tkey)
 		}
 
@@ -40,26 +40,26 @@ func seedTableToBudTable(name string, typ budTableType, t *table) *budTable {
 }
 
 func generateServer(seeds seedCollection, buds budCollection) budCollection {
-	for name, seed := range(seeds) {
+	for name, seed := range seeds {
 		bud := newBud()
 		name = strings.Title(name) + "Server"
 
-		for sname, stable := range(seed.inputs) {
+		for sname, stable := range seed.inputs {
 			btable := seedTableToBudTable(sname, budChannel, stable)
 			bud.collections[sname] = btable
 		}
 
-		for sname, stable := range(seed.outputs) {
+		for sname, stable := range seed.outputs {
 			btable := seedTableToBudTable(sname, budChannel, stable)
 			bud.collections[sname] = btable
 		}
 
-		for sname, stable := range(seed.tables) {
+		for sname, stable := range seed.tables {
 			btable := seedTableToBudTable(sname, budPersistant, stable)
 			bud.collections[sname] = btable
 		}
 
-		for _, rule := range(seed.rules) {
+		for _, rule := range seed.rules {
 			rule.value += ".payloads"
 			bud.rules = append(bud.rules, rule)
 		}

@@ -45,8 +45,8 @@ func (buds *budCollection) toRuby(dir string) error {
 		return err
 	}
 
-	for name, bud := range(*buds) {
-		filename := filepath.Join(dir, strings.ToLower(name) + ".rb")
+	for name, bud := range *buds {
+		filename := filepath.Join(dir, strings.ToLower(name)+".rb")
 		out, err := os.Create(filename)
 		if err != nil {
 			return err
@@ -59,13 +59,13 @@ func (buds *budCollection) toRuby(dir string) error {
 		fmt.Fprintf(out, "  include Bud\n")
 
 		fmt.Fprintf(out, "\n  state do\n")
-		for _, collection := range(bud.collections) {
+		for _, collection := range bud.collections {
 			fmt.Fprintf(out, "    %s #%s\n", collection, collection.source)
 		}
 		fmt.Fprintf(out, "  end\n")
 
 		fmt.Fprintf(out, "\n  bloom do\n")
-		for _, rule := range(bud.rules) {
+		for _, rule := range bud.rules {
 			fmt.Fprintf(out, "   %s #%s\n", rule, rule.source)
 		}
 		fmt.Fprintf(out, "  end\n")

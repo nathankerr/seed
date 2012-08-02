@@ -32,8 +32,8 @@ const (
 )
 
 type budTable struct {
-	typ budTableType
-	name string
+	typ     budTableType
+	name    string
 	key     []string
 	columns []string
 	source  source
@@ -57,17 +57,17 @@ func (t *budTable) String() string {
 
 	declaration += fmt.Sprintf(" :%s, [", t.name)
 
-	for _, v := range(t.key) {
+	for _, v := range t.key {
 		declaration += fmt.Sprintf(":%s, ", v)
 	}
 
-	declaration = declaration[:len(declaration) - 2] + "] => ["
+	declaration = declaration[:len(declaration)-2] + "] => ["
 
-	for _, v := range(t.columns) {
+	for _, v := range t.columns {
 		declaration += fmt.Sprintf(":%s, ", v)
 	}
 
-	declaration = declaration[:len(declaration) - 2] + "]"
+	declaration = declaration[:len(declaration)-2] + "]"
 
 	return declaration
 }
@@ -77,4 +77,3 @@ type budTableCollection map[string]*budTable
 func newBudTableCollection() budTableCollection {
 	return make(map[string]*budTable)
 }
-
