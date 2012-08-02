@@ -1,8 +1,8 @@
 # here is a comment
 input put [key] [value]
-table store [key] [value]
+table kvstore [key] [value]
 
-store <+ put
+kvstore <+ put
 
 output out [key] [value]
 output outer [key] [value]

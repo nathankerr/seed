@@ -1,14 +1,35 @@
 package main
 
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
 type bud struct {
-	collections tableCollection
+	collections budTableCollection
 	rules       []*rule
 }
 
 func newBud() *bud {
 	return &bud{
-		collections: newTableCollection(),
+		collections: newBudTableCollection(),
 	}
+}
+
+func (b *bud) String() string {
+	str := "collections:"
+	for name, bud := range b.collections {
+		str += fmt.Sprintf("\n\t%s (%s):\n\t\t%s", name, bud.source, bud)
+	}
+
+	str += "\nrules:"
+	for k, v := range b.rules {
+		str = fmt.Sprint(str, "\n\t", k, "\t", v, "\t(", v.source, ")")
+	}
+
+	return str
 }
 
 type budCollection map[string]*bud
@@ -18,5 +39,40 @@ func newBudCollection() budCollection {
 }
 
 func (buds *budCollection) toRuby(dir string) error {
+	dir = filepath.Clean(dir)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return err
+	}
+
+	for name, bud := range(*buds) {
+		filename := filepath.Join(dir, strings.ToLower(name) + ".rb")
+		out, err := os.Create(filename)
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprintln(out, "require 'rubygems'")
+		fmt.Fprintln(out, "require 'bud'")
+
+		fmt.Fprintf(out, "class %s\n", name)
+		fmt.Fprintf(out, "  include Bud\n")
+
+		fmt.Fprintf(out, "\n  state do\n")
+		for _, collection := range(bud.collections) {
+			fmt.Fprintf(out, "    %s #%s\n", collection, collection.source)
+		}
+		fmt.Fprintf(out, "  end\n")
+
+		fmt.Fprintf(out, "\n  bloom do\n")
+		for _, rule := range(bud.rules) {
+			fmt.Fprintf(out, "   %s #%s\n", rule, rule.source)
+		}
+		fmt.Fprintf(out, "  end\n")
+
+		fmt.Fprintf(out, "end\n")
+		out.Close()
+	}
+
 	return nil
 }

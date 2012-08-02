@@ -7,9 +7,9 @@ import (
 )
 
 type seed struct {
-	inputs  map[string]*table
-	outputs map[string]*table
-	tables  map[string]*table
+	inputs  tableCollection
+	outputs tableCollection
+	tables  tableCollection
 	rules   []*rule
 }
 
@@ -39,7 +39,7 @@ func (s *seed) String() string {
 
 	str += "\nrules:"
 	for k, v := range s.rules {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
+		str = fmt.Sprint(str, "\n\t", k, "\t", v, "\t(", v.source, ")")
 	}
 
 	return str
@@ -52,7 +52,7 @@ func newSeedCollection() seedCollection {
 }
 
 func loadSeeds(filenames []string) (seedCollection, error) {
-	seeds := make(map[string]*seed)
+	seeds := newSeedCollection()
 
 	for _, filename := range filenames {
 		filename = filepath.Clean(filename)

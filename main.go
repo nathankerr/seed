@@ -36,7 +36,9 @@ func main() {
 	seeds = applySeedTransforms(seeds, nil)
 
 	// apply seed -> bud transforms
-	buds := applySeedToBudTransforms(seeds, nil)
+	var s2b []seedToBudTransform
+	s2b = append(s2b, generateServer)
+	buds := applySeedToBudTransforms(seeds, s2b)
 
 	// apply bud -> bud transforms
 	buds = applyBudTransforms(buds, nil)
@@ -47,8 +49,9 @@ func main() {
 		panic(err)
 	}
 
-	for name, seed := range seeds {
-		fmt.Println("# ", name)
-		fmt.Println(seed)
-	}
+	// for debugging
+	// for name, bud := range buds {
+	// 	fmt.Println("# ", name)
+	// 	fmt.Println(bud)
+	// }
 }
