@@ -6,7 +6,7 @@ print: *.go
 	context print
 	open print.pdf
 
-seed: *.go
+seed: *.go kvs.seed
 	# go fmt
 	go build -o seed
 	-rm -rf bud

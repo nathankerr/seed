@@ -3,6 +3,9 @@ input put [key] [value]
 table kvstore [key] [value]
 
 kvstore <+ put
+kvstore <- put
+kvstore <= put
+kvstore <+- put
 
 output out [key] [value]
 output outer [key] [value]

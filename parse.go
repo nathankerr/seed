@@ -213,8 +213,12 @@ func parseRule(p *parser) parsefn {
 
 	// operation
 	operation := p.nextItem()
-	if operation.typ != itemOperationInsert {
-		fmt.Println("parseRule: expected itemOperationInsert, got ", operation)
+	switch operation.typ {
+	case itemOperationInsert, itemOperationSet,
+		itemOperationDelete, itemOperationUpdate:
+			//no-op
+	default:
+		fmt.Println("parseRule: expected an operation, got ", operation)
 		return nil
 	}
 

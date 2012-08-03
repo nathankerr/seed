@@ -53,7 +53,10 @@ const (
 	itemBeginArray
 	itemEndArray
 	itemArrayDelimter
-	itemOperationInsert
+	itemOperationInsert // <+
+	itemOperationSet // <=
+	itemOperationDelete // <-
+	itemOperationUpdate // <+-
 	itemMethodDelimiter
 	// keywords
 	itemKeyword // used to deliniate keyword identifiers
@@ -251,11 +254,26 @@ Loop:
 	return lexToken
 }
 
+// itemOperationInsert: <+
+// itemOperationSet: <=
+// itemOperationDelete: <-
+// itemOperationUpdate: <+-
 func lexOperation(l *lexer) stateFn {
 	lexinfo("lexOperation")
 	switch r := l.next(); {
 	case r == '+':
-		l.emit(itemOperationInsert)
+		if l.peek() == '-' {
+			l.next()
+			l.emit(itemOperationUpdate)
+		} else {
+			l.emit(itemOperationInsert)
+		}
+	case r == '=':
+		l.emit(itemOperationSet)
+	case r == '-':
+		l.emit(itemOperationDelete)
+	default:
+		return l.errorf("lexOperation: unexpected operation: '%s'", l.input[l.start:l.pos])
 	}
 	return lexToken
 }
