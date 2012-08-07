@@ -18,10 +18,11 @@ func lexinfo(args ...interface{}) {
 type source struct {
 	name string
 	line int
+	column int
 }
 
 func (s source) String() string {
-	return fmt.Sprint(s.name, ":", s.line)
+	return fmt.Sprint(s.name, ":", s.line, ":", s.column)
 }
 
 // item represents a token or text string returned from the scanner.
@@ -143,9 +144,25 @@ func (l *lexer) lineNumber() int {
 	return 1 + strings.Count(l.input[:l.pos], "\n")
 }
 
+func(l *lexer) columnNumber() int {
+	pos := l.start
+	if pos >= len(l.input) {
+			pos--
+	}
+
+	for pos != 0 {
+		if l.input[pos] == '\n' {
+			break
+		}
+		pos--
+	}
+
+	return l.start - pos
+}
+
 // returns a source struct for the line we are on
 func (l *lexer) source() source {
-	return source{l.name, l.lineNumber()}
+	return source{l.name, l.lineNumber(), l.columnNumber()}
 }
 
 // error returns an error token and terminates the scan by passing
