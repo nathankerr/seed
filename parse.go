@@ -3,13 +3,30 @@ package main
 import (
 	"fmt"
 	// "log"
+	"os"
+	"path"
+	"runtime"
 )
 
 func parseinfo(args ...interface{}) {
-	//log.Println(args...)
+	// log.Println(args...)
 }
 
-type parsefn func(p *parser) parsefn
+func parseError(i item, args ...interface{}) {
+	pc, file, line, ok := runtime.Caller(1)
+	if ok {
+		name := path.Ext(runtime.FuncForPC(pc).Name())
+		name = name[1:]
+		file = path.Base(file)
+		fmt.Fprintf(os.Stderr, "%s:%d: Parse Error:\n", file, line)
+		fmt.Fprintf(os.Stderr, "%s: %s: ", i.source, name)
+	} else {
+		fmt.Fprintf(os.Stderr, "%s: ", i.source)
+	}
+	fmt.Fprintln(os.Stderr, args...)
+}
+
+type parsefn func(p *parser) (next parsefn, ok bool)
 
 type parser struct {
 	s     *seed
@@ -22,7 +39,7 @@ func (p *parser) nextItem() item {
 	return p.i
 }
 
-func parse(name, input string) *seed {
+func parse(name, input string) (s *seed, ok bool) {
 	p := &parser{}
 	p.s = newSeed()
 
@@ -32,63 +49,66 @@ func parse(name, input string) *seed {
 	p.items = l.items
 
 	for state := parseSeed; state != nil; {
-		state = state(p)
+		state, ok = state(p)
+		if !ok {
+			return nil, false
+		}
 	}
 	// log.Println("parser stopped running")
 
-	return p.s
+	return p.s, true
 }
 
-func parseSeed(p *parser) parsefn {
+func parseSeed(p *parser) (next parsefn, ok bool) {
 	parseinfo("parseSeed")
 
 	i := p.nextItem()
 
 	switch i.typ {
 	case itemInput:
-		return parseInput
+		return parseInput, true
 	case itemOutput:
-		return parseOutput
+		return parseOutput, true
 	case itemTable:
-		return parseTable
+		return parseTable, true
 	case itemIdentifier:
-		return parseRule
+		return parseRule, true
 	case itemEOF:
-		return nil
+		return nil, true
 	default:
-		fmt.Println("parseSeed: unexpected", i)
-		return nil
+		parseError(i, "unexpected", i)
+		return nil, false
 	}
 
-	return nil
+	return nil, true
 }
 
 // input <name> <schema>
-func parseInput(p *parser) parsefn {
+func parseInput(p *parser) (next parsefn, ok bool) {
 	parseinfo("parseInput")
 
 	i := p.nextItem()
 	if i.typ != itemIdentifier {
-		fmt.Println("parseInput: expected itemIdentifier, got ", i)
-		return nil
+		parseError(i, "expected itemIdentifier, got ", i)
+		return nil, false
 	}
 
 	name := i.val
 
 	schema, ok := parseSchema(p.items)
 	if !ok {
-		return nil
+		return nil, false
 	}
 
 	if _, ok := p.s.inputs[name]; ok {
-		fmt.Println("parseInput: input", name, "already exists")
-		return nil
+		parseError(i, "input", name, "already exists")
+		return nil, false
 	}
 
 	schema.source = i.source
 	p.s.inputs[name] = schema
 
-	return parseSeed
+	return parseSeed, true
 }
 
 // [key] [columns]
@@ -97,16 +117,16 @@ func parseSchema(items chan item) (schema *table, ok bool) {
 
 	schema = new(table)
 
-	key, ok := parseArray(items)
+	key, i, ok := parseArray(items)
 	if !ok {
-		fmt.Println("parseSchema: expected key array")
+		parseError(i, "expected key array")
 		return nil, false
 	}
 	schema.key = key
 
-	columns, ok := parseArray(items)
+	columns, i, ok := parseArray(items)
 	if !ok {
-		fmt.Println("parseSchema: expected columns array")
+		parseError(i, "expected columns array")
 		return nil, false
 	}
 	schema.columns = columns
@@ -115,19 +135,19 @@ func parseSchema(items chan item) (schema *table, ok bool) {
 }
 
 // [string, string]
-func parseArray(items chan item) (array []string, ok bool) {
+func parseArray(items chan item) (array []string, i item, ok bool) {
 	parseinfo("parseArray")
 
-	i := <-items
+	i = <-items
 	if i.typ != itemBeginArray {
-		fmt.Println("parseSchema: expected [, got", i.val)
-		return nil, false
+		parseError(i, "expected [, got", i.val)
+		return nil, i, false
 	}
 
 	i = <-items
 	if i.typ != itemIdentifier {
-		fmt.Println("parseSchema: expected identifier, got", i.val)
-		return nil, false
+		parseError(i, "expected identifier, got", i.val)
+		return nil, i, false
 	}
 	array = append(array, i.val)
 
@@ -135,77 +155,77 @@ func parseArray(items chan item) (array []string, ok bool) {
 	for {
 		switch i.typ {
 		case itemEndArray:
-			return array, true
+			return array, i, true
 		case itemArrayDelimter:
 			i = <-items
 			if i.typ != itemIdentifier {
-				fmt.Println("parseSchema: expected identifier, got", i.val)
-				return nil, false
+				parseError(i, "expected identifier, got", i.val)
+				return nil, i, false
 			}
 			array = append(array, i.val)
 		}
 		i = <-items
 	}
-	return nil, false
+	return nil, i, false
 }
 
 // output <name> <schema>
-func parseOutput(p *parser) parsefn {
+func parseOutput(p *parser) (next parsefn, ok bool) {
 	parseinfo("parseOutput")
 
 	i := p.nextItem()
 	if i.typ != itemIdentifier {
-		fmt.Println("parseOutput: expected itemIdentifier, got ", i)
-		return nil
+		parseError(i, "expected itemIdentifier, got ", i)
+		return nil, false
 	}
 
 	name := i.val
 
 	schema, ok := parseSchema(p.items)
 	if !ok {
-		return nil
+		return nil, false
 	}
 
 	if _, ok := p.s.inputs[name]; ok {
-		fmt.Println("parseOutput: input", name, "already exists")
-		return nil
+		parseError(i, "input", name, "already exists")
+		return nil, false
 	}
 
 	schema.source = i.source
 	p.s.outputs[name] = schema
 
-	return parseSeed
+	return parseSeed, true
 }
 
 // table <name> <schema>
-func parseTable(p *parser) parsefn {
+func parseTable(p *parser) (next parsefn, ok bool) {
 	parseinfo("parseTable")
 
 	i := p.nextItem()
 	if i.typ != itemIdentifier {
-		fmt.Println("parseTable: expected itemIdentifier, got ", i)
-		return nil
+		parseError(i, "expected itemIdentifier, got ", i)
+		return nil, false
 	}
 
 	name := i.val
 
 	schema, ok := parseSchema(p.items)
 	if !ok {
-		return nil
+		return nil, false
 	}
 
 	if _, ok := p.s.inputs[name]; ok {
-		fmt.Println("parseTable: input", name, "already exists")
-		return nil
+		parseError(i, "parseTable: input", name, "already exists")
+		return nil, false
 	}
 
 	schema.source = i.source
 	p.s.tables[name] = schema
 
-	return parseSeed
+	return parseSeed, true
 }
 
-func parseRule(p *parser) parsefn {
+func parseRule(p *parser) (next parsefn, ok bool) {
 	parseinfo("parseRule")
 
 	// destination
@@ -218,15 +238,15 @@ func parseRule(p *parser) parsefn {
 		itemOperationDelete, itemOperationUpdate:
 			//no-op
 	default:
-		fmt.Println("parseRule: expected an operation, got ", operation)
-		return nil
+		parseError(operation, "expected an operation, got ", operation)
+		return nil, false
 	}
 
 	// expression
 	expr := p.nextItem()
 	if expr.typ != itemIdentifier {
-		fmt.Println("parseRule: expected itemIdentifier, got ", expr)
-		return nil
+		parseError(expr, "expected itemIdentifier, got ", expr)
+		return nil, false
 	}
 
 	r := new(rule)
@@ -236,5 +256,5 @@ func parseRule(p *parser) parsefn {
 	r.source = destination.source
 	p.s.rules = append(p.s.rules, r)
 
-	return parseSeed
+	return parseSeed, true
 }
