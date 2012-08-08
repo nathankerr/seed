@@ -1,11 +1,17 @@
-# here is a comment
-input put [key] [value]
-table kvstore [key] [value]
+# Derived from bud-sandbox/kvs/kvs.rb
 
-kvstore <+ put
-kvstore <- put
-kvstore <= put
-kvstore <+- put
+input kvput [key] => [value]
+input kvdel [key]
+input kvget [key] => [reqid]
+output kvget_response [reqid] => [key, value]
 
-output out [key] [value]
-output outer [key] [value]
+table kvstate [key] => [value]
+
+# mutate
+kvstate <+- kvput
+
+# get
+kvget_response <= (kvget * kvstate).pairs do |g, t| [g.reqid, t.key, t.value] end
+
+# delete
+kvstate <- (kvstate * kvdel).matches do |s, d| s end

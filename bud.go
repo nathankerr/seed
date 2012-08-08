@@ -20,8 +20,8 @@ func newBud() *bud {
 
 func (b *bud) String() string {
 	str := "collections:"
-	for name, bud := range b.collections {
-		str += fmt.Sprintf("\n\t%s (%s):\n\t\t%s", name, bud.source, bud)
+	for name, collection := range b.collections {
+		str += fmt.Sprintf("\n\t%s (%s):\n\t\t%s", name, collection.source, collection)
 	}
 
 	str += "\nrules:"
@@ -66,7 +66,7 @@ func (buds *budCollection) toRuby(dir string) error {
 
 		fmt.Fprintf(out, "\n  bloom do\n")
 		for _, rule := range bud.rules {
-			fmt.Fprintf(out, "   %s #%s\n", rule, rule.source)
+			fmt.Fprintf(out, "    %s #%s\n", rule, rule.source)
 		}
 		fmt.Fprintf(out, "  end\n")
 

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -24,6 +25,8 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	log.SetFlags(0) // turn off logger prefix
 
 	// load seeds
 	seeds, err := loadSeeds(flag.Args())
@@ -47,10 +50,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	// for debugging
-	// for name, bud := range buds {
-	// 	fmt.Println("# ", name)
-	// 	fmt.Println(bud)
-	// }
 }

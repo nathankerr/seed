@@ -5,14 +5,42 @@ package main
 
 import (
 	"fmt"
-	// "log"
+	"log"
+	"os"
+	"path"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
 
+// toggle on and off by commenting the first return statement
 func lexinfo(args ...interface{}) {
-	// log.Println(args...)
+	return
+	info := ""
+
+	pc, file, line, ok := runtime.Caller(1)
+	if ok {
+		basepath, err := filepath.Abs(".")
+		if err != nil {
+			panic(err)
+		}
+		sourcepath, err := filepath.Rel(basepath, file)
+		if err != nil {
+			panic(err)
+		}
+		info += fmt.Sprintf("%s:%d: ", sourcepath, line)
+
+		name := path.Ext(runtime.FuncForPC(pc).Name())
+		info += name[1:]
+		if len(args) > 0 {
+			info += ": "
+		}
+	}
+	info += fmt.Sprintln(args...)
+	
+	fmt.Print(info)
 }
 
 type source struct {
@@ -22,7 +50,7 @@ type source struct {
 }
 
 func (s source) String() string {
-	return fmt.Sprint(s.name, ":", s.line, ":", s.column)
+	return fmt.Sprint(s.name, ":", s.line)
 }
 
 // item represents a token or text string returned from the scanner.
@@ -53,12 +81,18 @@ const (
 	itemIdentifier // keywords and names
 	itemBeginArray
 	itemEndArray
-	itemArrayDelimter
+	itemArrayDelimter // ,
 	itemOperationInsert // <+
 	itemOperationSet // <=
 	itemOperationDelete // <-
 	itemOperationUpdate // <+-
-	itemMethodDelimiter
+	itemMethodDelimiter // .
+	itemKeyRelation // =>
+	itemBeginParen // (
+	itemEndParen // )
+	itemHashDelimiter // *
+	itemBlock // { ... }
+	itemDoBlock
 	// keywords
 	itemKeyword // used to deliniate keyword identifiers
 	itemInput   // input keyword
@@ -88,6 +122,16 @@ type lexer struct {
 	items chan item // channel of scanned items.
 }
 
+// lex creates a new scanner for the input string.
+func newLexer(name, input string) *lexer {
+	l := &lexer{
+		name:  name,
+		input: input,
+		items: make(chan item),
+	}
+	return l
+}
+
 // next returns the next rune in the input.
 func (l *lexer) next() (r rune) {
 	if l.pos >= len(l.input) {
@@ -96,6 +140,8 @@ func (l *lexer) next() (r rune) {
 	}
 	r, l.width = utf8.DecodeRuneInString(l.input[l.pos:])
 	l.pos += l.width
+
+	lexinfo(string(r))
 	return r
 }
 
@@ -167,22 +213,24 @@ func (l *lexer) source() source {
 
 // error returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{itemError, fmt.Sprintf(format, args...), l.source()}
-	return nil
-}
+func (l *lexer) errorf(format string, args ...interface{}) {
+	message := ""
 
-// nextItem returns the next item from the input.
-func (l *lexer) nextItem() item {
-	for {
-		select {
-		case item := <-l.items:
-			return item
-		default:
-			l.state = l.state(l)
-		}
+	pc, file, line, ok := runtime.Caller(1)
+	if ok {
+		name := path.Ext(runtime.FuncForPC(pc).Name())
+		name = name[1:]
+		file = path.Base(file)
+		message = fmt.Sprintf("%s:%d: [%s] ", file, line, name)
 	}
-	panic("not reached")
+
+	source := l.source()
+	message += fmt.Sprintf("%s:%d: ERROR: ", source, source.column)
+
+	message += fmt.Sprintf(format, args...)
+
+	log.Fatalln(message)
+	os.Exit(1)
 }
 
 // run lexes the input by executing state functions
@@ -195,17 +243,6 @@ func (l *lexer) run() {
 	l.emit(itemEOF)
 }
 
-// lex creates a new scanner for the input string.
-func lex(name, input string) *lexer {
-	l := &lexer{
-		name:  name,
-		input: input,
-		// state: lexText,
-		items: make(chan item),
-	}
-	return l
-}
-
 // state functions
 
 func lexToken(l *lexer) stateFn {
@@ -216,25 +253,34 @@ func lexToken(l *lexer) stateFn {
 	case r == '#':
 		return lexComment
 	case unicode.IsLetter(r):
+		if r == 'd' && l.accept("o") {
+			return lexDoBlock
+		}
 		return lexIdentifier
 	case isSpace(r):
 		l.ignore()
-		return lexToken
 	case r == '[':
 		l.emit(itemBeginArray)
-		return lexToken
 	case r == ']':
 		l.emit(itemEndArray)
-		return lexToken
 	case r == '<':
 		return lexOperation
 	case r == '.':
 		l.emit(itemMethodDelimiter)
-		return lexToken
+	case r == '=':
+		return lexKeyRelation
+	case r == ',':
+		l.emit(itemArrayDelimter)
+	case r == '(':
+		l.emit(itemBeginParen)
+	case r == ')':
+		l.emit(itemEndParen)
+	case r == '*':
+		l.emit(itemHashDelimiter)
 	default:
-		return l.errorf("lexToken: unrecognized character: %#U", r)
+		l.errorf("unrecognized character: %#U", r)
 	}
-	return nil
+	return lexToken
 }
 
 func lexComment(l *lexer) stateFn {
@@ -257,7 +303,7 @@ Loop:
 			l.backup()
 			word := l.input[l.start:l.pos]
 			if !l.atTerminator() {
-				return l.errorf("lexIdentifier: unexpected character %+U '%s", r, r)
+				l.errorf("unexpected character %+U '%c'", r, r)
 			}
 			switch {
 			case key[word] > itemKeyword:
@@ -290,8 +336,27 @@ func lexOperation(l *lexer) stateFn {
 	case r == '-':
 		l.emit(itemOperationDelete)
 	default:
-		return l.errorf("lexOperation: unexpected operation: '%s'", l.input[l.start:l.pos])
+		l.errorf("unexpected operation: '%s'", l.input[l.start:l.pos])
 	}
+	return lexToken
+}
+
+// itemKeyRelation =>
+func lexKeyRelation(l *lexer) stateFn {
+	if !l.accept(">") {
+		l.errorf("expected '>', got: '%s'", l.input[l.start:l.pos])
+	}
+	l.emit(itemKeyRelation)
+	return lexToken
+}
+
+// do ... end
+// nesting not allowed
+func lexDoBlock(l *lexer) stateFn {
+	// advance until an 'end' is found
+	l.pos = l.start + strings.Index(l.input[l.start:], "end") + len("end")
+	l.emit(itemDoBlock)
+
 	return lexToken
 }
 
@@ -310,7 +375,7 @@ func (l *lexer) atTerminator() bool {
 		return true
 	}
 	switch r {
-	case eof, ',', '[', ']', '#', '.':
+	case eof, ',', '[', ']', '#', '.', '*', '(', ')':
 		return true
 	}
 	return false

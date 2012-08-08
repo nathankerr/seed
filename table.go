@@ -73,13 +73,17 @@ func (t *budTable) String() string {
 		declaration += fmt.Sprintf(":%s, ", v)
 	}
 
-	declaration = declaration[:len(declaration)-2] + "] => ["
+	if len(t.columns) > 0 {
+		declaration = declaration[:len(declaration)-2] + "] => ["
 
-	for _, v := range t.columns {
-		declaration += fmt.Sprintf(":%s, ", v)
+		for _, v := range t.columns {
+			declaration += fmt.Sprintf(":%s, ", v)
+		}
+
+		declaration = declaration[:len(declaration)-2] + "]"
+	} else {
+		declaration = declaration[:len(declaration)-2] + "]"
 	}
-
-	declaration = declaration[:len(declaration)-2] + "]"
 
 	return declaration
 }

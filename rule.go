@@ -1,7 +1,17 @@
 package main
 
+type ruleType int
+
+const (
+	ruleInsert ruleType = iota
+	ruleSet
+	ruleDelete
+	ruleUpdate
+)
+
 type rule struct {
 	value    string
+	typ ruleType
 	supplies []string
 	requires []string
 	source   source
