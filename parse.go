@@ -173,10 +173,14 @@ func parseArray(p *parser) []string {
 	}
 
 	i = p.next()
-	if i.typ != itemIdentifier {
-		p.error("expected identifier, got", i.val)
+	switch i.typ {
+	case itemIdentifier:
+		array = append(array, i.val)
+	case itemEndArray:
+		return array
+	default:
+		p.error("expected identifier or ], got", i.val)
 	}
-	array = append(array, i.val)
 
 	i = p.next()
 	for {

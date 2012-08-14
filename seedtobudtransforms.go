@@ -62,7 +62,7 @@ func generateServer(seeds seedCollection, buds budCollection) budCollection {
 			bud.rules = append(bud.rules, rewrite)
 		}
 
-		// replace the output with a channel and a scratch
+		// replace the outputs with channela and scratches
 		for oname, table := range seed.outputs {
 			output := seedTableToBudTable(oname, budScratch, table)
 			bud.collections[oname] = output

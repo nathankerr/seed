@@ -2,8 +2,8 @@
 
 input kvput [key] => [value]
 input kvdel [key]
-input kvget [key] => [reqid]
-output kvget_response [reqid] => [key, value]
+input kvget [key]
+output kvget_response [key] => [value]
 
 table kvstate [key] => [value]
 
@@ -11,7 +11,7 @@ table kvstate [key] => [value]
 kvstate <+- kvput
 
 # get
-kvget_response <= (kvget * kvstate).pairs do |g, t| [g.reqid, t.key, t.value] end
+kvget_response <= (kvget * kvstate).pairs do |g, s| s end
 
 # delete
-kvstate <- (kvstate * kvdel).matches do |s, d| s end
+kvstate <- (kvstate * kvdel).lefts
