@@ -39,13 +39,13 @@ func lexinfo(args ...interface{}) {
 		}
 	}
 	info += fmt.Sprintln(args...)
-	
+
 	fmt.Print(info)
 }
 
 type source struct {
-	name string
-	line int
+	name   string
+	line   int
 	column int
 }
 
@@ -81,17 +81,17 @@ const (
 	itemIdentifier // keywords and names
 	itemBeginArray
 	itemEndArray
-	itemArrayDelimter // ,
+	itemArrayDelimter   // ,
 	itemOperationInsert // <+
-	itemOperationSet // <=
+	itemOperationSet    // <=
 	itemOperationDelete // <-
 	itemOperationUpdate // <+-
 	itemMethodDelimiter // .
-	itemKeyRelation // =>
-	itemBeginParen // (
-	itemEndParen // )
-	itemHashDelimiter // *
-	itemBlock // { ... }
+	itemKeyRelation     // =>
+	itemBeginParen      // (
+	itemEndParen        // )
+	itemHashDelimiter   // *
+	itemBlock           // { ... }
 	itemDoBlock
 	// keywords
 	itemKeyword // used to deliniate keyword identifiers
@@ -190,10 +190,10 @@ func (l *lexer) lineNumber() int {
 	return 1 + strings.Count(l.input[:l.pos], "\n")
 }
 
-func(l *lexer) columnNumber() int {
+func (l *lexer) columnNumber() int {
 	pos := l.start
 	if pos >= len(l.input) {
-			pos--
+		pos--
 	}
 
 	for pos != 0 {

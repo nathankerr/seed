@@ -11,7 +11,7 @@ const (
 
 type rule struct {
 	value    string
-	typ ruleType
+	typ      ruleType
 	supplies []string
 	requires []string
 	source   source

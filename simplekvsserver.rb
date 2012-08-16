@@ -33,5 +33,5 @@ end
 
 
 ## Below added by hand
-program = SimpleKvsServer.new(:ip => "127.0.0.1", :port => 3000)
+program = SimpleKvsServer.new(:ip => "127.0.0.1", :port => 3000, :dump_rewrite => true)
 program.run_fg

@@ -32,16 +32,16 @@ func parseinfo(args ...interface{}) {
 		}
 	}
 	info += fmt.Sprintln(args...)
-	
+
 	log.Print(info)
 }
 
 type parsefn func(p *parser) (next parsefn, ok bool)
 
 type parser struct {
-	s     *seed
-	items chan item
-	i     item // the last item
+	s        *seed
+	items    chan item
+	i        item // the last item
 	backedup bool // indicates that the last item should be used instead of getting a new one
 }
 
@@ -153,7 +153,7 @@ func parseSchema(p *parser) *table {
 	i := p.next()
 	if i.typ == itemKeyRelation {
 		columns := parseArray(p)
-	schema.columns = columns
+		schema.columns = columns
 	} else {
 		p.backup()
 	}
