@@ -36,7 +36,7 @@ func parseinfo(args ...interface{}) {
 	log.Print(info)
 }
 
-type parsefn func(p *parser) (next parsefn, ok bool)
+type parsefn func(p *parser) parsefn
 
 type parser struct {
 	s        *seed
@@ -77,7 +77,7 @@ func (p *parser) error(args ...interface{}) {
 	log.Fatal(message)
 }
 
-func parse(name, input string) (s *seed, ok bool) {
+func parse(name, input string) *seed {
 	p := &parser{}
 	p.s = newSeed()
 
@@ -87,38 +87,35 @@ func parse(name, input string) (s *seed, ok bool) {
 	p.items = l.items
 
 	for state := parseSeed; state != nil; {
-		state, ok = state(p)
-		if !ok {
-			return nil, false
-		}
+		state = state(p)
 	}
 
-	return p.s, true
+	return p.s
 }
 
-func parseSeed(p *parser) (next parsefn, ok bool) {
+func parseSeed(p *parser) parsefn {
 	parseinfo()
 
 	i := p.next()
 
 	switch i.typ {
 	case itemInput:
-		return parseCollection, true
+		return parseCollection
 	case itemOutput:
-		return parseCollection, true
+		return parseCollection
 	case itemTable:
-		return parseCollection, true
+		return parseCollection
 	case itemScratch:
-		return parseCollection, true
+		return parseCollection
 	case itemIdentifier:
-		return parseRule, true
+		return parseRule
 	case itemEOF:
-		return nil, true
+		return nil
 	default:
 		p.error("unexpected", i)
 	}
 
-	return nil, true
+	return nil
 }
 
 // [string, string]
@@ -160,7 +157,7 @@ func parseArray(p *parser) []string {
 }
 
 // (input|output|table|scratch) <name> <schema>
-func parseCollection(p *parser) (next parsefn, ok bool) {
+func parseCollection(p *parser) parsefn {
 	parseinfo()
 
 	var collectionType seedCollectionType
@@ -205,11 +202,11 @@ func parseCollection(p *parser) (next parsefn, ok bool) {
 	collection.typ = seedInput
 	p.s.collections[name] = collection
 
-	return parseSeed, true
+	return parseSeed
 }
 
 // <id> <op> <expr>
-func parseRule(p *parser) (next parsefn, ok bool) {
+func parseRule(p *parser) parsefn {
 	parseinfo()
 
 	// destination
@@ -269,7 +266,7 @@ func parseRule(p *parser) (next parsefn, ok bool) {
 	}
 
 	p.s.rules = append(p.s.rules, r)
-	return parseSeed, true
+	return parseSeed
 }
 
 // ( <id> <* <id>>)

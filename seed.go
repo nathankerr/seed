@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -51,10 +50,7 @@ func loadSeeds(filenames []string) (seedCollection, error) {
 			return nil, err
 		}
 
-		seed, ok := parse(filename, string(contents))
-		if !ok {
-			return nil, errors.New("Parse Error")
-		}
+		seed := parse(filename, string(contents))
 
 		seeds[name] = seed
 	}
