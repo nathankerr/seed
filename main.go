@@ -35,13 +35,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// HIJACK FOR ANALYSIS TESTING!!!
-	for _, seed := range seeds {
-		a := analyze(seed)
-		fmt.Println(a)
-	}
-	// END HIJACK
-
 	// apply seed-> seed transforms
 	seeds = applySeedTransforms(seeds, nil)
 

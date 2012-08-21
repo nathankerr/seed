@@ -132,12 +132,13 @@ func parseInput(p *parser) (next parsefn, ok bool) {
 
 	schema := parseSchema(p)
 
-	if _, ok := p.s.inputs[name]; ok {
+	if _, ok := p.s.collections[name]; ok {
 		p.error("input", name, "already exists")
 	}
 
 	schema.source = i.source
-	p.s.inputs[name] = schema
+	schema.typ = seedInput
+	p.s.collections[name] = schema
 
 	return parseSeed, true
 }
@@ -212,12 +213,13 @@ func parseOutput(p *parser) (next parsefn, ok bool) {
 
 	schema := parseSchema(p)
 
-	if _, ok := p.s.inputs[name]; ok {
+	if _, ok := p.s.collections[name]; ok {
 		p.error("input", name, "already exists")
 	}
 
 	schema.source = i.source
-	p.s.outputs[name] = schema
+	schema.typ = seedInput
+	p.s.collections[name] = schema
 
 	return parseSeed, true
 }
@@ -232,13 +234,14 @@ func parseTable(p *parser) (next parsefn, ok bool) {
 	}
 
 	name := i.val
-	if _, ok := p.s.inputs[name]; ok {
-		p.error("parseTable: input", name, "already exists")
+	if _, ok := p.s.collections[name]; ok {
+		p.error("parseTable: table", name, "already exists")
 	}
 
 	schema := parseSchema(p)
 	schema.source = i.source
-	p.s.tables[name] = schema
+	schema.typ = seedTable
+	p.s.collections[name] = schema
 
 	return parseSeed, true
 }

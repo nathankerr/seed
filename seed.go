@@ -8,34 +8,20 @@ import (
 )
 
 type seed struct {
-	inputs  tableCollection
-	outputs tableCollection
-	tables  tableCollection
+	collections  map[string]*table
 	rules   []*rule
 }
 
 func newSeed() *seed {
 	return &seed{
-		inputs:  newTableCollection(),
-		outputs: newTableCollection(),
-		tables:  newTableCollection(),
+		collections:  newTableCollection(),
 	}
 }
 
 func (s *seed) String() string {
-	str := "inputs:"
-	for k, v := range s.inputs {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
-	}
-
-	str += "\noutputs:"
-	for k, v := range s.outputs {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
-	}
-
-	str += "\ntables:"
-	for k, v := range s.tables {
-		str = fmt.Sprint(str, "\n\t", k, " ", v, "\t(", v.source, ")")
+	str := "collections:"
+	for k, v := range s.collections {
+		str = fmt.Sprintf("%s\n\t%s %s\t(%s)", str, k, v, v.source)
 	}
 
 	str += "\nrules:"
@@ -74,4 +60,33 @@ func loadSeeds(filenames []string) (seedCollection, error) {
 	}
 
 	return seeds, nil
+}
+
+type seedCollectionType int
+const (
+	seedInput seedCollectionType = iota
+	seedOutput
+	seedTable
+	seedScratch
+)
+
+type table struct {
+	key     []string
+	columns []string
+	source  source
+	typ seedCollectionType
+}
+
+func newTable(typ seedCollectionType) *table {
+	return &table{}
+}
+
+func (t *table) String() string {
+	return fmt.Sprint(t.key, "=>", t.columns)
+}
+
+type tableCollection map[string]*table
+
+func newTableCollection() tableCollection {
+	return make(map[string]*table)
 }

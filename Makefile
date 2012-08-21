@@ -2,7 +2,7 @@
 all: seed
 	-rm -rf bud
 	./seed kvs.seed
-	# cat bud/kvsserver.rb
+	cat bud/kvsserver.rb
 
 print: *.go
 	./gen-print.sh
