@@ -57,9 +57,8 @@ func generateServer(seeds seedCollection, buds budCollection) budCollection {
 				channel := seedTableToBudTable(cname, budChannel, collection)
 				bud.collections[cname] = channel
 
-				rewrite := newRule()
+				rewrite := newRule(collection.source)
 				rewrite.value = fmt.Sprintf("%s <= %s.payloads", name, cname)
-				rewrite.source = collection.source
 				bud.rules = append(bud.rules, rewrite)
 			case seedOutput:
 				// replace the outputs with channels and scratches
@@ -70,9 +69,8 @@ func generateServer(seeds seedCollection, buds budCollection) budCollection {
 				channel := seedTableToBudTable(cname, budChannel, collection)
 				bud.collections[name] = channel
 
-				rewrite := newRule()
+				rewrite := newRule(collection.source)
 				rewrite.value = fmt.Sprintf("%s <~ %s.payloads", cname, name)
-				rewrite.source = collection.source
 				bud.rules = append(bud.rules, rewrite)
 			case seedTable:
 				table := seedTableToBudTable(name, budPersistant, collection)
@@ -107,8 +105,7 @@ func generateClient(seeds seedCollection, buds budCollection) budCollection {
 				channel := seedTableToBudTable(cname, budChannel, collection)
 				bud.collections[cname] = channel
 
-				transfer := newRule()
-				transfer.source = collection.source
+				transfer := newRule(collection.source)
 				transfer.value = cname + " <~ " + name
 				bud.rules = append(bud.rules, transfer)
 			case seedOutput:

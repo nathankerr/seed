@@ -17,8 +17,8 @@ type rule struct {
 	source   source
 }
 
-func newRule() *rule {
-	return new(rule)
+func newRule(src source) *rule {
+	return &rule{source: src}
 }
 
 func (r *rule) String() string {

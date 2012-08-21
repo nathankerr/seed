@@ -61,6 +61,3 @@ accum
 <id> <op> (<hash pairs>).flatten
 
 - temp blocks (scratch that only exists in the bloom block)
-
-# Refactor todo
-- init rule.source in newRule

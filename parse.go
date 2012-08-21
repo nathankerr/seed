@@ -250,11 +250,9 @@ func parseTable(p *parser) (next parsefn, ok bool) {
 func parseRule(p *parser) (next parsefn, ok bool) {
 	parseinfo()
 
-	r := newRule()
-
 	// destination
 	destination := p.i
-	r.source = destination.source
+	r := newRule(destination.source)
 	r.value = fmt.Sprint(destination.val)
 	r.supplies = append(r.supplies, destination.val)
 
