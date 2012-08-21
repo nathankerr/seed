@@ -121,25 +121,6 @@ func parseSeed(p *parser) (next parsefn, ok bool) {
 	return nil, true
 }
 
-// [key] [columns]
-func parseSchema(p *parser) *table {
-	parseinfo()
-
-	schema := new(table)
-
-	schema.key = parseArray(p)
-
-	i := p.next()
-	if i.typ == itemKeyRelation {
-		columns := parseArray(p)
-		schema.columns = columns
-	} else {
-		p.backup()
-	}
-
-	return schema
-}
-
 // [string, string]
 func parseArray(p *parser) []string {
 	parseinfo()
@@ -203,16 +184,26 @@ func parseCollection(p *parser) (next parsefn, ok bool) {
 
 	name := i.val
 
-	schema := parseSchema(p)
-	schema.typ = collectionType
+	collection := new(table)
+	collection.key = parseArray(p)
+
+	i = p.next()
+	if i.typ == itemKeyRelation {
+		columns := parseArray(p)
+		collection.columns = columns
+	} else {
+		p.backup()
+	}
+
+	collection.typ = collectionType
 
 	if _, ok := p.s.collections[name]; ok {
 		p.error("collection", name, "already exists")
 	}
 
-	schema.source = i.source
-	schema.typ = seedInput
-	p.s.collections[name] = schema
+	collection.source = i.source
+	collection.typ = seedInput
+	p.s.collections[name] = collection
 
 	return parseSeed, true
 }
