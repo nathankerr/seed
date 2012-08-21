@@ -103,11 +103,13 @@ func parseSeed(p *parser) (next parsefn, ok bool) {
 
 	switch i.typ {
 	case itemInput:
-		return parseInput, true
+		return parseCollection, true
 	case itemOutput:
-		return parseOutput, true
+		return parseCollection, true
 	case itemTable:
-		return parseTable, true
+		return parseCollection, true
+	case itemScratch:
+		return parseCollection, true
 	case itemIdentifier:
 		return parseRule, true
 	case itemEOF:
@@ -117,30 +119,6 @@ func parseSeed(p *parser) (next parsefn, ok bool) {
 	}
 
 	return nil, true
-}
-
-// input <name> <schema>
-func parseInput(p *parser) (next parsefn, ok bool) {
-	parseinfo()
-
-	i := p.next()
-	if i.typ != itemIdentifier {
-		p.error("expected itemIdentifier, got ", i)
-	}
-
-	name := i.val
-
-	schema := parseSchema(p)
-
-	if _, ok := p.s.collections[name]; ok {
-		p.error("input", name, "already exists")
-	}
-
-	schema.source = i.source
-	schema.typ = seedInput
-	p.s.collections[name] = schema
-
-	return parseSeed, true
 }
 
 // [key] [columns]
@@ -200,9 +178,23 @@ func parseArray(p *parser) []string {
 	return nil
 }
 
-// output <name> <schema>
-func parseOutput(p *parser) (next parsefn, ok bool) {
+// (input|output|table|scratch) <name> <schema>
+func parseCollection(p *parser) (next parsefn, ok bool) {
 	parseinfo()
+
+	var collectionType seedCollectionType
+	switch p.i.typ {
+	case itemInput:
+		collectionType = seedInput
+	case itemOutput:
+		collectionType = seedOutput
+	case itemTable:
+		collectionType = seedTable
+	case itemScratch:
+		collectionType = seedScratch
+	default:
+		p.error("expected input, output, table, or scratch; got ", p.i)
+	}
 
 	i := p.next()
 	if i.typ != itemIdentifier {
@@ -212,35 +204,14 @@ func parseOutput(p *parser) (next parsefn, ok bool) {
 	name := i.val
 
 	schema := parseSchema(p)
+	schema.typ = collectionType
 
 	if _, ok := p.s.collections[name]; ok {
-		p.error("input", name, "already exists")
+		p.error("collection", name, "already exists")
 	}
 
 	schema.source = i.source
 	schema.typ = seedInput
-	p.s.collections[name] = schema
-
-	return parseSeed, true
-}
-
-// table <name> <schema>
-func parseTable(p *parser) (next parsefn, ok bool) {
-	parseinfo()
-
-	i := p.next()
-	if i.typ != itemIdentifier {
-		p.error("expected itemIdentifier, got ", i)
-	}
-
-	name := i.val
-	if _, ok := p.s.collections[name]; ok {
-		p.error("parseTable: table", name, "already exists")
-	}
-
-	schema := parseSchema(p)
-	schema.source = i.source
-	schema.typ = seedTable
 	p.s.collections[name] = schema
 
 	return parseSeed, true

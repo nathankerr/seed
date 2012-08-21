@@ -98,12 +98,14 @@ const (
 	itemInput   // input keyword
 	itemOutput  // output keyword
 	itemTable   // table keyword
+	itemScratch // scratch keyword
 )
 
 var key = map[string]itemType{
 	"input":  itemInput,
 	"output": itemOutput,
 	"table":  itemTable,
+	"scratch": itemScratch,
 }
 
 const eof = -1
