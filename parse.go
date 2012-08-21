@@ -118,44 +118,6 @@ func parseSeed(p *parser) parsefn {
 	return nil
 }
 
-// [string, string]
-func parseArray(p *parser) []string {
-	parseinfo()
-
-	var array []string
-
-	i := p.next()
-	if i.typ != itemBeginArray {
-		p.error("expected [, got", i.val)
-	}
-
-	i = p.next()
-	switch i.typ {
-	case itemIdentifier:
-		array = append(array, i.val)
-	case itemEndArray:
-		return array
-	default:
-		p.error("expected identifier or ], got", i.val)
-	}
-
-	i = p.next()
-	for {
-		switch i.typ {
-		case itemEndArray:
-			return array
-		case itemArrayDelimter:
-			i = p.next()
-			if i.typ != itemIdentifier {
-				p.error("expected identifier, got", i.val)
-			}
-			array = append(array, i.val)
-		}
-		i = p.next()
-	}
-	return nil
-}
-
 // (input|output|table|scratch) <name> <schema>
 func parseCollection(p *parser) parsefn {
 	parseinfo()
@@ -205,6 +167,44 @@ func parseCollection(p *parser) parsefn {
 	return parseSeed
 }
 
+// [string, string]
+func parseArray(p *parser) []string {
+	parseinfo()
+
+	var array []string
+
+	i := p.next()
+	if i.typ != itemBeginArray {
+		p.error("expected [, got", i.val)
+	}
+
+	i = p.next()
+	switch i.typ {
+	case itemIdentifier:
+		array = append(array, i.val)
+	case itemEndArray:
+		return array
+	default:
+		p.error("expected identifier or ], got", i.val)
+	}
+
+	i = p.next()
+	for {
+		switch i.typ {
+		case itemEndArray:
+			return array
+		case itemArrayDelimter:
+			i = p.next()
+			if i.typ != itemIdentifier {
+				p.error("expected identifier, got", i.val)
+			}
+			array = append(array, i.val)
+		}
+		i = p.next()
+	}
+	return nil
+}
+
 // <id> <op> <expr>
 func parseRule(p *parser) parsefn {
 	parseinfo()
@@ -231,7 +231,7 @@ func parseRule(p *parser) parsefn {
 	}
 	r.value = fmt.Sprint(r.value, " ", operation.val, " ")
 
-	// <id> | (<haspair>) 
+	// <id> | (<hashpair>) 
 	expr := p.next()
 	switch expr.typ {
 	case itemIdentifier:

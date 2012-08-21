@@ -7,13 +7,13 @@ import (
 )
 
 type seed struct {
-	collections  map[string]*table
-	rules   []*rule
+	collections map[string]*table
+	rules       []*rule
 }
 
 func newSeed() *seed {
 	return &seed{
-		collections:  newTableCollection(),
+		collections: newTableCollection(),
 	}
 }
 
@@ -59,6 +59,7 @@ func loadSeeds(filenames []string) (seedCollection, error) {
 }
 
 type seedCollectionType int
+
 const (
 	seedInput seedCollectionType = iota
 	seedOutput
@@ -70,7 +71,7 @@ type table struct {
 	key     []string
 	columns []string
 	source  source
-	typ seedCollectionType
+	typ     seedCollectionType
 }
 
 func newTable(typ seedCollectionType) *table {

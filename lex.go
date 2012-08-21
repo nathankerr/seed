@@ -102,9 +102,9 @@ const (
 )
 
 var key = map[string]itemType{
-	"input":  itemInput,
-	"output": itemOutput,
-	"table":  itemTable,
+	"input":   itemInput,
+	"output":  itemOutput,
+	"table":   itemTable,
 	"scratch": itemScratch,
 }
 

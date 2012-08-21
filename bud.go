@@ -146,4 +146,3 @@ type budTableCollection map[string]*budTable
 func newBudTableCollection() budTableCollection {
 	return make(map[string]*budTable)
 }
-
