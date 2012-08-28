@@ -20,7 +20,7 @@ func newSeed() *seed {
 func (s *seed) String() string {
 	str := "collections:"
 	for k, v := range s.collections {
-		str = fmt.Sprintf("%s\n\t%s %s\t(%s)", str, k, v, v.source)
+		str = fmt.Sprintf("%s\n\t%s %s %s\t(%s)", str, v.typ, k, v, v.source)
 	}
 
 	str += "\nrules:"
@@ -66,6 +66,11 @@ const (
 	seedTable
 	seedScratch
 )
+
+func (t seedCollectionType) String() string {
+	types := map[seedCollectionType]string{ seedInput: "input", seedOutput: "output", seedTable: "table", seedScratch:"scratch"}
+	return types[t]
+}
 
 type table struct {
 	key     []string

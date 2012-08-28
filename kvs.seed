@@ -11,7 +11,7 @@ table kvstate [key] => [value]
 kvstate <+- kvput
 
 # get
-#kvget_response <= (kvget * kvstate).pairs do |g, s| s end
+kvget_response <= (kvget * kvstate).pairs do |g, s| s end
 
 # delete
-# kvstate <- (kvstate * kvdel).lefts(key => key)
+kvstate <- (kvstate * kvdel).lefts(key => key)

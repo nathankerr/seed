@@ -2,7 +2,6 @@
 all: seed
 	-rm -rf bud
 	./seed kvs.seed
-	cat bud/kvsserver.rb
 
 print: *.go
 	./gen-print.sh
@@ -10,7 +9,6 @@ print: *.go
 	open print.pdf
 
 seed: *.go kvs.seed
-	# go fmt
 	go build -o seed
 
 .PHONY: clean

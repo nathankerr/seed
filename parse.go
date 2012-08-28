@@ -154,14 +154,12 @@ func parseCollection(p *parser) parsefn {
 		p.backup()
 	}
 
-	collection.typ = collectionType
-
 	if _, ok := p.s.collections[name]; ok {
 		p.error("collection", name, "already exists")
 	}
 
 	collection.source = i.source
-	collection.typ = seedInput
+	collection.typ = collectionType
 	p.s.collections[name] = collection
 
 	return parseSeed
@@ -251,15 +249,42 @@ func parseRule(p *parser) parsefn {
 		// <id> <block | doblock | args>
 		i = p.next()
 		if i.typ != itemIdentifier {
-			p.error("expeced identifier, got", i)
+			p.error("expected identifier, got", i)
 		}
 		r.value += i.val
 
 		switch i = p.next(); i.typ {
 		case itemDoBlock:
 			r.value += fmt.Sprint(" ", i.val)
+		case itemBeginParen:
+			// ( <id> => <id> )
+			r.value += fmt.Sprint(i.val)
+			
+			i = p.next()
+			if i.typ != itemIdentifier {
+				p.error("expected identifier, got", i)
+			}
+			r.value += fmt.Sprint(":", i.val)
+
+			i = p.next()
+			if i.typ != itemKeyRelation {
+				p.error("expected =>, got", i.val)
+			}
+			r.value += fmt.Sprint(" ", i.val)
+
+			i = p.next()
+			if i.typ != itemIdentifier {
+				p.error("expected identifier, got", i)
+			}
+			r.value += fmt.Sprint(" :", i.val)
+
+			i = p.next()
+			if i.typ != itemEndParen {
+				p.error("expected ), got", i)
+			}
+			r.value += fmt.Sprint(i.val)
 		default:
-			p.error("expected arguments, do block, or brace block; got", i)
+			p.error("expected do block or arguments; got", i)
 		}
 	} else {
 		p.backup()
@@ -269,7 +294,7 @@ func parseRule(p *parser) parsefn {
 	return parseSeed
 }
 
-// ( <id> <* <id>>)
+// ( <id> [* <id>] )
 func parseHashPairs(p *parser, r *rule) {
 	parseinfo()
 
