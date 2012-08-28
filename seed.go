@@ -68,7 +68,7 @@ const (
 )
 
 func (t seedCollectionType) String() string {
-	types := map[seedCollectionType]string{ seedInput: "input", seedOutput: "output", seedTable: "table", seedScratch:"scratch"}
+	types := map[seedCollectionType]string{seedInput: "input", seedOutput: "output", seedTable: "table", seedScratch: "scratch"}
 	return types[t]
 }
 

@@ -39,7 +39,7 @@ func main() {
 	s2s := []seedTransform{splitSeeds}
 	seeds = applySeedTransforms(seeds, s2s)
 
-	for name, seed := range(seeds) {
+	for name, seed := range seeds {
 		fmt.Printf("### %s ###\n%s\n\n", name, seed)
 	}
 

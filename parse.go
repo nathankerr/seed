@@ -259,7 +259,7 @@ func parseRule(p *parser) parsefn {
 		case itemBeginParen:
 			// ( <id> => <id> )
 			r.value += fmt.Sprint(i.val)
-			
+
 			i = p.next()
 			if i.typ != itemIdentifier {
 				p.error("expected identifier, got", i)

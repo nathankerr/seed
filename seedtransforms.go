@@ -14,16 +14,15 @@ func applySeedTransforms(seeds seedCollection, transformations []seedTransform) 
 	return seeds
 }
 
-
-func splitSeeds (seeds seedCollection) seedCollection {
+func splitSeeds(seeds seedCollection) seedCollection {
 	placement := make(map[string]string)
 	s := newSeedCollection()
 
-	for sname, seed := range(seeds) {
-		for _, rule := range(seed.rules) {
+	for sname, seed := range seeds {
+		for _, rule := range seed.rules {
 			// find or create the seed, placing its name in name
 			name := ""
-			for _, cname := range(rule.supplies) {
+			for _, cname := range rule.supplies {
 				// tables are not a basis for splitting
 				if seed.collections[cname].typ == seedTable {
 					continue
@@ -35,7 +34,7 @@ func splitSeeds (seeds seedCollection) seedCollection {
 					break
 				}
 			}
-			for _, cname := range(rule.requires) {
+			for _, cname := range rule.requires {
 				// tables are not a basis for splitting
 				if seed.collections[cname].typ == seedTable {
 					continue
@@ -56,11 +55,11 @@ func splitSeeds (seeds seedCollection) seedCollection {
 			s[name].rules = append(s[name].rules, rule)
 
 			// add the relevant collections
-			for _, cname := range(rule.supplies) {
+			for _, cname := range rule.supplies {
 				placement[cname] = name
 				s[name].collections[cname] = seed.collections[cname]
 			}
-			for _, cname := range(rule.requires) {
+			for _, cname := range rule.requires {
 				placement[cname] = name
 				s[name].collections[cname] = seed.collections[cname]
 			}
