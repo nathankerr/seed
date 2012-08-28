@@ -13,7 +13,7 @@ type seed struct {
 
 func newSeed() *seed {
 	return &seed{
-		collections: newTableCollection(),
+		collections: make(map[string]*table),
 	}
 }
 
@@ -80,10 +80,4 @@ func newTable(typ seedCollectionType) *table {
 
 func (t *table) String() string {
 	return fmt.Sprint(t.key, "=>", t.columns)
-}
-
-type tableCollection map[string]*table
-
-func newTableCollection() tableCollection {
-	return make(map[string]*table)
 }
