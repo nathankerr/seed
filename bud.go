@@ -41,7 +41,7 @@ func newBudCollection() budCollection {
 func (buds budCollection) String() string {
 	str := ""
 	for name, bud := range buds {
-		str = fmt.Sprintf("%s\n### %s ###\n%s\n", str, name, bud)
+		str = fmt.Sprintf("%s\n### bud: %s ###\n%s\n", str, name, bud)
 	}
 	return str
 }

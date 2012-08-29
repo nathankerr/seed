@@ -37,6 +37,14 @@ func newSeedCollection() seedCollection {
 	return make(map[string]*seed)
 }
 
+func (seeds seedCollection) String() string {
+	str := ""
+	for name, seed := range seeds {
+		str = fmt.Sprintf("%s\n### seed: %s ###\n%s\n", str, name, seed)
+	}
+	return str
+}
+
 func loadSeeds(filenames []string) (seedCollection, error) {
 	seeds := newSeedCollection()
 

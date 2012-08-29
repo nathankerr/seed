@@ -38,9 +38,7 @@ func main() {
 	// apply seed-> seed transforms
 	// applySeedTransformations(seeds, split_seeds)
 
-	// for name, seed := range seeds {
-	// 	fmt.Printf("### %s ###\n%s\n\n", name, seed)
-	// }
+	// fmt.Print(seeds)
 
 	// apply seed -> bud transforms
 	buds := applySeedToBudTransformations(seeds,
