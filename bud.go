@@ -38,6 +38,14 @@ func newBudCollection() budCollection {
 	return make(map[string]*bud)
 }
 
+func (buds budCollection) String() string {
+	str := ""
+	for name, bud := range buds {
+		str = fmt.Sprintf("%s\n### %s ###\n%s\n", str, name, bud)
+	}
+	return str
+}
+
 func (buds *budCollection) toRuby(dir string) error {
 	dir = filepath.Clean(dir)
 	err := os.MkdirAll(dir, 0755)

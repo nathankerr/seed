@@ -92,3 +92,13 @@ func applySeedTransformations(seeds seedCollection, transformationList ...seedTr
 
 	return seeds
 }
+
+type budTransformation func(buds budCollection) budCollection
+
+func applyBudTransforms(buds budCollection, transformationList ...budTransformation) budCollection {
+	for _, transformation := range transformationList {
+		buds = transformation(buds)
+	}
+
+	return buds
+}
