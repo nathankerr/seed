@@ -39,12 +39,16 @@ func main() {
 	}
 
 	// apply seed-> seed transforms
-	// applySeedTransformations(seeds, split_seeds)
+	applySeedTransformations(seeds,
+		no_s2s_changes,
+		// split_seeds,
+	)
 
 	// fmt.Print(seeds)
 
 	// apply seed -> bud transforms
 	buds := applySeedToBudTransformations(seeds,
+		// no_s2b_changes,
 		generate_client,
 		generate_server,
 	)
@@ -52,7 +56,9 @@ func main() {
 	// fmt.Print(buds)
 
 	// apply bud -> bud transforms
-	// buds = applyBudTransforms(buds)
+	buds = applyBudTransforms(buds,
+		no_b2b_changes,
+	)
 
 	// write bud to ruby
 	err = buds.toRuby(*outputdir)

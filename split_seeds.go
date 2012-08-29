@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 var split_seeds = seedTransformations{
 	"000": split,
 	"001": split,
@@ -31,5 +35,22 @@ var split_seeds = seedTransformations{
 }
 
 func split(seeds seedCollection, cluster *cluster, seed *seed, sname string) (sc seedCollection, delete_seed bool) {
+	transformationinfo(sname)
+
+	sname = fmt.Sprintf("%s%d", sname, seed.rules[cluster.rules[0]].source.line)
+
+	_, ok := seeds[sname]
+	if !ok {
+		seeds[sname] = newSeed()
+	}
+
+	for cname, _ := range cluster.collections {
+		seeds[sname].collections[cname] = seed.collections[cname]
+	}
+
+	for _, rnum := range cluster.rules {
+		seeds[sname].rules = append(seeds[sname].rules, seed.rules[rnum])
+	}
+
 	return seeds, true
 }

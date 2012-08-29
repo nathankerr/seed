@@ -23,7 +23,7 @@ func applySeedToBudTransformations(seeds seedCollection, transformationList ...s
 			for name, cluster := range clusters {
 				transformation, ok := transformations[cluster.typ()]
 				if !ok {
-					fmt.Println("Tranformation for", name, cluster.typ(), "not supported!")
+					fmt.Println("Transformation for", name, cluster.typ(), "not supported!")
 					continue
 				}
 
@@ -40,14 +40,20 @@ type seedTransformations map[string]seedTransformation
 
 func applySeedTransformations(seeds seedCollection, transformationList ...seedTransformations) seedCollection {
 	for _, transformations := range transformationList {
+		// iterating over the changing set of seeds also iterated (inconsistently) over the seeds which were added
+		seedsCopy := make(seedCollection, len(seeds))
 		for sname, seed := range seeds {
+			seedsCopy[sname] = seed
+		}
+
+		for sname, seed := range seedsCopy {
 			clusters := getClusters(sname, seed)
 			delete_seed := false
 
 			for name, cluster := range clusters {
 				transformation, ok := transformations[cluster.typ()]
 				if !ok {
-					fmt.Println("Tranformation for", name, cluster.typ(), "not supported!")
+					fmt.Println("Transformation for", name, cluster.typ(), "not supported!")
 					continue
 				}
 
