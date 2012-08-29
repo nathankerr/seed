@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"unicode"
@@ -18,29 +17,7 @@ import (
 // toggle on and off by commenting the first return statement
 func lexinfo(args ...interface{}) {
 	return
-	info := ""
-
-	pc, file, line, ok := runtime.Caller(1)
-	if ok {
-		basepath, err := filepath.Abs(".")
-		if err != nil {
-			panic(err)
-		}
-		sourcepath, err := filepath.Rel(basepath, file)
-		if err != nil {
-			panic(err)
-		}
-		info += fmt.Sprintf("%s:%d: ", sourcepath, line)
-
-		name := path.Ext(runtime.FuncForPC(pc).Name())
-		info += name[1:]
-		if len(args) > 0 {
-			info += ": "
-		}
-	}
-	info += fmt.Sprintln(args...)
-
-	fmt.Print(info)
+	info(args...)
 }
 
 type source struct {
