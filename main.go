@@ -36,15 +36,14 @@ func main() {
 	}
 
 	// apply seed-> seed transforms
-	s2s := []seedTransform{}
-	seeds = applySeedTransforms(seeds, s2s)
+	applySeedTransformations(seeds, split_seeds)
 
 	// for name, seed := range seeds {
 	// 	fmt.Printf("### %s ###\n%s\n\n", name, seed)
 	// }
 
 	// apply seed -> bud transforms
-	buds := applySeedToBudTranformations(seeds,
+	buds := applySeedToBudTransformations(seeds,
 		generate_client,
 		generate_server,
 	)
