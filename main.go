@@ -43,15 +43,15 @@ func main() {
 	// 	fmt.Printf("### %s ###\n%s\n\n", name, seed)
 	// }
 
-	buds := applyTranformations(serverTranformationFns, seeds)
+	// apply seed -> bud transforms
+	buds := applySeedToBudTranformations(seeds,
+		generate_client,
+		generate_server,
+	)
 
-	for name, bud := range(buds) {
+	for name, bud := range buds {
 		fmt.Printf("### %s ###\n%s\n\n", name, bud)
 	}
-
-	// apply seed -> bud transforms
-	// s2b := []seedToBudTransform{generateServer, generateClient}
-	// buds := applySeedToBudTransforms(seeds, s2b)
 
 	// apply bud -> bud transforms
 	b2b := []budTransform{}

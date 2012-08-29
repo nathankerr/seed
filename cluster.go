@@ -1,11 +1,11 @@
 package main
 
-import(
+import (
 	"fmt"
 )
 
 type cluster struct {
-	rules []int
+	rules       []int
 	collections map[string]seedCollectionType
 }
 
@@ -65,7 +65,7 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 func (c *cluster) typ() string {
 	var inputs, outputs, tables int
 
-	for _ , ctyp := range(c.collections) {
+	for _, ctyp := range c.collections {
 		switch ctyp {
 		case seedInput:
 			inputs++
@@ -88,7 +88,7 @@ func count(i int) string {
 	case i == 1:
 		return "1"
 	case i > 1:
-			return "n"
+		return "n"
 	}
 	return "?"
 }

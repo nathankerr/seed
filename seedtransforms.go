@@ -12,10 +12,10 @@ func applySeedTransforms(seeds seedCollection, transformations []seedTransform) 
 
 func splitSeeds(seeds seedCollection) seedCollection {
 	s := newSeedCollection()
-	for sname, seed := range(seeds) {
+	for sname, seed := range seeds {
 		clusters := getClusters(sname, seed)
-		
-		for name, cluster := range(clusters) {
+
+		for name, cluster := range clusters {
 			s[name] = newSeed()
 
 			for cname, _ := range cluster.collections {

@@ -146,3 +146,26 @@ type budTableCollection map[string]*budTable
 func newBudTableCollection() budTableCollection {
 	return make(map[string]*budTable)
 }
+
+func seedTableToBudTable(name string, typ budTableType, t *table) *budTable {
+	b := newBudTable()
+
+	b.name = name
+	b.typ = typ
+
+	if b.typ == budChannel {
+		key := []string{"@address"}
+		for _, tkey := range t.key {
+			key = append(key, tkey)
+		}
+
+		b.key = key
+	} else {
+		b.key = t.key
+	}
+
+	b.columns = t.columns
+	b.source = t.source
+
+	return b
+}
