@@ -41,9 +41,9 @@ func seedTableToBudTable(name string, typ budTableType, t *table) *budTable {
 }
 
 func generateServer(seeds seedCollection, buds budCollection) budCollection {
-	for seed_name, seed := range seeds {
+	for sname, seed := range seeds {
 		bud := newBud()
-		seed_name = strings.Title(seed_name) + "Server"
+		sname = strings.Title(sname) + "Server"
 
 		for name, collection := range seed.collections {
 			switch collection.typ {
@@ -82,7 +82,7 @@ func generateServer(seeds seedCollection, buds budCollection) budCollection {
 			bud.rules = append(bud.rules, r)
 		}
 
-		buds[seed_name] = bud
+		buds[sname] = bud
 	}
 
 	return buds

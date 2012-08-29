@@ -36,19 +36,26 @@ func main() {
 	}
 
 	// apply seed-> seed transforms
-	s2s := []seedTransform{splitSeeds}
+	s2s := []seedTransform{}
 	seeds = applySeedTransforms(seeds, s2s)
 
-	for name, seed := range seeds {
-		fmt.Printf("### %s ###\n%s\n\n", name, seed)
+	// for name, seed := range seeds {
+	// 	fmt.Printf("### %s ###\n%s\n\n", name, seed)
+	// }
+
+	buds := applyTranformations(serverTranformationFns, seeds)
+
+	for name, bud := range(buds) {
+		fmt.Printf("### %s ###\n%s\n\n", name, bud)
 	}
 
 	// apply seed -> bud transforms
-	s2b := []seedToBudTransform{generateServer, generateClient}
-	buds := applySeedToBudTransforms(seeds, s2b)
+	// s2b := []seedToBudTransform{generateServer, generateClient}
+	// buds := applySeedToBudTransforms(seeds, s2b)
 
 	// apply bud -> bud transforms
-	buds = applyBudTransforms(buds, nil)
+	b2b := []budTransform{}
+	buds = applyBudTransforms(buds, b2b)
 
 	// write bud to ruby
 	err = buds.toRuby(*outputdir)

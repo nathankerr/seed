@@ -9,10 +9,6 @@ type cluster struct {
 	collections map[string]seedCollectionType
 }
 
-func newCluster() *cluster {
-	return &cluster{collections: make(map[string]seedCollectionType)}
-}
-
 func getClusters(sname string, seed *seed) map[string]*cluster {
 	placement := make(map[string]string)
 	clusters := make(map[string]*cluster)
@@ -46,7 +42,7 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 		}
 		if name == "" {
 			name = fmt.Sprintf("%s%d", sname, rule.source.line)
-			clusters[name] = newCluster()
+			clusters[name] = &cluster{collections: make(map[string]seedCollectionType)}
 		}
 
 		// add the rule
@@ -64,4 +60,35 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 	}
 
 	return clusters
+}
+
+func (c *cluster) typ() string {
+	var inputs, outputs, tables int
+
+	for _ , ctyp := range(c.collections) {
+		switch ctyp {
+		case seedInput:
+			inputs++
+		case seedOutput:
+			outputs++
+		case seedTable:
+			tables++
+		case seedScratch:
+			// no-op
+		}
+	}
+
+	return fmt.Sprint(count(inputs), count(outputs), count(tables))
+}
+
+func count(i int) string {
+	switch {
+	case i == 0:
+		return "0"
+	case i == 1:
+		return "1"
+	case i > 1:
+			return "n"
+	}
+	return "?"
 }
