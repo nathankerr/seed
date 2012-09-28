@@ -1,5 +1,3 @@
-# Derived from bud-sandbox/kvs/kvs.rb
-
 input kvput [key] => [value]
 input kvdel [key]
 input kvget [key]
