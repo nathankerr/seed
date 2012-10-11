@@ -10,10 +10,13 @@ func transformationinfo(args ...interface{}) {
 	info(args...)
 }
 
-type seedToBudTransformation func(buds budCollection, cluster *cluster, seed *seed, sname string) budCollection
+type seedToBudTransformation func(buds budCollection, cluster *cluster,
+	seed *seed, sname string) budCollection
 type seedToBudTransformations map[string]seedToBudTransformation
 
-func applySeedToBudTransformations(seeds seedCollection, transformationList ...seedToBudTransformations) budCollection {
+func applySeedToBudTransformations(seeds seedCollection,
+	transformationList ...seedToBudTransformations) budCollection {
+
 	buds := make(budCollection)
 
 	for _, transformations := range transformationList {
@@ -23,7 +26,8 @@ func applySeedToBudTransformations(seeds seedCollection, transformationList ...s
 			for name, cluster := range clusters {
 				transformation, ok := transformations[cluster.typ()]
 				if !ok {
-					fmt.Println("Transformation for", name, cluster.typ(), "not supported!")
+					fmt.Println("Transformation for", name, cluster.typ(),
+						"not supported!")
 					continue
 				}
 
@@ -35,10 +39,13 @@ func applySeedToBudTransformations(seeds seedCollection, transformationList ...s
 	return buds
 }
 
-type seedTransformation func(seeds seedCollection, cluster *cluster, seed *seed, sname string) (sc seedCollection, delete_seed bool)
+type seedTransformation func(seeds seedCollection, cluster *cluster,
+	seed *seed, sname string) (sc seedCollection, delete_seed bool)
 type seedTransformations map[string]seedTransformation
 
-func applySeedTransformations(seeds seedCollection, transformationList ...seedTransformations) seedCollection {
+func applySeedTransformations(seeds seedCollection,
+	transformationList ...seedTransformations) seedCollection {
+
 	for _, transformations := range transformationList {
 		// iterating over the changing set of seeds also iterated (inconsistently) over the seeds which were added
 		seedsCopy := make(seedCollection, len(seeds))
@@ -53,7 +60,8 @@ func applySeedTransformations(seeds seedCollection, transformationList ...seedTr
 			for name, cluster := range clusters {
 				transformation, ok := transformations[cluster.typ()]
 				if !ok {
-					fmt.Println("Transformation for", name, cluster.typ(), "not supported!")
+					fmt.Println("Transformation for", name, cluster.typ(),
+						"not supported!")
 					continue
 				}
 
@@ -75,7 +83,9 @@ func applySeedTransformations(seeds seedCollection, transformationList ...seedTr
 
 type budTransformation func(buds budCollection) budCollection
 
-func applyBudTransforms(buds budCollection, transformationList ...budTransformation) budCollection {
+func applyBudTransforms(buds budCollection,
+	transformationList ...budTransformation) budCollection {
+
 	for _, transformation := range transformationList {
 		buds = transformation(buds)
 	}
