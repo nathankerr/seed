@@ -49,7 +49,7 @@ func main() {
 	// apply seed -> bud transforms
 	buds := applySeedToBudTransformations(seeds,
 		// no_s2b_changes,
-		generate_client,
+		// generate_client,
 		generate_server,
 	)
 

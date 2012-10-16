@@ -206,100 +206,94 @@ func parseRule(p *parser) parsefn {
 	}
 	r.value = fmt.Sprint(r.value, " ", operation.val, " ")
 
-	// <id> | (<hashpair>) 
+	// <id> | []
 	expr := p.next()
 	switch expr.typ {
 	case itemIdentifier:
 		r.requires = append(r.requires, expr.val)
 		r.value = fmt.Sprint(r.value, " ", expr.val)
-	case itemBeginParen:
-		parseHashPairs(p, r)
+	case itemBeginArray:
+		r = parseJoin(p, r)
 	default:
-		p.error("expected identifier or (, got", expr)
-	}
-
-	// optional .
-	i := p.next()
-	if i.typ == itemMethodDelimiter {
-		r.value += "."
-
-		// <id> <block | doblock | args>
-		i = p.next()
-		if i.typ != itemIdentifier {
-			p.error("expected identifier, got", i)
-		}
-		r.value += i.val
-
-		switch i = p.next(); i.typ {
-		case itemDoBlock:
-			r.value += fmt.Sprint(" ", i.val)
-		case itemBeginParen:
-			// ( <id> => <id> )
-			r.value += fmt.Sprint(i.val)
-
-			i = p.next()
-			if i.typ != itemIdentifier {
-				p.error("expected identifier, got", i)
-			}
-			r.value += fmt.Sprint(":", i.val)
-
-			i = p.next()
-			if i.typ != itemKeyRelation {
-				p.error("expected =>, got", i.val)
-			}
-			r.value += fmt.Sprint(" ", i.val)
-
-			i = p.next()
-			if i.typ != itemIdentifier {
-				p.error("expected identifier, got", i)
-			}
-			r.value += fmt.Sprint(" :", i.val)
-
-			i = p.next()
-			if i.typ != itemEndParen {
-				p.error("expected ), got", i)
-			}
-			r.value += fmt.Sprint(i.val)
-		default:
-			p.error("expected do block or arguments; got", i)
-		}
-	} else {
-		p.backup()
+		p.error("expected identifier, got", expr)
 	}
 
 	p.s.rules = append(p.s.rules, r)
 	return parseSeed
 }
 
-// ( <id> [* <id>] )
-func parseHashPairs(p *parser, r *rule) {
+// [<id>(, <id>)*](: <id> => <id>(, <id> => <id>)*)
+func parseJoin(p *parser, r *rule) *rule {
 	parseinfo()
 
-	r.value += "("
+	j := newJoin()
+	r.value = j
 
-	i := p.next()
-	if i.typ != itemIdentifier {
-		p.error("expected identifier, got", i)
-	}
-	r.requires = append(r.requires, i.val)
-	r.value += i.val
-
+	// get the array contents
 	for {
-		i = p.next()
-		switch i.typ {
-		case itemHashDelimiter:
-			r.value += " * "
-			i := p.next()
-			if i.typ != itemIdentifier {
-				p.error("expected identifier, got", i)
-			}
-			r.requires = append(r.requires, i.val)
-			r.value += i.val
-		case itemEndParen:
-			r.value += ")"
-			return
-		default:
-			p.error("expected hash delim or ), got", i)
+		column := parseQualifiedColumn(p)
+		j.collections[column.collection] = true
+		j.output = append(j.output, column)
+
+		if p.next().typ != itemArrayDelimter {
+			break
 		}
 	}
+
+	// using p.i so the previous loop does not need to backup
+	if p.i.typ != itemEndArray {
+		p.error("expected ']', got", p.i)
+	}
+
+	// if there is no ':', then the statement is finished
+	if p.next().typ != itemPredicateDelimiter {
+		p.backup()
+		return r
+	}
+
+	// get the predicates
+	for {
+		left := parseQualifiedColumn(p)
+		j.collections[left.collection] = true
+
+		if p.next().typ != itemKeyRelation {
+			p.error("expected '=>', got", p.i)
+		}
+
+		right := parseQualifiedColumn(p)
+		j.collections[right.collection] = true
+
+		j.predicates = append(j.predicates, predicate{left: left, right: right})
+
+		if p.next().typ != itemArrayDelimter {
+			p.backup()
+			break
+		}
+	}
+
+	for collection, _ := range j.collections {
+		r.requires = append(r.requires, collection)
+	}
+
+	return r
+}
+
+func parseQualifiedColumn(p *parser) qualifiedColumn {
+	parseinfo()
+
+	collection := p.next()
+	if collection.typ != itemIdentifier {
+		p.error("expected identifier, got", collection)
+	}
+
+	if p.next().typ != itemScopeDelimiter {
+		p.error("expected '.', got", p.i)
+	}
+
+	column := p.next()
+	if column.typ != itemIdentifier {
+		p.error("expected identifier, got", column)
+	}
+
+	return qualifiedColumn{collection: collection.val, column: column.val}
 }

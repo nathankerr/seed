@@ -55,21 +55,17 @@ type itemType int
 const (
 	itemError itemType = iota // error occurred; value is text of error
 	itemEOF
-	itemIdentifier // keywords and names
-	itemBeginArray
-	itemEndArray
+	itemIdentifier		// keywords and names
+	itemBeginArray		// [
+	itemEndArray		// ]
 	itemArrayDelimter   // ,
 	itemOperationInsert // <+
 	itemOperationSet    // <=
 	itemOperationDelete // <-
 	itemOperationUpdate // <+-
-	itemMethodDelimiter // .
 	itemKeyRelation     // =>
-	itemBeginParen      // (
-	itemEndParen        // )
-	itemHashDelimiter   // *
-	itemBlock           // { ... }
-	itemDoBlock
+	itemScopeDelimiter	// .
+	itemPredicateDelimiter	// :
 	// keywords
 	itemKeyword // used to deliniate keyword identifiers
 	itemInput   // input keyword
@@ -232,9 +228,6 @@ func lexToken(l *lexer) stateFn {
 	case r == '#':
 		return lexComment
 	case unicode.IsLetter(r):
-		if r == 'd' && l.accept("o") {
-			return lexDoBlock
-		}
 		return lexIdentifier
 	case isSpace(r):
 		l.ignore()
@@ -244,18 +237,14 @@ func lexToken(l *lexer) stateFn {
 		l.emit(itemEndArray)
 	case r == '<':
 		return lexOperation
-	case r == '.':
-		l.emit(itemMethodDelimiter)
 	case r == '=':
 		return lexKeyRelation
 	case r == ',':
 		l.emit(itemArrayDelimter)
-	case r == '(':
-		l.emit(itemBeginParen)
-	case r == ')':
-		l.emit(itemEndParen)
-	case r == '*':
-		l.emit(itemHashDelimiter)
+	case r == '.':
+		l.emit(itemScopeDelimiter)
+	case r == ':':
+		l.emit(itemPredicateDelimiter)
 	default:
 		l.errorf("unrecognized character: %#U", r)
 	}
@@ -326,16 +315,6 @@ func lexKeyRelation(l *lexer) stateFn {
 		l.errorf("expected '>', got: '%s'", l.input[l.start:l.pos])
 	}
 	l.emit(itemKeyRelation)
-	return lexToken
-}
-
-// do ... end
-// nesting not allowed
-func lexDoBlock(l *lexer) stateFn {
-	// advance until an 'end' is found
-	l.pos = l.start + strings.Index(l.input[l.start:], "end") + len("end")
-	l.emit(itemDoBlock)
-
 	return lexToken
 }
 

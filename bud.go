@@ -74,7 +74,7 @@ func (buds *budCollection) toRuby(dir string) error {
 
 		fmt.Fprintf(out, "\n  bloom do\n")
 		for _, rule := range bud.rules {
-			fmt.Fprintf(out, "    %s #%s\n", rule, rule.source)
+			fmt.Fprintf(out, "    %s #%s\n", rule.Ruby(), rule.source)
 		}
 		fmt.Fprintf(out, "  end\n")
 

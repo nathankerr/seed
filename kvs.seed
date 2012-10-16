@@ -9,7 +9,9 @@ table kvstate [key] => [value]
 kvstate <+- kvput
 
 # get
-kvget_response <= (kvget * kvstate).pairs do |g, s| s end
+# kvget_response <= (kvget * kvstate).rights(key => key)
+kvget_response <= [kvstate.key, kvstate.value]: kvget.key => kvstate.key
 
 # delete
-kvstate <- (kvstate * kvdel).lefts(key => key)
+# kvstate <- (kvstate * kvdel).lefts(key => key)
+kvstate <- [kvstate.key, kvstate.value]: kvdel.key => kvstate.key
