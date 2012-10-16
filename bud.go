@@ -63,7 +63,7 @@ func (buds *budCollection) toRuby(dir string) error {
 		fmt.Fprintln(out, "require 'rubygems'")
 		fmt.Fprintln(out, "require 'bud'")
 
-		fmt.Fprintf(out, "\nmodule %s\n", name)
+		fmt.Fprintf(out, "\nclass %s\n", name)
 		fmt.Fprintf(out, "  include Bud\n")
 
 		fmt.Fprintf(out, "\n  state do\n")

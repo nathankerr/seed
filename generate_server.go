@@ -118,6 +118,10 @@ func generate_server_111(buds budCollection, cluster *cluster, seed *seed, sname
 				break
 			}
 		}
+
+		if rule.typ == ruleSet {
+			rule.typ = ruleAsyncInsert
+		}
 		
 		bud.rules = append(bud.rules, rule)
 	}

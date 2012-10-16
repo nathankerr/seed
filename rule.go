@@ -12,7 +12,26 @@ const (
 	ruleSet
 	ruleDelete
 	ruleUpdate
+	ruleAsyncInsert // only to be used with bud
 )
+
+func (rt ruleType) String() string {
+	switch rt {
+	case ruleInsert:
+		return "<+"
+	case ruleSet:
+		return "<="
+	case ruleDelete:
+		return "<-"
+	case ruleUpdate:
+		return "<+-"
+	case ruleAsyncInsert:
+		return "<~"
+	default:
+		panic("unknown type")
+	}
+	return "ERROR"
+}
 
 type rule struct {
 	value    interface{}
@@ -29,7 +48,10 @@ func newRule(src source) *rule {
 func (r *rule) String() string {
 	switch value := r.value.(type) {
 	case fmt.Stringer:
-		return value.String()
+		return fmt.Sprintf("%s %s %s",
+			r.supplies[0],
+			r.typ.String(),
+			value)
 	case string:
 		return value
 	default:
@@ -45,7 +67,10 @@ type Rubyer interface {
 func (r *rule) Ruby() string {
 	switch value := r.value.(type) {
 	case Rubyer:
-		return value.Ruby()
+		return fmt.Sprintf("%s %s %s",
+			r.supplies[0],
+			r.typ,
+			value.Ruby())
 	case string:
 		return value
 	default:
