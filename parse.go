@@ -214,6 +214,13 @@ func parseRule(p *parser) parsefn {
 		r.value = fmt.Sprint(r.value, " ", expr.val)
 	case itemBeginArray:
 		r = parseJoin(p, r)
+		j, ok := r.value.(*join)
+		if !ok {
+			panic("shouldn't get here")
+		}
+		for collection, _ := range j.collections {
+			r.requires = append(r.requires, collection)
+		}
 	default:
 		p.error("expected identifier, got", expr)
 	}
@@ -269,10 +276,6 @@ func parseJoin(p *parser, r *rule) *rule {
 			p.backup()
 			break
 		}
-	}
-
-	for collection, _ := range j.collections {
-		r.requires = append(r.requires, collection)
 	}
 
 	return r

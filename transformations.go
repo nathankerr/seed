@@ -27,7 +27,7 @@ func applySeedToBudTransformations(seeds seedCollection,
 				transformation, ok := transformations[cluster.typ()]
 				if !ok {
 					fmt.Println("Seed to Bud Transformation for", name, cluster.typ(),
-						"not supported!")
+						"not supported!\n", cluster)
 					continue
 				}
 

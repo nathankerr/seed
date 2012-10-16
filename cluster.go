@@ -9,6 +9,16 @@ type cluster struct {
 	collections map[string]seedCollectionType
 }
 
+func (c* cluster) String() string {
+	str := "collections:"
+	for collection, typ := range c.collections {
+		str = fmt.Sprintf("%s\n\t%s %s", str, typ, collection)
+	}
+
+	str = fmt.Sprintf("%s\n rules: %d", str, c.rules)
+	return str
+}
+
 func getClusters(sname string, seed *seed) map[string]*cluster {
 	placement := make(map[string]string)
 	clusters := make(map[string]*cluster)

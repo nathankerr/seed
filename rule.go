@@ -114,12 +114,7 @@ func (j *join) Ruby() string {
 	for c, _ := range j.collections {
 		collections = append(collections, c)
 	}
-
-	predicates := []string{}
-	for _, p := range j.predicates {
-		predicates = append(predicates, p.String())
-	}
-
+	
 	index := make(map[string]string)
 	names := []string{}
 	for i, c := range collections {
@@ -132,12 +127,27 @@ func (j *join) Ruby() string {
 	for _, o := range j.output {
 		output = append(output, fmt.Sprintf("%s.%s", index[o.collection], o.column))
 	}
-	
-	return fmt.Sprintf("(%s).combos(%s) do |%s| [%s] end",
-		strings.Join(collections, " * "),
-		strings.Join(predicates, ", "),
-		strings.Join(names, ", "),
-		strings.Join(output, ", "))
+
+	if len(j.collections) == 1 {
+		return fmt.Sprintf("%s do |%s| [%s] end",
+			j.output[0].collection,
+			strings.Join(names, ", "),
+			strings.Join(output, ", "))
+	} else {
+		predicates := []string{}
+		for _, p := range j.predicates {
+			predicates = append(predicates, p.String())
+		}
+		
+		return fmt.Sprintf("(%s).combos(%s) do |%s| [%s] end",
+			strings.Join(collections, " * "),
+			strings.Join(predicates, ", "),
+			strings.Join(names, ", "),
+			strings.Join(output, ", "))
+	}
+
+	panic("shouldn't get here")
+	return ""
 }
 
 type qualifiedColumn struct {
