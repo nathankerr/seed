@@ -36,7 +36,7 @@ func (rt ruleType) String() string {
 type rule struct {
 	value    interface{}
 	typ      ruleType
-	supplies []string
+	supplies string
 	requires []string
 	source   source
 }
@@ -49,7 +49,7 @@ func (r *rule) String() string {
 	switch value := r.value.(type) {
 	case fmt.Stringer:
 		return fmt.Sprintf("%s %s %s",
-			r.supplies[0],
+			r.supplies,
 			r.typ.String(),
 			value)
 	case string:
@@ -68,7 +68,7 @@ func (r *rule) Ruby() string {
 	switch value := r.value.(type) {
 	case Rubyer:
 		return fmt.Sprintf("%s %s %s",
-			r.supplies[0],
+			r.supplies,
 			r.typ,
 			value.Ruby())
 	case string:

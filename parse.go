@@ -188,7 +188,7 @@ func parseRule(p *parser) parsefn {
 	destination := p.i
 	r := newRule(destination.source)
 	r.value = fmt.Sprint(destination.val)
-	r.supplies = append(r.supplies, destination.val)
+	r.supplies = destination.val
 
 	// operation
 	operation := p.next()
