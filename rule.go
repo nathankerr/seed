@@ -34,30 +34,47 @@ func (rt ruleType) String() string {
 }
 
 type rule struct {
-	value    interface{}
-	typ      ruleType
+	// lhs
 	supplies string
+
+	// op
+	typ      ruleType
+
+	//rhs
+	collections map[string]bool // boolean has no meaning, just want a map for unique keys
+	output []qualifiedColumn
+	predicates []predicate
+
+	// meta
 	requires []string
 	source   source
 }
 
 func newRule(src source) *rule {
-	return &rule{source: src}
+	collections := make(map[string]bool)
+	return &rule{source: src, collections: collections}
 }
 
 func (r *rule) String() string {
-	switch value := r.value.(type) {
-	case fmt.Stringer:
-		return fmt.Sprintf("%s %s %s",
-			r.supplies,
-			r.typ.String(),
-			value)
-	case string:
-		return value
-	default:
-		panic("Unsupported type")
+	output := []string{}
+	for _, o := range r.output {
+		output = append(output, o.String())
 	}
-	return "Unsupported type: see rule.go r.String()"
+
+	if len(r.predicates) > 0 {
+		predicates := []string{}
+		for _, p := range r.predicates {
+			predicates = append(predicates, p.String())
+		}
+		return fmt.Sprintf("[%s]: %s",
+			strings.Join(output, ", "),
+			strings.Join(predicates, ", "))
+	}
+
+	return fmt.Sprintf("%s %s [%s]",
+		r.supplies,
+		r.typ.String(),
+		strings.Join(output, ", "))
 }
 
 type Rubyer interface {
@@ -65,18 +82,48 @@ type Rubyer interface {
 }
 
 func (r *rule) Ruby() string {
-	switch value := r.value.(type) {
-	case Rubyer:
-		return fmt.Sprintf("%s %s %s",
-			r.supplies,
-			r.typ,
-			value.Ruby())
-	case string:
-		return value
-	default:
-		panic("Unsupported type")
+	var str string
+
+	collections := []string{}
+	for c, _ := range r.collections {
+		collections = append(collections, c)
 	}
-	return "Unsupported type: see rule.go r.String()"
+
+	index := make(map[string]string)
+	names := []string{}
+	for i, c := range collections {
+		name := fmt.Sprintf("c%d", i)
+		index[c] = name
+		names = append(names, name)
+	}
+
+	output := []string{}
+	for _, o := range r.output {
+		output = append(output, fmt.Sprintf("%s.%s", index[o.collection], o.column))
+	}
+
+	if len(r.collections) == 1 {
+		str = fmt.Sprintf("%s do |%s| [%s] end",
+			r.output[0].collection,
+			strings.Join(names, ", "),
+			strings.Join(output, ", "))
+	} else {
+		predicates := []string{}
+		for _, p := range r.predicates {
+			predicates = append(predicates, p.String())
+		}
+		
+		str = fmt.Sprintf("(%s).combos(%s) do |%s| [%s] end",
+			strings.Join(collections, " * "),
+			strings.Join(predicates, ", "),
+			strings.Join(names, ", "),
+			strings.Join(output, ", "))
+	}
+
+	return fmt.Sprintf("%s %s %s",
+		r.supplies,
+		r.typ,
+		str)
 }
 
 type join struct {
@@ -114,7 +161,7 @@ func (j *join) Ruby() string {
 	for c, _ := range j.collections {
 		collections = append(collections, c)
 	}
-	
+
 	index := make(map[string]string)
 	names := []string{}
 	for i, c := range collections {

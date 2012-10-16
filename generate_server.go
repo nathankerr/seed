@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -20,34 +19,19 @@ func generate_server_101(buds budCollection, cluster *cluster, seed *seed, sname
 		bud = newBud()
 	}
 
+	// as the inputs and outputs are already
+	// projected, there is no need to remove the
+	// address columns added to the interfaces
+	// when converting them to channels
 	for name, _ := range cluster.collections {
 		collection := seed.collections[name]
 		switch collection.typ {
 		case seedInput:
-			// replace the inputs with channels and scratches
-			// this removes the need to rewrite the rules
-			input := seedTableToBudTable(name, budScratch, collection)
-			bud.collections[name] = input
-
-			cname := name + "_channel"
-			channel := seedTableToBudTable(cname, budChannel, collection)
-			bud.collections[cname] = channel
-
-			rewrite := newRule(collection.source)
-			rewrite.value = fmt.Sprintf("%s <= %s.payloads", name, cname)
-			bud.rules = append(bud.rules, rewrite)
+			channel := seedTableToBudTable(name, budChannel, collection)
+			bud.collections[name] = channel
 		case seedOutput:
-			// replace the outputs with channels and scratches
 			output := seedTableToBudTable(name, budScratch, collection)
 			bud.collections[name] = output
-
-			cname := name + "_channel"
-			channel := seedTableToBudTable(cname, budChannel, collection)
-			bud.collections[name] = channel
-
-			rewrite := newRule(collection.source)
-			rewrite.value = fmt.Sprintf("%s <~ %s.payloads", cname, name)
-			bud.rules = append(bud.rules, rewrite)
 		case seedTable:
 			table := seedTableToBudTable(name, budPersistant, collection)
 			bud.collections[name] = table
@@ -102,19 +86,14 @@ func generate_server_111(buds budCollection, cluster *cluster, seed *seed, sname
 	for _, rulenum := range(cluster.rules) {
 		rule := seed.rules[rulenum]
 
-		value, ok := rule.value.(*join)
-		if !ok {
-			panic("unsupported rule type for: " + rule.String())
-		}
-
-		// find the input channel and add its client to the beginning of value.output
-		for collection, _ := range value.collections {
+		// find the input channel and add its client to the beginning of output
+		for collection, _ := range rule.collections {
 			if seed.collections[collection].typ == seedInput {
 				output := []qualifiedColumn{qualifiedColumn{collection: collection, column: "client"}}
-				for _, o := range value.output {
+				for _, o := range rule.output {
 					output = append(output, o)
 				}
-				value.output = output
+				rule.output = output
 				break
 			}
 		}

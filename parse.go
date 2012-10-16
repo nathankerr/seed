@@ -187,7 +187,6 @@ func parseRule(p *parser) parsefn {
 	// destination
 	destination := p.i
 	r := newRule(destination.source)
-	r.value = fmt.Sprint(destination.val)
 	r.supplies = destination.val
 
 	// operation
@@ -204,43 +203,17 @@ func parseRule(p *parser) parsefn {
 	default:
 		p.error("expected an operation, got ", operation)
 	}
-	r.value = fmt.Sprint(r.value, " ", operation.val, " ")
 
-	// <id> | []
-	expr := p.next()
-	switch expr.typ {
-	case itemIdentifier:
-		r.requires = append(r.requires, expr.val)
-		r.value = fmt.Sprint(r.value, " ", expr.val)
-	case itemBeginArray:
-		r = parseJoin(p, r)
-		j, ok := r.value.(*join)
-		if !ok {
-			panic("shouldn't get here")
-		}
-		for collection, _ := range j.collections {
-			r.requires = append(r.requires, collection)
-		}
-	default:
-		p.error("expected identifier, got", expr)
+	// expr
+	if p.next().typ != itemBeginArray {
+		p.error("expected '[', got", p.i)
 	}
-
-	p.s.rules = append(p.s.rules, r)
-	return parseSeed
-}
-
-// [<id>(, <id>)*](: <id> => <id>(, <id> => <id>)*)
-func parseJoin(p *parser, r *rule) *rule {
-	parseinfo()
-
-	j := newJoin()
-	r.value = j
 
 	// get the array contents
 	for {
 		column := parseQualifiedColumn(p)
-		j.collections[column.collection] = true
-		j.output = append(j.output, column)
+		r.collections[column.collection] = true
+		r.output = append(r.output, column)
 
 		if p.next().typ != itemArrayDelimter {
 			break
@@ -253,30 +226,43 @@ func parseJoin(p *parser, r *rule) *rule {
 	}
 
 	// if there is no ':', then the statement is finished
-	if p.next().typ != itemPredicateDelimiter {
+	if p.next().typ == itemPredicateDelimiter {
+		// get the predicates
+		for {
+			left := parseQualifiedColumn(p)
+			r.collections[left.collection] = true
+
+			if p.next().typ != itemKeyRelation {
+				p.error("expected '=>', got", p.i)
+			}
+
+			right := parseQualifiedColumn(p)
+			r.collections[right.collection] = true
+
+			r.predicates = append(r.predicates, predicate{left: left, right: right})
+
+			if p.next().typ != itemArrayDelimter {
+				p.backup()
+				break
+			}
+		}
+	} else {
 		p.backup()
-		return r
 	}
 
-	// get the predicates
-	for {
-		left := parseQualifiedColumn(p)
-		j.collections[left.collection] = true
-
-		if p.next().typ != itemKeyRelation {
-			p.error("expected '=>', got", p.i)
-		}
-
-		right := parseQualifiedColumn(p)
-		j.collections[right.collection] = true
-
-		j.predicates = append(j.predicates, predicate{left: left, right: right})
-
-		if p.next().typ != itemArrayDelimter {
-			p.backup()
-			break
-		}
+	for collection, _ := range r.collections {
+		r.requires = append(r.requires, collection)
 	}
+
+	p.s.rules = append(p.s.rules, r)
+	return parseSeed
+}
+
+// [<id>(, <id>)*](: <id> => <id>(, <id> => <id>)*)
+func parseJoin(p *parser, r *rule) *rule {
+	parseinfo()
+
+	
 
 	return r
 }
