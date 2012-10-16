@@ -55,17 +55,17 @@ type itemType int
 const (
 	itemError itemType = iota // error occurred; value is text of error
 	itemEOF
-	itemIdentifier		// keywords and names
-	itemBeginArray		// [
-	itemEndArray		// ]
-	itemArrayDelimter   // ,
-	itemOperationInsert // <+
-	itemOperationSet    // <=
-	itemOperationDelete // <-
-	itemOperationUpdate // <+-
-	itemKeyRelation     // =>
-	itemScopeDelimiter	// .
-	itemPredicateDelimiter	// :
+	itemIdentifier         // keywords and names
+	itemBeginArray         // [
+	itemEndArray           // ]
+	itemArrayDelimter      // ,
+	itemOperationInsert    // <+
+	itemOperationSet       // <=
+	itemOperationDelete    // <-
+	itemOperationUpdate    // <+-
+	itemKeyRelation        // =>
+	itemScopeDelimiter     // .
+	itemPredicateDelimiter // :
 	// keywords
 	itemKeyword // used to deliniate keyword identifiers
 	itemInput   // input keyword
@@ -73,6 +73,48 @@ const (
 	itemTable   // table keyword
 	itemScratch // scratch keyword
 )
+
+func (typ itemType) String() string {
+	switch typ {
+	case itemError:
+		return "itemError"
+	case itemEOF:
+		return "itemEOF"
+	case itemIdentifier:
+		return "itemIdentifier"
+	case itemBeginArray:
+		return "itemBeginArray"
+	case itemEndArray:
+		return "itemEndArray"
+	case itemArrayDelimter:
+		return "itemArrayDelimter"
+	case itemOperationInsert:
+		return "itemOperationInsert"
+	case itemOperationSet:
+		return "itemOperationSet"
+	case itemOperationDelete:
+		return "itemOperationDelete"
+	case itemOperationUpdate:
+		return "itemOperationUpdate"
+	case itemKeyRelation:
+		return "itemKeyRelation"
+	case itemScopeDelimiter:
+		return "itemScopeDelimiter"
+	case itemPredicateDelimiter:
+		return "itemPredicateDelimiter"
+	case itemKeyword:
+		return "itemKeyword"
+	case itemInput:
+		return "itemInput"
+	case itemOutput:
+		return "itemOutput"
+	case itemTable:
+		return "itemTable"
+	case itemScratch:
+		return "itemScratch"
+	}
+	panic("unsupported type")
+}
 
 var key = map[string]itemType{
 	"input":   itemInput,
@@ -122,6 +164,8 @@ func (l *lexer) next() (r rune) {
 
 // peek returns but does not consume the next rune in the input.
 func (l *lexer) peek() rune {
+	lexinfo()
+
 	r := l.next()
 	l.backup()
 	return r
@@ -129,22 +173,30 @@ func (l *lexer) peek() rune {
 
 // backup steps back one rune. Can only be called once per call of next.
 func (l *lexer) backup() {
+	lexinfo()
+
 	l.pos -= l.width
 }
 
 // emit passes an item back to the client.
 func (l *lexer) emit(t itemType) {
+	lexinfo(t.String())
+
 	l.items <- item{t, l.input[l.start:l.pos], l.source()}
 	l.start = l.pos
 }
 
 // ignore skips over the pending input before this point.
 func (l *lexer) ignore() {
+	lexinfo()
+
 	l.start = l.pos
 }
 
 // accept consumes the next rune if it's from the valid set.
 func (l *lexer) accept(valid string) bool {
+	lexinfo(valid)
+
 	if strings.IndexRune(valid, l.next()) >= 0 {
 		return true
 	}
@@ -154,7 +206,10 @@ func (l *lexer) accept(valid string) bool {
 
 // acceptRun consumes a run of runes from the valid set.
 func (l *lexer) acceptRun(valid string) {
+	lexinfo(valid)
+
 	for strings.IndexRune(valid, l.next()) >= 0 {
+		// no-op
 	}
 	l.backup()
 }
@@ -214,14 +269,15 @@ func (l *lexer) run() {
 	for state := lexToken; state != nil; {
 		state = state(l)
 	}
-	// log.Println("lexer stopped running")
+	lexinfo("lexer stopped running")
 	l.emit(itemEOF)
 }
 
 // state functions
 
 func lexToken(l *lexer) stateFn {
-	lexinfo("lexToken")
+	lexinfo()
+
 	switch r := l.next(); {
 	case r == eof:
 		return nil
@@ -248,20 +304,24 @@ func lexToken(l *lexer) stateFn {
 	default:
 		l.errorf("unrecognized character: %#U", r)
 	}
+
 	return lexToken
 }
 
 func lexComment(l *lexer) stateFn {
-	lexinfo("lexComment")
+	lexinfo()
+
 	i := strings.Index(l.input[l.pos:], "\n")
 	l.pos += i + len("\n")
 	l.ignore()
+
 	return lexToken
 }
 
 // lexIdentifier scans an alphanumeric or field.
 func lexIdentifier(l *lexer) stateFn {
-	lexinfo("lexIdentifier")
+	lexinfo()
+
 Loop:
 	for {
 		switch r := l.next(); {
@@ -285,41 +345,44 @@ Loop:
 	return lexToken
 }
 
-// itemOperationInsert: <+
-// itemOperationSet: <=
-// itemOperationDelete: <-
-// itemOperationUpdate: <+-
 func lexOperation(l *lexer) stateFn {
-	lexinfo("lexOperation")
+	lexinfo()
+
 	switch r := l.next(); {
 	case r == '+':
 		if l.peek() == '-' {
 			l.next()
-			l.emit(itemOperationUpdate)
+			l.emit(itemOperationUpdate) // <+-
 		} else {
-			l.emit(itemOperationInsert)
+			l.emit(itemOperationInsert) // <+
 		}
 	case r == '=':
-		l.emit(itemOperationSet)
+		l.emit(itemOperationSet) // <=
 	case r == '-':
-		l.emit(itemOperationDelete)
+		l.emit(itemOperationDelete) // <-
 	default:
 		l.errorf("unexpected operation: '%s'", l.input[l.start:l.pos])
 	}
+
 	return lexToken
 }
 
 // itemKeyRelation =>
 func lexKeyRelation(l *lexer) stateFn {
+	lexinfo()
+
 	if !l.accept(">") {
 		l.errorf("expected '>', got: '%s'", l.input[l.start:l.pos])
 	}
-	l.emit(itemKeyRelation)
+	l.emit(itemKeyRelation) // =>
+
 	return lexToken
 }
 
 // isSpace reports whether r is a space character.
 func isSpace(r rune) bool {
+	lexinfo(r)
+
 	switch r {
 	case ' ', '\t', '\n', '\r':
 		return true
@@ -328,6 +391,8 @@ func isSpace(r rune) bool {
 }
 
 func (l *lexer) atTerminator() bool {
+	lexinfo()
+
 	r := l.peek()
 	if isSpace(r) {
 		return true
