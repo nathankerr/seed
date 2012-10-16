@@ -212,7 +212,7 @@ func parseRule(p *parser) parsefn {
 	// get the array contents
 	for {
 		column := parseQualifiedColumn(p)
-		r.collections[column.collection] = true
+		r.requires[column.collection] = true
 		r.output = append(r.output, column)
 
 		if p.next().typ != itemArrayDelimter {
@@ -230,14 +230,14 @@ func parseRule(p *parser) parsefn {
 		// get the predicates
 		for {
 			left := parseQualifiedColumn(p)
-			r.collections[left.collection] = true
+			r.requires[left.collection] = true
 
 			if p.next().typ != itemKeyRelation {
 				p.error("expected '=>', got", p.i)
 			}
 
 			right := parseQualifiedColumn(p)
-			r.collections[right.collection] = true
+			r.requires[right.collection] = true
 
 			r.predicates = append(r.predicates, predicate{left: left, right: right})
 
@@ -248,10 +248,6 @@ func parseRule(p *parser) parsefn {
 		}
 	} else {
 		p.backup()
-	}
-
-	for collection, _ := range r.collections {
-		r.requires = append(r.requires, collection)
 	}
 
 	p.s.rules = append(p.s.rules, r)

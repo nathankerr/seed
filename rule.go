@@ -41,18 +41,17 @@ type rule struct {
 	typ      ruleType
 
 	//rhs
-	collections map[string]bool // boolean has no meaning, just want a map for unique keys
 	output []qualifiedColumn
 	predicates []predicate
 
 	// meta
-	requires []string
+	requires map[string]bool // bool has no meaning, just want a map for unique keys
 	source   source
 }
 
 func newRule(src source) *rule {
-	collections := make(map[string]bool)
-	return &rule{source: src, collections: collections}
+	requires := make(map[string]bool)
+	return &rule{source: src, requires: requires}
 }
 
 func (r *rule) String() string {
@@ -85,7 +84,7 @@ func (r *rule) Ruby() string {
 	var str string
 
 	collections := []string{}
-	for c, _ := range r.collections {
+	for c, _ := range r.requires {
 		collections = append(collections, c)
 	}
 
@@ -102,7 +101,7 @@ func (r *rule) Ruby() string {
 		output = append(output, fmt.Sprintf("%s.%s", index[o.collection], o.column))
 	}
 
-	if len(r.collections) == 1 {
+	if len(r.requires) == 1 {
 		str = fmt.Sprintf("%s do |%s| [%s] end",
 			r.output[0].collection,
 			strings.Join(names, ", "),
@@ -124,77 +123,6 @@ func (r *rule) Ruby() string {
 		r.supplies,
 		r.typ,
 		str)
-}
-
-type join struct {
-	collections map[string]bool // boolean has no meaning, just want a map for unique keys
-	output []qualifiedColumn
-	predicates []predicate
-}
-
-func newJoin() *join {
-	collections := make(map[string]bool)
-	return &join{collections: collections}
-}
-
-func (j *join) String() string {
-	output := []string{}
-	for _, o := range j.output {
-		output = append(output, o.String())
-	}
-
-	if len(j.predicates) > 0 {
-		predicates := []string{}
-		for _, p := range j.predicates {
-			predicates = append(predicates, p.String())
-		}
-		return fmt.Sprintf("[%s]: %s",
-			strings.Join(output, ", "),
-			strings.Join(predicates, ", "))
-	}
-
-	return fmt.Sprintf("[%s]", strings.Join(output, ", "))
-}
-
-func (j *join) Ruby() string {
-	collections := []string{}
-	for c, _ := range j.collections {
-		collections = append(collections, c)
-	}
-
-	index := make(map[string]string)
-	names := []string{}
-	for i, c := range collections {
-		name := fmt.Sprintf("c%d", i)
-		index[c] = name
-		names = append(names, name)
-	}
-
-	output := []string{}
-	for _, o := range j.output {
-		output = append(output, fmt.Sprintf("%s.%s", index[o.collection], o.column))
-	}
-
-	if len(j.collections) == 1 {
-		return fmt.Sprintf("%s do |%s| [%s] end",
-			j.output[0].collection,
-			strings.Join(names, ", "),
-			strings.Join(output, ", "))
-	} else {
-		predicates := []string{}
-		for _, p := range j.predicates {
-			predicates = append(predicates, p.String())
-		}
-		
-		return fmt.Sprintf("(%s).combos(%s) do |%s| [%s] end",
-			strings.Join(collections, " * "),
-			strings.Join(predicates, ", "),
-			strings.Join(names, ", "),
-			strings.Join(output, ", "))
-	}
-
-	panic("shouldn't get here")
-	return ""
 }
 
 type qualifiedColumn struct {

@@ -35,7 +35,7 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 			}			
 		}
 		
-		for _, cname := range rule.requires {
+		for cname, _ := range rule.requires {
 			// tables are not a basis for splitting
 			if seed.collections[cname].typ == seedTable {
 				continue
@@ -59,7 +59,7 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 		placement[rule.supplies] = name
 		clusters[name].collections[rule.supplies] = seed.collections[rule.supplies].typ
 
-		for _, cname := range rule.requires {
+		for cname, _ := range rule.requires {
 			placement[cname] = name
 			clusters[name].collections[cname] = seed.collections[cname].typ
 		}
