@@ -49,7 +49,8 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 		}
 		if name == "" {
 			name = fmt.Sprintf("%s%d", sname, rule.source.line)
-			clusters[name] = &cluster{collections: make(map[string]seedCollectionType)}
+			collections := make(map[string]seedCollectionType)
+			clusters[name] = &cluster{collections: collections}
 		}
 
 		// add the rule
@@ -57,7 +58,8 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 
 		// add the relevant collections
 		placement[rule.supplies] = name
-		clusters[name].collections[rule.supplies] = seed.collections[rule.supplies].typ
+		clusters[name].collections[rule.supplies] =
+			seed.collections[rule.supplies].typ
 
 		for cname, _ := range rule.requires {
 			placement[cname] = name

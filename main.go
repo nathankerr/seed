@@ -19,7 +19,8 @@ import (
 func main() {
 	var outputdir = flag.String("o", "bud", "directory name to create and output the bud source")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage:\n  %s [options] [input files]\nOptions:\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
+		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
