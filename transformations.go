@@ -16,6 +16,7 @@ type seedToBudTransformations map[string]seedToBudTransformation
 
 func applySeedToBudTransformations(seeds seedCollection,
 	transformationList ...seedToBudTransformations) budCollection {
+	transformationinfo()
 
 	buds := make(budCollection)
 
@@ -45,6 +46,7 @@ type seedTransformations map[string]seedTransformation
 
 func applySeedTransformations(seeds seedCollection,
 	transformationList ...seedTransformations) seedCollection {
+	transformationinfo()
 
 	for _, transformations := range transformationList {
 		// iterating over the changing set of seeds also iterated (inconsistently) over the seeds which were added
@@ -85,6 +87,7 @@ type budTransformation func(buds budCollection) budCollection
 
 func applyBudTransforms(buds budCollection,
 	transformationList ...budTransformation) budCollection {
+	transformationinfo()
 
 	for _, transformation := range transformationList {
 		buds = transformation(buds)

@@ -33,7 +33,8 @@ func (p *parser) next() item {
 }
 
 func (p *parser) backup() {
-	parseinfo("backing up")
+	parseinfo()
+
 	p.backedup = true
 }
 
@@ -252,15 +253,6 @@ func parseRule(p *parser) parsefn {
 
 	p.s.rules = append(p.s.rules, r)
 	return parseSeed
-}
-
-// [<id>(, <id>)*](: <id> => <id>(, <id> => <id>)*)
-func parseJoin(p *parser, r *rule) *rule {
-	parseinfo()
-
-	
-
-	return r
 }
 
 func parseQualifiedColumn(p *parser) qualifiedColumn {

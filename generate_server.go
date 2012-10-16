@@ -40,7 +40,7 @@ func generate_server_101(buds budCollection, cluster *cluster, seed *seed, sname
 		buds[sname] = bud
 	}
 
-	for _, rule := range(cluster.rules) {
+	for _, rule := range cluster.rules {
 		bud.rules = append(bud.rules, seed.rules[rule])
 	}
 
@@ -83,7 +83,7 @@ func generate_server_111(buds budCollection, cluster *cluster, seed *seed, sname
 		buds[sname] = bud
 	}
 
-	for _, rulenum := range(cluster.rules) {
+	for _, rulenum := range cluster.rules {
 		rule := seed.rules[rulenum]
 
 		// find the input channel and add its client to the beginning of output
@@ -101,7 +101,7 @@ func generate_server_111(buds budCollection, cluster *cluster, seed *seed, sname
 		if rule.typ == ruleSet {
 			rule.typ = ruleAsyncInsert
 		}
-		
+
 		bud.rules = append(bud.rules, rule)
 	}
 

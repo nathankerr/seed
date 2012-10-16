@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"fmt"
 	"strings"
 )
@@ -38,10 +38,10 @@ type rule struct {
 	supplies string
 
 	// op
-	typ      ruleType
+	typ ruleType
 
 	//rhs
-	output []qualifiedColumn
+	output     []qualifiedColumn
 	predicates []predicate
 
 	// meta
@@ -111,7 +111,7 @@ func (r *rule) Ruby() string {
 		for _, p := range r.predicates {
 			predicates = append(predicates, p.String())
 		}
-		
+
 		str = fmt.Sprintf("(%s).combos(%s) do |%s| [%s] end",
 			strings.Join(collections, " * "),
 			strings.Join(predicates, ", "),
@@ -127,15 +127,15 @@ func (r *rule) Ruby() string {
 
 type qualifiedColumn struct {
 	collection string
-	column string
+	column     string
 }
 
-func(qc *qualifiedColumn) String() string {
+func (qc *qualifiedColumn) String() string {
 	return fmt.Sprintf("%s.%s", qc.collection, qc.column)
 }
 
 type predicate struct {
-	left qualifiedColumn
+	left  qualifiedColumn
 	right qualifiedColumn
 }
 

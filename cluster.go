@@ -9,7 +9,7 @@ type cluster struct {
 	collections map[string]seedCollectionType
 }
 
-func (c* cluster) String() string {
+func (c *cluster) String() string {
 	str := "collections:"
 	for collection, typ := range c.collections {
 		str = fmt.Sprintf("%s\n\t%s %s", str, typ, collection)
@@ -32,9 +32,9 @@ func getClusters(sname string, seed *seed) map[string]*cluster {
 			if ok {
 				name = sname
 				break
-			}			
+			}
 		}
-		
+
 		for cname, _ := range rule.requires {
 			// tables are not a basis for splitting
 			if seed.collections[cname].typ == seedTable {
