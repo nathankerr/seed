@@ -81,8 +81,8 @@ func (c *cluster) typ() string {
 			outputs++
 		case seedTable:
 			tables++
-		case seedScratch:
-			// no-op
+		default:
+			panic("shouldn't get here")
 		}
 	}
 

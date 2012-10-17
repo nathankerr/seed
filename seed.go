@@ -72,12 +72,20 @@ const (
 	seedInput seedCollectionType = iota
 	seedOutput
 	seedTable
-	seedScratch
 )
 
+var seedCollectionTypeNames = map[seedCollectionType]string{
+	seedInput:  "input",
+	seedOutput: "output",
+	seedTable:  "table",
+}
+
 func (t seedCollectionType) String() string {
-	types := map[seedCollectionType]string{seedInput: "input", seedOutput: "output", seedTable: "table", seedScratch: "scratch"}
-	return types[t]
+	str, ok := seedCollectionTypeNames[t]
+	if !ok {
+		panic("unknown seed collection type")
+	}
+	return str
 }
 
 type table struct {

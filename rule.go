@@ -9,28 +9,24 @@ type ruleType int
 
 const (
 	ruleInsert ruleType = iota
-	ruleSet
 	ruleDelete
 	ruleUpdate
 	ruleAsyncInsert // only to be used with bud
 )
 
+var ruleTypeNames = map[ruleType]string{
+	ruleInsert:      "<+",
+	ruleDelete:      "<-",
+	ruleUpdate:      "<+-",
+	ruleAsyncInsert: "<~",
+}
+
 func (rt ruleType) String() string {
-	switch rt {
-	case ruleInsert:
-		return "<+"
-	case ruleSet:
-		return "<="
-	case ruleDelete:
-		return "<-"
-	case ruleUpdate:
-		return "<+-"
-	case ruleAsyncInsert:
-		return "<~"
-	default:
-		panic("unknown type")
+	str, ok := ruleTypeNames[rt]
+	if !ok {
+		panic("unknown rule type")
 	}
-	return "ERROR"
+	return str
 }
 
 type rule struct {

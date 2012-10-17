@@ -94,6 +94,21 @@ const (
 	budScratch
 )
 
+var budTableTypeNames = map[budTableType]string{
+	budPersistant: "budPersistant",
+	budChannel:    "budChannel",
+	budInterface:  "budInterface",
+	budScratch:    "budScratch",
+}
+
+func (typ budTableType) String() string {
+	str, ok := budTableTypeNames[typ]
+	if !ok {
+		panic("unknown but table type")
+	}
+	return str
+}
+
 type budTable struct {
 	typ     budTableType
 	name    string

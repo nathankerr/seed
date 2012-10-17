@@ -83,8 +83,6 @@ func parseSeed(p *parser) parsefn {
 		return parseCollection
 	case itemTable:
 		return parseCollection
-	case itemScratch:
-		return parseCollection
 	case itemIdentifier:
 		return parseRule
 	case itemEOF:
@@ -108,8 +106,6 @@ func parseCollection(p *parser) parsefn {
 		collectionType = seedOutput
 	case itemTable:
 		collectionType = seedTable
-	case itemScratch:
-		collectionType = seedScratch
 	default:
 		p.error("expected input, output, table, or scratch; got ", p.i)
 	}
@@ -195,8 +191,6 @@ func parseRule(p *parser) parsefn {
 	switch operation.typ {
 	case itemOperationInsert:
 		r.typ = ruleInsert
-	case itemOperationSet:
-		r.typ = ruleSet
 	case itemOperationDelete:
 		r.typ = ruleDelete
 	case itemOperationUpdate:

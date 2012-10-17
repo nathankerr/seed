@@ -9,7 +9,7 @@ table kvstate [key] => [value]
 kvstate <+- [kvput.key, kvput.value]
 
 # get
-kvget_response <= [kvstate.key, kvstate.value]: kvget.key => kvstate.key
+kvget_response <+ [kvstate.key, kvstate.value]: kvget.key => kvstate.key
 
 # delete
 kvstate <- [kvstate.key, kvstate.value]: kvdel.key => kvstate.key

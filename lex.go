@@ -41,86 +41,63 @@ func (i item) String() string {
 	switch {
 	case i.typ == itemEOF:
 		return "EOF"
-	case i.typ == itemError:
-		return i.val
 	case len(i.val) > 30:
-		return fmt.Sprintf("%.10q...", i.val)
+		return fmt.Sprintf("%s: %.10q...", i.typ.String(), i.val)
 	}
-	return fmt.Sprintf("%q", i.val)
+	return fmt.Sprintf("%s: %q", i.typ.String(), i.val)
 }
 
 // itemType identifies the type of lex items.
 type itemType int
 
 const (
-	itemError itemType = iota // error occurred; value is text of error
-	itemEOF
-	itemIdentifier         // keywords and names
-	itemBeginArray         // [
-	itemEndArray           // ]
-	itemArrayDelimter      // ,
-	itemOperationInsert    // <+
-	itemOperationSet       // <=
-	itemOperationDelete    // <-
-	itemOperationUpdate    // <+-
-	itemKeyRelation        // =>
-	itemScopeDelimiter     // .
-	itemPredicateDelimiter // :
-	// keywords
-	itemKeyword // used to deliniate keyword identifiers
-	itemInput   // input keyword
-	itemOutput  // output keyword
-	itemTable   // table keyword
-	itemScratch // scratch keyword
+	itemEOF                itemType = iota
+	itemIdentifier                  // keywords and names
+	itemBeginArray                  // [
+	itemEndArray                    // ]
+	itemArrayDelimter               // ,
+	itemOperationInsert             // <+
+	itemOperationDelete             // <-
+	itemOperationUpdate             // <+-
+	itemKeyRelation                 // =>
+	itemScopeDelimiter              // .
+	itemPredicateDelimiter          // :
+	// keywords, also need to be in key map
+	itemInput  // input keyword
+	itemOutput // output keyword
+	itemTable  // table keyword
 )
 
+var itemNames = map[itemType]string{
+	itemEOF:                "itemEOF",
+	itemIdentifier:         "itemIdentifier",
+	itemBeginArray:         "itemBeginArray",
+	itemEndArray:           "itemEndArray",
+	itemArrayDelimter:      "itemArrayDelimter",
+	itemOperationInsert:    "itemOperationInsert",
+	itemOperationDelete:    "itemOperationDelete",
+	itemOperationUpdate:    "itemOperationUpdate",
+	itemKeyRelation:        "itemKeyRelation",
+	itemScopeDelimiter:     "itemScopeDelimiter",
+	itemPredicateDelimiter: "itemPredicateDelimiter",
+	// keywords
+	itemInput:  "itemInput",
+	itemOutput: "itemOutput",
+	itemTable:  "itemTable",
+}
+
 func (typ itemType) String() string {
-	switch typ {
-	case itemError:
-		return "itemError"
-	case itemEOF:
-		return "itemEOF"
-	case itemIdentifier:
-		return "itemIdentifier"
-	case itemBeginArray:
-		return "itemBeginArray"
-	case itemEndArray:
-		return "itemEndArray"
-	case itemArrayDelimter:
-		return "itemArrayDelimter"
-	case itemOperationInsert:
-		return "itemOperationInsert"
-	case itemOperationSet:
-		return "itemOperationSet"
-	case itemOperationDelete:
-		return "itemOperationDelete"
-	case itemOperationUpdate:
-		return "itemOperationUpdate"
-	case itemKeyRelation:
-		return "itemKeyRelation"
-	case itemScopeDelimiter:
-		return "itemScopeDelimiter"
-	case itemPredicateDelimiter:
-		return "itemPredicateDelimiter"
-	case itemKeyword:
-		return "itemKeyword"
-	case itemInput:
-		return "itemInput"
-	case itemOutput:
-		return "itemOutput"
-	case itemTable:
-		return "itemTable"
-	case itemScratch:
-		return "itemScratch"
+	str, ok := itemNames[typ]
+	if !ok {
+		panic("unknown item type")
 	}
-	panic("unsupported type")
+	return str
 }
 
 var key = map[string]itemType{
-	"input":   itemInput,
-	"output":  itemOutput,
-	"table":   itemTable,
-	"scratch": itemScratch,
+	"input":  itemInput,
+	"output": itemOutput,
+	"table":  itemTable,
 }
 
 const eof = -1
@@ -333,10 +310,11 @@ Loop:
 			if !l.atTerminator() {
 				l.errorf("unexpected character %+U '%c'", r, r)
 			}
-			switch {
-			case key[word] > itemKeyword:
-				l.emit(key[word])
-			default:
+
+			typ, ok := key[word]
+			if ok {
+				l.emit(typ)
+			} else {
 				l.emit(itemIdentifier)
 			}
 			break Loop
@@ -356,8 +334,6 @@ func lexOperation(l *lexer) stateFn {
 		} else {
 			l.emit(itemOperationInsert) // <+
 		}
-	case r == '=':
-		l.emit(itemOperationSet) // <=
 	case r == '-':
 		l.emit(itemOperationDelete) // <-
 	default:
