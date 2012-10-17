@@ -302,7 +302,7 @@ func lexIdentifier(l *lexer) stateFn {
 Loop:
 	for {
 		switch r := l.next(); {
-		case r == '_' || unicode.IsLetter(r):
+		case r == '_' || unicode.IsLetter(r) || unicode.IsNumber(r):
 			// absorb.
 		default:
 			l.backup()

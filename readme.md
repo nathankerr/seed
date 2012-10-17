@@ -18,7 +18,7 @@ table <id> <schema>
 start := collection | rule
 collection := keyword id schema
 keyword := 'input' | 'output' | 'table'
-id := [:letter:] ([:letter:] | '_')*
+id := [:letter:] ([:letter:|] | [:number:] | '_')*
 schema := array ('=>' array)?
 array := '[' id (',' id)* ']'
 rule := id operation expr
