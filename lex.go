@@ -51,26 +51,57 @@ func (i item) String() string {
 type itemType int
 
 const (
-	itemEOF                itemType = iota
-	itemIdentifier                  // keywords and names
-	itemBeginArray                  // [
-	itemEndArray                    // ]
-	itemArrayDelimter               // ,
-	itemOperationInsert             // <+
-	itemOperationDelete             // <-
-	itemOperationUpdate             // <+-
-	itemKeyRelation                 // =>
-	itemScopeDelimiter              // .
-	itemPredicateDelimiter          // :
+	itemEOF        itemType = iota
+	itemIdentifier          // keywords and names
+	itemRuby                // ruby blocks (contents of do and reduce blocks)
+	// special characters, add the beginning of these to atTerminator
+	itemBeginArray         // [
+	itemEndArray           // ]
+	itemArrayDelimter      // ,
+	itemOperationInsert    // <+
+	itemOperationDelete    // <-
+	itemOperationUpdate    // <+-
+	itemKeyRelation        // =>
+	itemScopeDelimiter     // .
+	itemPredicateDelimiter // :
+	itemPipe               // |
 	// keywords, also need to be in key map
 	itemInput  // input keyword
 	itemOutput // output keyword
 	itemTable  // table keyword
+	itemDo     // start of do block
+	itemReduce // start of reduce block
+	itemEnd    // end of do or reduce block
 )
+
+var key = map[string]itemType{
+	"input":  itemInput,
+	"output": itemOutput,
+	"table":  itemTable,
+	"do":     itemDo,
+	"reduce": itemReduce,
+	"end":    itemEnd,
+}
+
+func (l *lexer) atTerminator() bool {
+	lexinfo()
+
+	r := l.peek()
+	if isSpace(r) {
+		return true
+	}
+	switch r {
+	case eof, ',', '[', ']', '#', '.', '(', ')', ':', '|':
+		// # is a special case for comments, which are not passed to the parser
+		return true
+	}
+	return false
+}
 
 var itemNames = map[itemType]string{
 	itemEOF:                "itemEOF",
 	itemIdentifier:         "itemIdentifier",
+	itemRuby:               "itemRuby",
 	itemBeginArray:         "itemBeginArray",
 	itemEndArray:           "itemEndArray",
 	itemArrayDelimter:      "itemArrayDelimter",
@@ -80,24 +111,22 @@ var itemNames = map[itemType]string{
 	itemKeyRelation:        "itemKeyRelation",
 	itemScopeDelimiter:     "itemScopeDelimiter",
 	itemPredicateDelimiter: "itemPredicateDelimiter",
+	itemPipe:               "itemPipe",
 	// keywords
 	itemInput:  "itemInput",
 	itemOutput: "itemOutput",
 	itemTable:  "itemTable",
+	itemDo:     "itemDo",
+	itemReduce: "itemReduce",
+	itemEnd:    "itemEnd",
 }
 
 func (typ itemType) String() string {
 	str, ok := itemNames[typ]
 	if !ok {
-		panic("unknown item type")
+		panic(fmt.Sprintf("itemType.String: unknown item type, %d", typ))
 	}
 	return str
-}
-
-var key = map[string]itemType{
-	"input":  itemInput,
-	"output": itemOutput,
-	"table":  itemTable,
 }
 
 const eof = -1
@@ -278,6 +307,8 @@ func lexToken(l *lexer) stateFn {
 		l.emit(itemScopeDelimiter)
 	case r == ':':
 		l.emit(itemPredicateDelimiter)
+	case r == '|':
+		return lexRuby
 	default:
 		l.errorf("unrecognized character: %#U", r)
 	}
@@ -355,26 +386,67 @@ func lexKeyRelation(l *lexer) stateFn {
 	return lexToken
 }
 
+// | args | ruby 'end'
+func lexRuby(l *lexer) stateFn {
+	lexinfo()
+
+	l.emit(itemPipe)
+
+	// identifiers and arraydelimiters
+Loop:
+	for {
+		switch r := l.next(); {
+		case unicode.IsLetter(r):
+			lexIdentifier(l)
+		case r == ',':
+			l.emit(itemArrayDelimter)
+		case r == '|':
+			break Loop
+		default:
+			l.errorf("expected identifier, ',', or '|'; got: '%s'", l.input[l.start:l.pos])
+		}
+	}
+	l.emit(itemPipe)
+
+	// eat the space between the end pipe and the ruby code
+	for isSpace(l.next()) {
+		// no-op
+	}
+	l.backup()
+	l.start = l.pos
+
+	start := l.start
+	endpos := strings.Index(l.input[start:], "end")
+	dopos := strings.Index(l.input[start:], "do")
+	for dopos != -1 && dopos < endpos {
+		endpos = strings.Index(l.input[start:], "end")
+		dopos = strings.Index(l.input[start:], "do")
+	}
+	l.pos = l.start + endpos
+
+	// eat the space between the ruby code and 'end'
+	r, _ := utf8.DecodeRuneInString(l.input[l.pos:])
+	for !isSpace(r) {
+		l.pos--
+		r, _ = utf8.DecodeRuneInString(l.input[l.pos:])
+
+	}
+
+	l.emit(itemRuby)
+
+	for isSpace(l.next()) {
+		l.ignore()
+	}
+
+	return lexIdentifier
+}
+
 // isSpace reports whether r is a space character.
 func isSpace(r rune) bool {
 	lexinfo(r)
 
 	switch r {
 	case ' ', '\t', '\n', '\r':
-		return true
-	}
-	return false
-}
-
-func (l *lexer) atTerminator() bool {
-	lexinfo()
-
-	r := l.peek()
-	if isSpace(r) {
-		return true
-	}
-	switch r {
-	case eof, ',', '[', ']', '#', '.', '*', '(', ')':
 		return true
 	}
 	return false

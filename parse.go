@@ -245,6 +245,57 @@ func parseRule(p *parser) parsefn {
 		p.backup()
 	}
 
+	// do or reduce blocks (optional)
+	p.next()
+	if p.i.typ == itemDo || p.i.typ == itemReduce {
+		reduce := false
+		if p.i.typ == itemReduce {
+			reduce = true
+		}
+
+		r.block = p.i.val
+
+		if p.next().typ != itemPipe {
+			p.error("expected '|', got", p.i)
+		}
+
+		if p.next().typ != itemIdentifier {
+			p.error("expected identifier, got", p.i)
+		}
+		r.block = fmt.Sprintf("%s |%s", r.block, p.i.val)
+
+		// reduce has two arguments
+		if reduce {
+			if p.next().typ != itemArrayDelimter {
+				p.error("expected ',', got", p.i)
+			}
+
+			if p.next().typ != itemIdentifier {
+				p.error("expected identifier, got", p.i)
+			}
+
+			r.block = fmt.Sprintf("%s, %s", r.block, p.i.val)
+		}
+
+		if p.next().typ != itemPipe {
+			p.error("expected '|', got", p.i)
+		}
+
+		if p.next().typ != itemRuby {
+			p.error("expected ruby, got", p.i)
+		}
+		r.block = fmt.Sprintf("%s|\n\t%s\nend", r.block, p.i.val)
+
+		if p.next().typ != itemEnd {
+			p.error("expected 'end', got", p.i)
+		}
+
+		println(r.block)
+
+	} else {
+		p.backup()
+	}
+
 	p.s.rules = append(p.s.rules, r)
 	return parseSeed
 }

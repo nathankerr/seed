@@ -39,6 +39,7 @@ type rule struct {
 	//rhs
 	output     []qualifiedColumn
 	predicates []predicate
+	block      string // do or reduce block
 
 	// meta
 	requires map[string]bool // bool has no meaning, just want a map for unique keys

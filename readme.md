@@ -24,7 +24,8 @@ array := '[' id (',' id)* ']'
 rule := id operation expr
 operation := '<+' | '<-' | '<+-'
 expr := '[' qualifiedColumn (',' qualifiedColumn)* ']'
-	(':' predicate (',' predicate)* )
+	(':' predicate (',' predicate)* ) (( 'do' '|' id '|' ruby 'end') | ('reduce' '|' id ',' id '|' ruby 'end')
 predicate := qualifiedColumn '=>' qualifiedColumn
 qualifiedColumn := id '.' id
+ruby := DATA INCLUDING NESTED do end BLOCKS
 ~~~

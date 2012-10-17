@@ -6,7 +6,7 @@ import (
 
 // toggle on and off by commenting the first return statement
 func transformationinfo(args ...interface{}) {
-	// return
+	return
 	info(args...)
 }
 
