@@ -33,6 +33,11 @@ echo "\\environment layout
 \\setupheadertexts[chapter]
 \\setuptolerance[horizontal,strict]
 
+\\definelayer[version][x=40mm,y=20.45mm]
+\\setlayer[version][]{\\input{version.tex}}
+\\setupbackgrounds[page][background=version]
+\\\\version[temporary]
+
 \\starttext
 
 \\\\title{Contents}

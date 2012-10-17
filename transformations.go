@@ -49,7 +49,8 @@ func applySeedTransformations(seeds seedCollection,
 	transformationinfo()
 
 	for _, transformations := range transformationList {
-		// iterating over the changing set of seeds also iterated (inconsistently) over the seeds which were added
+		// iterating over the changing set of seeds also iterated
+		// (inconsistently) over the seeds which were added
 		seedsCopy := make(seedCollection, len(seeds))
 		for sname, seed := range seeds {
 			seedsCopy[sname] = seed
