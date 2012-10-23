@@ -289,9 +289,6 @@ func parseRule(p *parser) parsefn {
 		if p.next().typ != itemEnd {
 			p.error("expected 'end', got", p.i)
 		}
-
-		println(r.block)
-
 	} else {
 		p.backup()
 	}

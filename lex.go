@@ -398,6 +398,8 @@ Loop:
 		switch r := l.next(); {
 		case unicode.IsLetter(r):
 			lexIdentifier(l)
+		case isSpace(r):
+			l.ignore()
 		case r == ',':
 			l.emit(itemArrayDelimter)
 		case r == '|':

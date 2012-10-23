@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -43,7 +44,7 @@ type rule struct {
 
 	// meta
 	requires map[string]bool // bool has no meaning, just want a map for unique keys
-	source   source
+	source source
 }
 
 func newRule(src source) *rule {
@@ -78,7 +79,7 @@ type Rubyer interface {
 }
 
 func (r *rule) Ruby() string {
-	var str string
+	var selecter string
 
 	collections := []string{}
 	for c, _ := range r.requires {
@@ -99,7 +100,7 @@ func (r *rule) Ruby() string {
 	}
 
 	if len(r.requires) == 1 {
-		str = fmt.Sprintf("%s do |%s| [%s] end",
+		selecter = fmt.Sprintf("%s do |%s| [%s] end",
 			r.output[0].collection,
 			strings.Join(names, ", "),
 			strings.Join(output, ", "))
@@ -109,17 +110,37 @@ func (r *rule) Ruby() string {
 			predicates = append(predicates, p.String())
 		}
 
-		str = fmt.Sprintf("(%s).combos(%s) do |%s| [%s] end",
+		selecter = fmt.Sprintf("(%s).combos(%s) do |%s| [%s] end",
 			strings.Join(collections, " * "),
 			strings.Join(predicates, ", "),
 			strings.Join(names, ", "),
 			strings.Join(output, ", "))
 	}
 
+	// at this point, str contains the translation of the join and projection ([]: =>) specifier. If there is a block, this needs to be put into a scratch and then the scratch needs the block to be applied to it
+	if len(r.block) > 0 {
+		scratch_name := r.source.name[:len(r.source.name)-
+			len(filepath.Ext(r.source.name))]
+		scratch_name = fmt.Sprintf("%s%d_scratch",
+			scratch_name, r.source.line)
+		scratch := fmt.Sprintf("%s <= %s #%s",
+			scratch_name, selecter, r.source)
+		indented_block := strings.Replace(r.block, "\n", "\n\t\t", -1)
+		if r.block[0] == 'd' {
+			// do block
+			return fmt.Sprintf("%s\n\t\t%s %s %s %s",
+				scratch, r.supplies, r.typ, scratch_name, indented_block)
+		} else {
+			// reduce block
+			return fmt.Sprintf("%s\n\t\t%s %s %s.reduce({}) do %s",
+				scratch, r.supplies, r.typ, scratch_name, indented_block[7:])
+		}
+	}
+
 	return fmt.Sprintf("%s %s %s",
 		r.supplies,
 		r.typ,
-		str)
+		selecter)
 }
 
 type qualifiedColumn struct {
