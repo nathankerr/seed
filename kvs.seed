@@ -6,8 +6,7 @@ output kvget_response [key] => [value]
 table kvstate [key] => [value]
 
 # mutate
-kvstate <+- [kvput.key, kvput.value] reduce |a, b| ruby code here
-end
+kvstate <+- [kvput.key, kvput.value]
 
 # get
 kvget_response <+ [kvstate.key, kvstate.value]: kvget.key => kvstate.key

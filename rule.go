@@ -123,7 +123,7 @@ func (r *rule) Ruby() string {
 			len(filepath.Ext(r.source.name))]
 		scratch_name = fmt.Sprintf("%s%d_scratch",
 			scratch_name, r.source.line)
-		scratch := fmt.Sprintf("%s <= %s #%s",
+		scratch := fmt.Sprintf("temp :%s <= %s #%s",
 			scratch_name, selecter, r.source)
 		indented_block := strings.Replace(r.block, "\n", "\n\t\t", -1)
 		if r.block[0] == 'd' {
