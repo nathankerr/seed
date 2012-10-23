@@ -88,6 +88,7 @@ func generate_server_111(buds budCollection, cluster *cluster, seed *seed, sname
 
 		// find the input channel and add its client to the beginning of output
 		if seed.collections[rule.supplies].typ == seedOutput {
+			rule.typ = ruleAsyncInsert
 			for collection, _ := range rule.requires {
 				if seed.collections[collection].typ == seedInput {
 					output := []qualifiedColumn{qualifiedColumn{collection: collection, column: "client"}}
