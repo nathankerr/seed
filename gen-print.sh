@@ -3,22 +3,20 @@ OUT=print.tex
 
 echo "\\environment layout
 
-\\usemodule[vim]
-\\definevimtyping[Go][
-        syntax=go,
-        tab=4,
-        directory=tmp,
-        alternative=blackandwhite,
-        style=\\Code,
-        strip=yes,
-        lines=split,
-        numbering=yes,
-]
-
+\\usemodule[filter]
 \\defineexternalfilter[markdown][
 	filtercommand={cat \\externalfilterinputfile | pandoc -t context -o \\externalfilteroutputfile},
 	directory=tmp,
 	cache=yes,
+]
+
+\\setuptyping[
+    tab=4,
+    empty=yes,
+    style=\Code,
+    lines=yes,
+    numbering=file,
+    page=yes,
 ]
 
 \\setuphead
@@ -52,7 +50,7 @@ echo '\\chapter{readme.md}
 for file in `ls *.go`
 do
 	echo "\\\\chapter{$file}" >> $OUT
-	echo "\\\\typeGofile{$file}\n" >> $OUT
+	echo "\\\\typefile{$file}\n" >> $OUT
 done
 
 echo "\\stoptext" >> $OUT

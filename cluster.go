@@ -90,13 +90,16 @@ func (c *cluster) typ() string {
 }
 
 func count(i int) string {
+	var str string
 	switch {
 	case i == 0:
-		return "0"
+		str = "0"
 	case i == 1:
-		return "1"
+		str = "1"
 	case i > 1:
-		return "n"
+		str = "n"
+	default:
+		panic("should not get here")
 	}
-	return "?"
+	return str
 }

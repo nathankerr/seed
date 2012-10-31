@@ -5,18 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
-	"path/filepath"
-	"runtime"
 )
 
 // flow:
 // - load seeds
-// - apply seed-> seed transforms
-// - apply seed -> bud transforms
-// - apply bud -> bud transforms
+// - add network interface
 // - write bud to ruby
 func main() {
+	log.SetFlags(0) // turn off logger prefix
+
 	var outputdir = flag.String("o", "bud", "directory name to create and output the bud source")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
@@ -25,41 +22,25 @@ func main() {
 	}
 	flag.Parse()
 
+	// load seeds
 	if flag.NArg() < 1 {
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	log.SetFlags(0) // turn off logger prefix
-
-	// load seeds
 	seeds, err := loadSeeds(flag.Args())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
-	// apply seed-> seed transforms
-	applySeedTransformations(seeds,
-		no_s2s_changes,
-		// split_seeds,
-	)
+	// Add network interface
+	buds := make(budCollection)
+	for sname, seed := range seeds {
+		clusters := getClusters(sname, seed)
 
-	// fmt.Print(seeds)
-
-	// apply seed -> bud transforms
-	buds := applySeedToBudTransformations(seeds,
-		// no_s2b_changes,
-		// generate_client,
-		generate_server,
-	)
-
-	// fmt.Print(buds)
-
-	// apply bud -> bud transforms
-	buds = applyBudTransforms(buds,
-		no_b2b_changes,
-	)
+		for _, cluster := range clusters {
+			buds = add_clients(buds, cluster, seed, sname)
+		}
+	}
 
 	// write bud to ruby
 	err = buds.toRuby(*outputdir)
@@ -67,30 +48,4 @@ func main() {
 		panic(err)
 	}
 
-}
-
-func info(args ...interface{}) {
-	info := ""
-
-	pc, file, line, ok := runtime.Caller(2)
-	if ok {
-		basepath, err := filepath.Abs(".")
-		if err != nil {
-			panic(err)
-		}
-		sourcepath, err := filepath.Rel(basepath, file)
-		if err != nil {
-			panic(err)
-		}
-		info += fmt.Sprintf("%s:%d: ", sourcepath, line)
-
-		name := path.Ext(runtime.FuncForPC(pc).Name())
-		info += name[1:]
-		if len(args) > 0 {
-			info += ": "
-		}
-	}
-	info += fmt.Sprintln(args...)
-
-	log.Print(info)
 }

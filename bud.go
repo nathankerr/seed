@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 type bud struct {
@@ -44,45 +41,6 @@ func (buds budCollection) String() string {
 		str = fmt.Sprintf("%s\n### bud: %s ###\n%s\n", str, name, bud)
 	}
 	return str
-}
-
-func (buds *budCollection) toRuby(dir string) error {
-	dir = filepath.Clean(dir)
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		return err
-	}
-
-	for name, bud := range *buds {
-		filename := filepath.Join(dir, strings.ToLower(name)+".rb")
-		out, err := os.Create(filename)
-		if err != nil {
-			return err
-		}
-
-		fmt.Fprintln(out, "require 'rubygems'")
-		fmt.Fprintln(out, "require 'bud'")
-
-		fmt.Fprintf(out, "\nclass %s\n", name)
-		fmt.Fprintf(out, "  include Bud\n")
-
-		fmt.Fprintf(out, "\n  state do\n")
-		for _, collection := range bud.collections {
-			fmt.Fprintf(out, "    %s #%s\n", collection, collection.source)
-		}
-		fmt.Fprintf(out, "  end\n")
-
-		fmt.Fprintf(out, "\n  bloom do\n")
-		for _, rule := range bud.rules {
-			fmt.Fprintf(out, "    %s #%s\n", rule.Ruby(), rule.source)
-		}
-		fmt.Fprintf(out, "  end\n")
-
-		fmt.Fprintf(out, "end\n")
-		out.Close()
-	}
-
-	return nil
 }
 
 type budTableType int
