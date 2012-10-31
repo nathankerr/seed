@@ -3,20 +3,17 @@ OUT=print.tex
 
 echo "\\environment layout
 
-\\usemodule[filter]
-\\defineexternalfilter[markdown][
-	filtercommand={cat \\externalfilterinputfile | pandoc -t context -o \\externalfilteroutputfile},
-	directory=tmp,
-	cache=yes,
-]
-
-\\setuptyping[
-    tab=4,
-    empty=yes,
-    style=\Code,
-    lines=yes,
-    numbering=file,
-    page=yes,
+\usemodule[vim]
+\\definevimtyping[Go][
+  tab=4,
+  directory=tmp,
+  alternative=blackandwhite,
+  style=\Code,
+  strip=yes,
+  lines=split,
+  numbering=yes,
+  before=\blank,
+  after=\blank,
 ]
 
 \\setuphead
@@ -34,23 +31,23 @@ echo "\\environment layout
 \\definelayer[version][x=40mm,y=20.45mm]
 \\setlayer[version][]{\\input{version.tex}}
 \\setupbackgrounds[page][background=version]
-\\\\version[temporary]
+\\version[temporary]
 
 \\starttext
 
-\\\\title{Contents}
+\\title{Contents}
 \\startcolumns[n=2,rule=on]
 	\\placelist[chapter]
 \\stopcolumns
 " > $OUT
 
-echo '\\chapter{readme.md}
-\\processmarkdownfile{readme.md}' >> $OUT
+# echo '\chapter{readme.md}
+# \processmarkdownfile{readme.md}' >> $OUT
 
 for file in `ls *.go`
 do
-	echo "\\\\chapter{$file}" >> $OUT
-	echo "\\\\typefile{$file}\n" >> $OUT
+	echo "\\chapter{$file}" >> $OUT
+	echo "\\typeGofile{$file}" >> $OUT
 done
 
 echo "\\stoptext" >> $OUT

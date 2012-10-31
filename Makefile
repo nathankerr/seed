@@ -8,8 +8,8 @@ seed: *.go kvs.seed
 
 print: *.go tmp version.tex
 	./gen-print.sh
-	context print
-	open print.pdf
+	context --mode=a4Chapbook print
+	acroread print.pdf
 
 tmp:
 	mkdir tmp
