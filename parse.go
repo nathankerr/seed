@@ -2,21 +2,14 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"path"
 	"runtime"
 )
 
-// toggle on and off by commenting the first return statement
-func parseinfo(args ...interface{}) {
-	return
-	info(args...)
-}
-
 type parsefn func(p *parser) parsefn
 
 type parser struct {
-	s        *seed
+	s        *service
 	items    chan item
 	i        item // the last item
 	backedup bool // indicates that the last item should be used instead of getting a new one
@@ -52,12 +45,13 @@ func (p *parser) error(args ...interface{}) {
 	message += fmt.Sprintf("%s:%d: ERROR: ", p.i.source, p.i.source.column)
 	message += fmt.Sprintln(args...)
 
-	log.Fatal(message)
+	fatal(message)
 }
 
-func parse(name, input string) *seed {
+func parse(name, input string) *service {
 	p := &parser{}
-	p.s = newSeed()
+	p.s = &service{collections: make(map[string]*collection)}
+	p.s.source = source{name: name}
 
 	l := newLexer(name, input)
 	go l.run()
@@ -98,14 +92,14 @@ func parseSeed(p *parser) parsefn {
 func parseCollection(p *parser) parsefn {
 	parseinfo()
 
-	var collectionType seedCollectionType
+	var collectionType collectionType
 	switch p.i.typ {
 	case itemInput:
-		collectionType = seedInput
+		collectionType = collectionInput
 	case itemOutput:
-		collectionType = seedOutput
+		collectionType = collectionOutput
 	case itemTable:
-		collectionType = seedTable
+		collectionType = collectionTable
 	default:
 		p.error("expected input, output, table, or scratch; got ", p.i)
 	}
@@ -117,13 +111,13 @@ func parseCollection(p *parser) parsefn {
 
 	name := i.val
 
-	collection := new(table)
+	collection := new(collection)
 	collection.key = parseArray(p)
 
 	i = p.next()
 	if i.typ == itemKeyRelation {
 		columns := parseArray(p)
-		collection.columns = columns
+		collection.data = columns
 	} else {
 		p.backup()
 	}
@@ -133,7 +127,7 @@ func parseCollection(p *parser) parsefn {
 	}
 
 	collection.source = i.source
-	collection.typ = collectionType
+	collection.ctype = collectionType
 	p.s.collections[name] = collection
 
 	return parseSeed
@@ -183,18 +177,14 @@ func parseRule(p *parser) parsefn {
 
 	// destination
 	destination := p.i
-	r := newRule(destination.source)
+	r := &rule{source: destination.source}
 	r.supplies = destination.val
 
 	// operation
 	operation := p.next()
 	switch operation.typ {
-	case itemOperationInsert:
-		r.typ = ruleInsert
-	case itemOperationDelete:
-		r.typ = ruleDelete
-	case itemOperationUpdate:
-		r.typ = ruleUpdate
+	case itemOperationInsert, itemOperationDelete, itemOperationUpdate:
+		r.operation = operation.val
 	default:
 		p.error("expected an operation, got ", operation)
 	}
@@ -207,8 +197,7 @@ func parseRule(p *parser) parsefn {
 	// get the array contents
 	for {
 		column := parseQualifiedColumn(p)
-		r.requires[column.collection] = true
-		r.output = append(r.output, column)
+		r.projection = append(r.projection, column)
 
 		if p.next().typ != itemArrayDelimter {
 			break
@@ -225,16 +214,14 @@ func parseRule(p *parser) parsefn {
 		// get the predicates
 		for {
 			left := parseQualifiedColumn(p)
-			r.requires[left.collection] = true
 
 			if p.next().typ != itemKeyRelation {
 				p.error("expected '=>', got", p.i)
 			}
 
 			right := parseQualifiedColumn(p)
-			r.requires[right.collection] = true
 
-			r.predicates = append(r.predicates, predicate{left: left, right: right})
+			r.predicate = append(r.predicate, constraint{left: left, right: right})
 
 			if p.next().typ != itemArrayDelimter {
 				p.backup()

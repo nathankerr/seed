@@ -20,12 +20,6 @@ func lexinfo(args ...interface{}) {
 	info(args...)
 }
 
-type source struct {
-	name   string
-	line   int
-	column int
-}
-
 func (s source) String() string {
 	return fmt.Sprint(s.name, ":", s.line)
 }

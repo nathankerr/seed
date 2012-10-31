@@ -3,18 +3,29 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 )
 
-// toggle return to turn on and off
-func transformationinfo(args ...interface{}) {
+func info(args ...interface{}) {
+	return
+	printlog(args...)
+}
+
+func fatal(args ...interface{}) {
+	// return
+	printlog(args...)
+	os.Exit(1)
+}
+
+func parseinfo(args ...interface{}) {
 	return
 	info(args...)
 }
 
-func info(args ...interface{}) {
+func printlog(args ...interface{}) {
 	info := ""
 
 	pc, file, line, ok := runtime.Caller(2)
