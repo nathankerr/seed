@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path"
-	"runtime"
 )
 
 type parsefn func(p *parser) parsefn
@@ -12,7 +10,7 @@ type parser struct {
 	s        *service
 	items    chan item
 	i        item // the last item
-	backedup bool // indicates that the last item should be used instead of getting a new one
+	backedup bool // indicates i should be used instead of getting a new item
 }
 
 func (p *parser) next() item {
@@ -29,23 +27,6 @@ func (p *parser) backup() {
 	parseinfo()
 
 	p.backedup = true
-}
-
-func (p *parser) error(args ...interface{}) {
-	message := ""
-
-	pc, file, line, ok := runtime.Caller(1)
-	if ok {
-		name := path.Ext(runtime.FuncForPC(pc).Name())
-		name = name[1:]
-		file = path.Base(file)
-		message = fmt.Sprintf("%s:%d: [%s] ", file, line, name)
-	}
-
-	message += fmt.Sprintf("%s:%d: ERROR: ", p.i.source, p.i.source.column)
-	message += fmt.Sprintln(args...)
-
-	fatal(message)
 }
 
 func parse(name, input string) *service {
@@ -82,7 +63,7 @@ func parseSeed(p *parser) parsefn {
 	case itemEOF:
 		return nil
 	default:
-		p.error("unexpected", i)
+		fatal("unexpected", i)
 	}
 
 	return nil
@@ -101,12 +82,12 @@ func parseCollection(p *parser) parsefn {
 	case itemTable:
 		collectionType = collectionTable
 	default:
-		p.error("expected input, output, table, or scratch; got ", p.i)
+		fatal("expected input, output, table, or scratch; got ", p.i)
 	}
 
 	i := p.next()
 	if i.typ != itemIdentifier {
-		p.error("expected itemIdentifier, got ", i)
+		fatal("expected itemIdentifier, got ", i)
 	}
 
 	name := i.val
@@ -123,7 +104,7 @@ func parseCollection(p *parser) parsefn {
 	}
 
 	if _, ok := p.s.collections[name]; ok {
-		p.error("collection", name, "already exists")
+		fatal("collection", name, "already exists")
 	}
 
 	collection.source = i.source
@@ -141,7 +122,7 @@ func parseArray(p *parser) []string {
 
 	i := p.next()
 	if i.typ != itemBeginArray {
-		p.error("expected [, got", i.val)
+		fatal("expected [, got", i.val)
 	}
 
 	i = p.next()
@@ -151,7 +132,7 @@ func parseArray(p *parser) []string {
 	case itemEndArray:
 		return array
 	default:
-		p.error("expected identifier or ], got", i.val)
+		fatal("expected identifier or ], got", i.val)
 	}
 
 	i = p.next()
@@ -162,7 +143,7 @@ func parseArray(p *parser) []string {
 		case itemArrayDelimter:
 			i = p.next()
 			if i.typ != itemIdentifier {
-				p.error("expected identifier, got", i.val)
+				fatal("expected identifier, got", i.val)
 			}
 			array = append(array, i.val)
 		}
@@ -183,15 +164,15 @@ func parseRule(p *parser) parsefn {
 	// operation
 	operation := p.next()
 	switch operation.typ {
-	case itemOperationInsert, itemOperationDelete, itemOperationUpdate:
+	case itemOperation:
 		r.operation = operation.val
 	default:
-		p.error("expected an operation, got ", operation)
+		fatal("expected an operation, got ", operation)
 	}
 
 	// expr
 	if p.next().typ != itemBeginArray {
-		p.error("expected '[', got", p.i)
+		fatal("expected '[', got", p.i)
 	}
 
 	// get the array contents
@@ -206,7 +187,7 @@ func parseRule(p *parser) parsefn {
 
 	// using p.i so the previous loop does not need to backup
 	if p.i.typ != itemEndArray {
-		p.error("expected ']', got", p.i)
+		fatal("expected ']', got", p.i)
 	}
 
 	// if there is no ':', then the statement is finished
@@ -216,12 +197,13 @@ func parseRule(p *parser) parsefn {
 			left := parseQualifiedColumn(p)
 
 			if p.next().typ != itemKeyRelation {
-				p.error("expected '=>', got", p.i)
+				fatal("expected '=>', got", p.i)
 			}
 
 			right := parseQualifiedColumn(p)
 
-			r.predicate = append(r.predicate, constraint{left: left, right: right})
+			r.predicate = append(r.predicate,
+				constraint{left: left, right: right})
 
 			if p.next().typ != itemArrayDelimter {
 				p.backup()
@@ -234,7 +216,7 @@ func parseRule(p *parser) parsefn {
 
 	// do or reduce blocks (optional)
 	p.next()
-	if p.i.typ == itemDo || p.i.typ == itemReduce {
+	if p.i.typ == itemMap || p.i.typ == itemReduce {
 		reduce := false
 		if p.i.typ == itemReduce {
 			reduce = true
@@ -243,38 +225,38 @@ func parseRule(p *parser) parsefn {
 		r.block = p.i.val
 
 		if p.next().typ != itemPipe {
-			p.error("expected '|', got", p.i)
+			fatal("expected '|', got", p.i)
 		}
 
 		if p.next().typ != itemIdentifier {
-			p.error("expected identifier, got", p.i)
+			fatal("expected identifier, got", p.i)
 		}
 		r.block = fmt.Sprintf("%s |%s", r.block, p.i.val)
 
 		// reduce has two arguments
 		if reduce {
 			if p.next().typ != itemArrayDelimter {
-				p.error("expected ',', got", p.i)
+				fatal("expected ',', got", p.i)
 			}
 
 			if p.next().typ != itemIdentifier {
-				p.error("expected identifier, got", p.i)
+				fatal("expected identifier, got", p.i)
 			}
 
 			r.block = fmt.Sprintf("%s, %s", r.block, p.i.val)
 		}
 
 		if p.next().typ != itemPipe {
-			p.error("expected '|', got", p.i)
+			fatal("expected '|', got", p.i)
 		}
 
 		if p.next().typ != itemRuby {
-			p.error("expected ruby, got", p.i)
+			fatal("expected ruby, got", p.i)
 		}
 		r.block = fmt.Sprintf("%s|\n\t%s\nend", r.block, p.i.val)
 
 		if p.next().typ != itemEnd {
-			p.error("expected 'end', got", p.i)
+			fatal("expected 'end', got", p.i)
 		}
 	} else {
 		p.backup()
@@ -289,16 +271,16 @@ func parseQualifiedColumn(p *parser) qualifiedColumn {
 
 	collection := p.next()
 	if collection.typ != itemIdentifier {
-		p.error("expected identifier, got", collection)
+		fatal("expected identifier, got", collection)
 	}
 
 	if p.next().typ != itemScopeDelimiter {
-		p.error("expected '.', got", p.i)
+		fatal("expected '.', got", p.i)
 	}
 
 	column := p.next()
 	if column.typ != itemIdentifier {
-		p.error("expected identifier, got", column)
+		fatal("expected identifier, got", column)
 	}
 
 	return qualifiedColumn{collection: collection.val, column: column.val}

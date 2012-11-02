@@ -2,46 +2,34 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 )
 
-func (s *service) toRuby(name string, dir string) error {
-	dir = filepath.Clean(dir)
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		return err
-	}
+func (s *service) toRuby(name string) string {
+	var str string
+	str = fmt.Sprintf("%srequire 'rubygems'", str)
+	str = fmt.Sprintf("%s\nrequire 'bud'\n", str)
 
-	filename := filepath.Join(dir, strings.ToLower(name)+".rb")
-	out, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
+	str = fmt.Sprintf("%s\nclass %s\n", str, name)
+	str = fmt.Sprintf("%s  include Bud\n", str)
 
-	fmt.Fprintln(out, "require 'rubygems'")
-	fmt.Fprintln(out, "require 'bud'")
-
-	fmt.Fprintf(out, "\nclass %s\n", name)
-	fmt.Fprintf(out, "  include Bud\n")
-
-	fmt.Fprintf(out, "\n  state do\n")
+	str = fmt.Sprintf("%s\n  state do\n", str)
 	for cname, collection := range s.collections {
-		fmt.Fprintf(out, "    %s #%s\n", collection.Ruby(cname), collection.source)
+		str = fmt.Sprintf("%s    %s #%s\n", str, collection.Ruby(cname),
+			collection.source)
 	}
-	fmt.Fprintf(out, "  end\n")
+	str = fmt.Sprintf("%s  end\n", str)
 
-	fmt.Fprintf(out, "\n  bloom do\n")
+	str = fmt.Sprintf("%s\n  bloom do\n", str)
 	for _, rule := range s.rules {
-		fmt.Fprintf(out, "    %s #%s\n", rule.Ruby(), rule.source)
+		str = fmt.Sprintf("%s    %s #%s\n", str, rule.Ruby(), rule.source)
 	}
-	fmt.Fprintf(out, "  end\n")
+	str = fmt.Sprintf("%s  end\n", str)
 
-	fmt.Fprintf(out, "end\n")
-	out.Close()
+	str = fmt.Sprintf("%send\n", str)
 
-	return nil
+	return str
 }
 
 func (r *rule) Ruby() string {
@@ -59,7 +47,8 @@ func (r *rule) Ruby() string {
 
 	output := []string{}
 	for _, o := range r.projection {
-		output = append(output, fmt.Sprintf("%s.%s", index[o.collection], o.column))
+		output = append(output,
+			fmt.Sprintf("%s.%s", index[o.collection], o.column))
 	}
 
 	if len(collections) == 1 {
@@ -80,7 +69,9 @@ func (r *rule) Ruby() string {
 			strings.Join(output, ", "))
 	}
 
-	// at this point, str contains the translation of the join and projection ([]: =>) specifier. If there is a block, this needs to be put into a scratch and then the scratch needs the block to be applied to it
+	// at this point, str contains the translation of the join and projection
+	// ([]: =>) specifier. If there is a block, this needs to be put into a
+	// scratch and then the scratch needs the block to be applied to it
 	if len(r.block) > 0 {
 		scratch_name := r.source.name[:len(r.source.name)-
 			len(filepath.Ext(r.source.name))]
@@ -89,14 +80,14 @@ func (r *rule) Ruby() string {
 		scratch := fmt.Sprintf("temp :%s <= %s #%s",
 			scratch_name, selecter, r.source)
 		indented_block := strings.Replace(r.block, "\n", "\n\t\t", -1)
-		if r.block[0] == 'd' {
-			// do block
+		if r.block[0] == 'm' {
+			// map block
 			return fmt.Sprintf("%s\n\t\t%s %s %s %s",
 				scratch, r.supplies, r.operation, scratch_name, indented_block)
 		} else {
 			// reduce block
-			return fmt.Sprintf("%s\n\t\t%s %s %s.reduce({}) do %s",
-				scratch, r.supplies, r.operation, scratch_name, indented_block[7:])
+			return fmt.Sprintf("%s\n\t\t%s %s %s.reduce({}) do %s", scratch,
+				r.supplies, r.operation, scratch_name, indented_block[7:])
 		}
 	}
 

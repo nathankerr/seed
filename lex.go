@@ -5,24 +5,10 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"path"
-	"runtime"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
-
-// toggle on and off by commenting the first return statement
-func lexinfo(args ...interface{}) {
-	return
-	info(args...)
-}
-
-func (s source) String() string {
-	return fmt.Sprint(s.name, ":", s.line)
-}
 
 // item represents a token or text string returned from the scanner.
 type item struct {
@@ -52,9 +38,7 @@ const (
 	itemBeginArray         // [
 	itemEndArray           // ]
 	itemArrayDelimter      // ,
-	itemOperationInsert    // <+
-	itemOperationDelete    // <-
-	itemOperationUpdate    // <+-
+	itemOperation          // <+, <-, <+-
 	itemKeyRelation        // =>
 	itemScopeDelimiter     // .
 	itemPredicateDelimiter // :
@@ -63,7 +47,7 @@ const (
 	itemInput  // input keyword
 	itemOutput // output keyword
 	itemTable  // table keyword
-	itemDo     // start of do block
+	itemMap    // start of do block
 	itemReduce // start of reduce block
 	itemEnd    // end of do or reduce block
 )
@@ -72,7 +56,7 @@ var key = map[string]itemType{
 	"input":  itemInput,
 	"output": itemOutput,
 	"table":  itemTable,
-	"do":     itemDo,
+	"map":    itemMap,
 	"reduce": itemReduce,
 	"end":    itemEnd,
 }
@@ -85,7 +69,7 @@ func (l *lexer) atTerminator() bool {
 		return true
 	}
 	switch r {
-	case eof, ',', '[', ']', '#', '.', '(', ')', ':', '|':
+	case eof, ',', '[', ']', '#', '.', '(', ')', ':', '|', '<':
 		// # is a special case for comments, which are not passed to the parser
 		return true
 	}
@@ -99,9 +83,7 @@ var itemNames = map[itemType]string{
 	itemBeginArray:         "itemBeginArray",
 	itemEndArray:           "itemEndArray",
 	itemArrayDelimter:      "itemArrayDelimter",
-	itemOperationInsert:    "itemOperationInsert",
-	itemOperationDelete:    "itemOperationDelete",
-	itemOperationUpdate:    "itemOperationUpdate",
+	itemOperation:          "itemOperation",
 	itemKeyRelation:        "itemKeyRelation",
 	itemScopeDelimiter:     "itemScopeDelimiter",
 	itemPredicateDelimiter: "itemPredicateDelimiter",
@@ -110,7 +92,7 @@ var itemNames = map[itemType]string{
 	itemInput:  "itemInput",
 	itemOutput: "itemOutput",
 	itemTable:  "itemTable",
-	itemDo:     "itemDo",
+	itemMap:    "itemMap",
 	itemReduce: "itemReduce",
 	itemEnd:    "itemEnd",
 }
@@ -125,7 +107,7 @@ func (typ itemType) String() string {
 
 const eof = -1
 
-// stateFn represents the state of the scanner as a function that returns the next state.
+// state functions are used to drive the state machine
 type stateFn func(*lexer) stateFn
 
 // lexer holds the state of the scanner.
@@ -241,28 +223,6 @@ func (l *lexer) source() source {
 	return source{l.name, l.lineNumber(), l.columnNumber()}
 }
 
-// error returns an error token and terminates the scan by passing
-// back a nil pointer that will be the next state, terminating l.nextItem.
-func (l *lexer) errorf(format string, args ...interface{}) {
-	message := ""
-
-	pc, file, line, ok := runtime.Caller(1)
-	if ok {
-		name := path.Ext(runtime.FuncForPC(pc).Name())
-		name = name[1:]
-		file = path.Base(file)
-		message = fmt.Sprintf("%s:%d: [%s] ", file, line, name)
-	}
-
-	source := l.source()
-	message += fmt.Sprintf("%s:%d: ERROR: ", source, source.column)
-
-	message += fmt.Sprintf(format, args...)
-
-	log.Fatalln(message)
-	os.Exit(1)
-}
-
 // run lexes the input by executing state functions
 // until the state is nil.
 func (l *lexer) run() {
@@ -304,7 +264,8 @@ func lexToken(l *lexer) stateFn {
 	case r == '|':
 		return lexRuby
 	default:
-		l.errorf("unrecognized character: %#U", r)
+		fatalf("%s unrecognized character: %#U",
+			l.source(), r)
 	}
 
 	return lexToken
@@ -333,7 +294,8 @@ Loop:
 			l.backup()
 			word := l.input[l.start:l.pos]
 			if !l.atTerminator() {
-				l.errorf("unexpected character %+U '%c'", r, r)
+				fatalf("%s unexpected character %+U '%c'",
+					l.source(), r, r)
 			}
 
 			typ, ok := key[word]
@@ -355,14 +317,15 @@ func lexOperation(l *lexer) stateFn {
 	case r == '+':
 		if l.peek() == '-' {
 			l.next()
-			l.emit(itemOperationUpdate) // <+-
+			l.emit(itemOperation) // <+-
 		} else {
-			l.emit(itemOperationInsert) // <+
+			l.emit(itemOperation) // <+
 		}
 	case r == '-':
-		l.emit(itemOperationDelete) // <-
+		l.emit(itemOperation) // <-
 	default:
-		l.errorf("unexpected operation: '%s'", l.input[l.start:l.pos])
+		fatalf("%s unexpected operation: '%s'",
+			l.source(), l.input[l.start:l.pos])
 	}
 
 	return lexToken
@@ -373,7 +336,8 @@ func lexKeyRelation(l *lexer) stateFn {
 	lexinfo()
 
 	if !l.accept(">") {
-		l.errorf("expected '>', got: '%s'", l.input[l.start:l.pos])
+		fatalf("%s expected '>', got: '%s'",
+			l.source(), l.input[l.start:l.pos])
 	}
 	l.emit(itemKeyRelation) // =>
 
@@ -399,7 +363,8 @@ Loop:
 		case r == '|':
 			break Loop
 		default:
-			l.errorf("expected identifier, ',', or '|'; got: '%s'", l.input[l.start:l.pos])
+			fatalf("%s expected identifier, ',', or '|'; got: '%s'",
+				l.source(), l.input[l.start:l.pos])
 		}
 	}
 	l.emit(itemPipe)

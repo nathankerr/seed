@@ -1,30 +1,42 @@
 package main
 
+// control output verbosity by toggling lexinfo, parseinfo, and info on and off
+// by enabling/disabling the return statements.
+
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 )
 
-func info(args ...interface{}) {
+func lexinfo(args ...interface{}) {
 	return
 	printlog(args...)
-}
-
-func fatal(args ...interface{}) {
-	// return
-	printlog(args...)
-	os.Exit(1)
 }
 
 func parseinfo(args ...interface{}) {
 	return
-	info(args...)
+	printlog(args...)
 }
 
+func info(args ...interface{}) {
+	// return
+	printlog(args...)
+}
+
+func fatal(args ...interface{}) {
+	printlog(args...)
+	os.Exit(1)
+}
+
+func fatalf(format string, args ...interface{}) {
+	printlog(fmt.Sprintf(format, args...))
+	os.Exit(1)
+}
+
+// include source location with log output
 func printlog(args ...interface{}) {
 	info := ""
 
@@ -48,5 +60,5 @@ func printlog(args ...interface{}) {
 	}
 	info += fmt.Sprintln(args...)
 
-	log.Print(info)
+	fmt.Printf("%s", info)
 }

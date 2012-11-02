@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // flow:
@@ -14,9 +14,7 @@ import (
 // - add network interface
 // - write bud to ruby
 func main() {
-	log.SetFlags(0) // turn off logger prefix
-
-	var outputdir = flag.String("o", "bud",
+	var outputdir = *flag.String("o", "bud",
 		"directory name to create and output the bud source")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
@@ -51,7 +49,7 @@ func main() {
 		seeds[name] = seed
 	}
 
-	// Add network interface
+	info("Add Network Interface")
 	buds := make(map[string]*service)
 	for sname, seed := range seeds {
 		groups := getGroups(sname, seed)
@@ -60,25 +58,37 @@ func main() {
 			switch group.typ() {
 			case "000", "010", "0n0", "100", "n00":
 				panic("these clusters should not exist in seed")
-			case "011", "01n", "0n1", "0nn":
-				// fatal(group.typ(), "not supported in", sname)
-				// works with assumption that first column is address
-				buds = add_clients(buds, group, seed, sname)
 			case "101", "10n", "n01", "n0n", "001", "00n", "110", "111",
 				"11n", "1n0", "1n1", "1nn", "n10", "n11", "n1n", "nn0",
-				"nn1", "nnn":
-				buds = add_clients(buds, group, seed, sname)
+				"nn1", "nnn", "011", "01n", "0n1", "0nn":
+				buds = add_network_interface(buds, group, seed, sname)
 			default:
-				panic("should not get here")
+				// shouldn't get here
+				panic(group.typ())
 			}
 		}
 	}
 
-	// write bud to ruby
-	for name, seed := range seeds {
-		err := seed.toRuby(name, *outputdir)
+	info("Write Ruby")
+	outputdir = filepath.Clean(outputdir)
+	err := os.MkdirAll(outputdir, 0755)
+	if err != nil {
+		fatal(err)
+	}
+
+	for name, bud := range buds {
+		filename := filepath.Join(outputdir, strings.ToLower(name)+".rb")
+		out, err := os.Create(filename)
 		if err != nil {
-			panic(err)
+			fatal(err)
 		}
+
+		ruby := bud.toRuby(name)
+		_, err = out.Write([]byte(ruby))
+		if err != nil {
+			fatal(err)
+		}
+
+		out.Close()
 	}
 }

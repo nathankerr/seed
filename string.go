@@ -11,3 +11,7 @@ func (qc *qualifiedColumn) String() string {
 func (c *constraint) String() string {
 	return fmt.Sprintf("%s => %s", c.left.String(), c.right.String())
 }
+
+func (s source) String() string {
+	return fmt.Sprint(s.name, ":", s.line)
+}

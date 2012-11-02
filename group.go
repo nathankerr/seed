@@ -58,7 +58,8 @@ func (g *group) typ() string {
 		case collectionTable:
 			tables++
 		default:
-			panic("shouldn't get here")
+			// shouldn't get here
+			panic(ctyp)
 		}
 	}
 
@@ -75,7 +76,8 @@ func count(i int) string {
 	case i > 1:
 		str = "n"
 	default:
-		panic("should not get here")
+		// shouldn't get here
+		panic(i)
 	}
 	return str
 }
