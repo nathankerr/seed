@@ -35,7 +35,7 @@ func (s *service) toRuby(name string) string {
 func (r *rule) Ruby() string {
 	var selecter string
 
-	collections := r.collections()
+	collections := r.requires()
 
 	index := make(map[string]string)
 	names := []string{}

@@ -49,6 +49,10 @@ func main() {
 		seeds[name] = seed
 	}
 
+	for sname, seed := range seeds {
+		info("seed:", sname, seed)
+	}
+
 	info("Add Network Interface")
 	buds := make(map[string]*service)
 	for sname, seed := range seeds {
@@ -68,6 +72,11 @@ func main() {
 			}
 		}
 	}
+
+	for sname, seed := range seeds {
+		info("seed:", sname, seed)
+	}
+
 
 	info("Write Ruby")
 	outputdir = filepath.Clean(outputdir)

@@ -6,15 +6,8 @@ func (r *rule) collections() []string {
 	// supplies
 	collectionsmap[r.supplies] = true
 
-	// projection
-	for _, qc := range r.projection {
-		collectionsmap[qc.collection] = true
-	}
-
-	// predicate
-	for _, c := range r.predicate {
-		collectionsmap[c.left.collection] = true
-		collectionsmap[c.right.collection] = true
+	for _, requires := range r.requires() {
+		collectionsmap[requires] = true
 	}
 
 	// convert map to []string
@@ -24,4 +17,27 @@ func (r *rule) collections() []string {
 	}
 
 	return collections
+}
+
+func (r *rule) requires() []string {
+	requiresmap := make(map[string]bool) // map only used for uniqueness
+
+	// projection
+	for _, qc := range r.projection {
+		requiresmap[qc.collection] = true
+	}
+
+	// predicate
+	for _, c := range r.predicate {
+		requiresmap[c.left.collection] = true
+		requiresmap[c.right.collection] = true
+	}
+
+	// convert map to []string
+	requires := []string{}
+	for collection, _ := range requiresmap {
+		requires = append(requires, collection)
+	}
+
+	return requires
 }

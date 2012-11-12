@@ -1,15 +1,14 @@
-input kvput [key] => [value]
-input kvdel [key]
-input kvget [key]
-output kvget_response [key] => [value]
-
 table kvstate [key] => [value]
 
-# mutate
+# put
+input kvput [key] => [value]
 kvstate <+- [kvput.key, kvput.value]
 
-# get
-kvget_response <+ [kvstate.key, kvstate.value]: kvget.key => kvstate.key
-
 # delete
+input kvdel [key]
 kvstate <- [kvstate.key, kvstate.value]: kvdel.key => kvstate.key
+
+# get
+input kvget [key]
+output kvget_response [key] => [value]
+kvget_response <+ [kvstate.key, kvstate.value]: kvget.key => kvstate.key
