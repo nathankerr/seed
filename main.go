@@ -60,11 +60,14 @@ func main() {
 
 		for _, group := range groups {
 			switch group.typ() {
-			case "000", "010", "0n0", "100", "n00":
-				panic("these clusters should not exist in seed")
-			case "101", "10n", "n01", "n0n", "001", "00n", "110", "111",
-				"11n", "1n0", "1n1", "1nn", "n10", "n11", "n1n", "nn0",
-				"nn1", "nnn", "011", "01n", "0n1", "0nn":
+			case "000", "010", "0n0", "100", "n00": // not possible
+				panic(group.typ())
+			case "011", "01n", "0n1", "0nn": // not input driven (not handled)
+				panic(group.typ())
+			case "001", "00n", "101", "10n", "n01", "n0n", // passthrough
+				"110", "111", "11n", // single output
+				"1n0", "1n1", "1nn", // multiple output
+				"n10", "n11", "n1n", "nn0", "nn1", "nnn": // multiple input
 				buds = add_network_interface(buds, group, seed, sname)
 			default:
 				// shouldn't get here
