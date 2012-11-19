@@ -8,13 +8,13 @@ import (
 
 func (s *service) toRuby(name string) string {
 	var str string
-	str = fmt.Sprintf("%srequire 'rubygems'", str)
-	str = fmt.Sprintf("%s\nrequire 'bud'\n", str)
+	// str = fmt.Sprintf("%srequire 'rubygems'", str)
+	// str = fmt.Sprintf("%s\nrequire 'bud'\n", str)
 
-	str = fmt.Sprintf("%s\nclass %s\n", str, name)
-	str = fmt.Sprintf("%s  include Bud\n", str)
+	str = fmt.Sprintf("%s\nmodule %s\n", str, name)
+	// str = fmt.Sprintf("%s  include Bud\n", str)
 
-	str = fmt.Sprintf("%s\n  state do\n", str)
+	str = fmt.Sprintf("%s  state do\n", str)
 	for cname, collection := range s.collections {
 		str = fmt.Sprintf("%s    %s #%s\n", str, collection.Ruby(cname),
 			collection.source)
@@ -101,12 +101,15 @@ func (c *collection) Ruby(name string) string {
 	declaration := ""
 
 	switch c.ctype {
-	case collectionInput, collectionOutput:
+	case collectionInput, collectionOutput, collectionChannel:
 		declaration += "channel"
 	case collectionTable:
 		declaration += "table"
+	case collectionScratch:
+		declaration += "scratch"
 	default:
-		panic("shouldn't get here")
+		// shouldn't get here
+		panic(c.ctype)
 	}
 
 	declaration += fmt.Sprintf(" :%s, [", name)

@@ -19,6 +19,8 @@ const (
 	collectionInput collectionType = iota
 	collectionOutput
 	collectionTable
+	collectionScratch // only for use in buds
+	collectionChannel // only for use in buds
 )
 
 type rule struct {

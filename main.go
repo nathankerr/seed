@@ -80,6 +80,15 @@ func main() {
 		info("seed:", sname, seed)
 	}
 
+	info("Add Replicated Tables")
+	replicated := make(map[string]*service)
+	for bname, bud := range buds {
+		replicated = add_replicated_tables(bname, bud, replicated)
+	}
+
+	for sname, seed := range replicated {
+		info("seed:", sname, seed)
+	}
 
 	info("Write Ruby")
 	outputdir = filepath.Clean(outputdir)
@@ -88,7 +97,7 @@ func main() {
 		fatal(err)
 	}
 
-	for name, bud := range buds {
+	for name, bud := range replicated {
 		filename := filepath.Join(outputdir, strings.ToLower(name)+".rb")
 		out, err := os.Create(filename)
 		if err != nil {

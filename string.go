@@ -40,6 +40,10 @@ func (c *collection) String(cname string) string {
 		ctype = "output"
 	case collectionTable:
 		ctype = "table"
+	case collectionChannel:
+		ctype = "channel"
+	case collectionScratch:
+		ctype = "scratch"
 	default:
 		// shouldn't get here
 		panic(c.ctype)
