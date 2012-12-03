@@ -16,6 +16,8 @@ import (
 func main() {
 	var outputdir = *flag.String("o", "bud",
 		"directory name to create and output the bud source")
+	var dot = flag.Bool("dot", false,
+		"also produce dot (graphviz) files)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -49,9 +51,9 @@ func main() {
 		seeds[name] = seed
 	}
 
-	for sname, seed := range seeds {
-		info("seed:", sname, seed)
-	}
+	// for sname, seed := range seeds {
+	// 	info("seed:", sname, seed)
+	// }
 
 	info("Add Network Interface")
 	buds := make(map[string]*service)
@@ -76,9 +78,9 @@ func main() {
 		}
 	}
 
-	for sname, seed := range seeds {
-		info("seed:", sname, seed)
-	}
+	// for sname, seed := range seeds {
+	// 	info("seed:", sname, seed)
+	// }
 
 	info("Add Replicated Tables")
 	replicated := make(map[string]*service)
@@ -86,9 +88,9 @@ func main() {
 		replicated = add_replicated_tables(bname, bud, replicated)
 	}
 
-	for sname, seed := range replicated {
-		info("seed:", sname, seed)
-	}
+	// for sname, seed := range replicated {
+	// 	info("seed:", sname, seed)
+	// }
 
 	info("Write Ruby")
 	outputdir = filepath.Clean(outputdir)
@@ -111,5 +113,25 @@ func main() {
 		}
 
 		out.Close()
+	}
+
+	if *dot {
+		info("Write Dot")
+
+		for name, bud := range replicated {
+			filename := filepath.Join(outputdir, strings.ToLower(name)+".dot")
+			out, err := os.Create(filename)
+			if err != nil {
+				fatal(err)
+			}
+
+			ruby := bud.toDot(name)
+			_, err = out.Write([]byte(ruby))
+			if err != nil {
+				fatal(err)
+			}
+
+			out.Close()
+		}
 	}
 }
