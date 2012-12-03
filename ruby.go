@@ -18,8 +18,8 @@ func (s *service) toRuby(name string) string {
 	str = fmt.Sprintf("%s  end\n", str)
 
 	str = fmt.Sprintf("%s\n  bloom do\n", str)
-	for _, rule := range s.rules {
-		str = fmt.Sprintf("%s    %s #%s\n", str, rule.Ruby(), rule.source)
+	for rule_num, rule := range s.rules {
+		str = fmt.Sprintf("%s    %s #%s rule %d\n", str, rule.Ruby(), rule.source, rule_num)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
 

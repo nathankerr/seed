@@ -6,7 +6,12 @@ import (
 )
 
 func (s *service) toDot(name string) string {
-	dot := fmt.Sprintf("digraph %s { margin=\"0\" size=\"4.5,7.1\" ", name)
+	dot := fmt.Sprintf("digraph %s {", name)
+	dot = fmt.Sprintf("%s\n\tmargin=\"0\"", dot)
+	dot = fmt.Sprintf("%s\n\tsize=\"4.5,7.1\"", dot)
+	dot = fmt.Sprintf("%s\n\tpage=\"324,12\"", dot)
+	dot = fmt.Sprintf("%s\n\tnode [fontname=\"Alegreya\" fontsize=\"9\"]", dot)
+	dot = fmt.Sprintf("%s\n", dot)
 
 	for cname, collection := range s.collections {
 		columns := collection.key
