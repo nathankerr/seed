@@ -69,6 +69,25 @@ func (c *collection) String(cname string) string {
 	)
 }
 
+func (ctype collectionType) String() string {
+	switch ctype {
+	case collectionInput:
+		return "input"
+	case collectionOutput:
+		return "output"
+	case collectionTable:
+		return "table"
+	case collectionChannel:
+		return "channel"
+	case collectionScratch:
+		return "scratch"
+	default:
+		// shouldn't get here
+		panic(ctype)
+	}
+	return ""
+}
+
 func (r *rule) String() string {
 	columns := []string{}
 	for _, qc := range r.projection {

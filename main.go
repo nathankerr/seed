@@ -16,6 +16,10 @@ import (
 func main() {
 	var outputdir = *flag.String("o", "bud",
 		"directory name to create and output the bud source")
+	var network = flag.Bool("network", true,
+		"add network interface")
+	var replicate = flag.Bool("replicate", true,
+		"replicate tables")
 	var dot = flag.Bool("dot", false,
 		"also produce dot (graphviz) files)")
 	flag.Usage = func() {
@@ -32,6 +36,7 @@ func main() {
 	}
 
 	seeds := make(map[string]*service)
+	var transformed map[string]*service
 
 	for _, filename := range flag.Args() {
 		filename = filepath.Clean(filename)
@@ -51,46 +56,40 @@ func main() {
 		seeds[name] = seed
 	}
 
-	// for sname, seed := range seeds {
-	// 	info("seed:", sname, seed)
-	// }
+	if *network {
+		info("Add Network Interface")
+		transformed := make(map[string]*service)
+		for sname, seed := range seeds {
+			groups := getGroups(sname, seed)
 
-	info("Add Network Interface")
-	buds := make(map[string]*service)
-	for sname, seed := range seeds {
-		groups := getGroups(sname, seed)
-
-		for _, group := range groups {
-			switch group.typ() {
-			case "000", "010", "0n0", "100", "n00": // not possible
-				panic(group.typ())
-			case "011", "01n", "0n1", "0nn": // not input driven (not handled)
-				panic(group.typ())
-			case "001", "00n", "101", "10n", "n01", "n0n", // passthrough
-				"110", "111", "11n", // single output
-				"1n0", "1n1", "1nn", // multiple output
-				"n10", "n11", "n1n", "nn0", "nn1", "nnn": // multiple input
-				buds = add_network_interface(buds, group, seed, sname)
-			default:
-				// shouldn't get here
-				panic(group.typ())
+			for _, group := range groups {
+				switch group.typ() {
+				case "000", "010", "0n0", "100", "n00": // not possible
+					panic(group.typ())
+				case "011", "01n", "0n1", "0nn": // not input driven (not handled)
+					panic(group.typ())
+				case "001", "00n", "101", "10n", "n01", "n0n", // passthrough
+					"110", "111", "11n", // single output
+					"1n0", "1n1", "1nn", // multiple output
+					"n10", "n11", "n1n", "nn0", "nn1", "nnn": // multiple input
+					transformed = add_network_interface(transformed, group, seed, sname)
+				default:
+					// shouldn't get here
+					panic(group.typ())
+				}
 			}
 		}
+		seeds = transformed
 	}
 
-	// for sname, seed := range seeds {
-	// 	info("seed:", sname, seed)
-	// }
-
-	info("Add Replicated Tables")
-	replicated := make(map[string]*service)
-	for bname, bud := range buds {
-		replicated = add_replicated_tables(bname, bud, replicated)
+	if *replicate {
+		info("Add Replicated Tables")
+		transformed = make(map[string]*service)
+		for sname, seed := range seeds {
+			transformed = add_replicated_tables(sname, seed, transformed)
+		}
+		seeds = transformed
 	}
-
-	// for sname, seed := range replicated {
-	// 	info("seed:", sname, seed)
-	// }
 
 	info("Write Ruby")
 	outputdir = filepath.Clean(outputdir)
@@ -99,7 +98,7 @@ func main() {
 		fatal(err)
 	}
 
-	for name, bud := range replicated {
+	for name, bud := range seeds {
 		filename := filepath.Join(outputdir, strings.ToLower(name)+".rb")
 		out, err := os.Create(filename)
 		if err != nil {
@@ -118,7 +117,7 @@ func main() {
 	if *dot {
 		info("Write Dot")
 
-		for name, bud := range replicated {
+		for name, bud := range seeds {
 			filename := filepath.Join(outputdir, strings.ToLower(name)+".dot")
 			out, err := os.Create(filename)
 			if err != nil {

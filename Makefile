@@ -1,9 +1,9 @@
 .PHONY: all
 all: seed
 	-rm -rf bud
-	./seed -dot kvs.seed
-	dot -o kvsserver.pdf -T pdf bud/kvsserver.dot
-	open kvsserver.pdf
+	./seed -dot -network=false -replicate=false kvs.seed
+	dot -O -T pdf bud/*.dot
+	open bud/*.pdf
 
 seed: *.go kvs.seed
 	go build -o seed

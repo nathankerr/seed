@@ -4,7 +4,8 @@ import (
 	"fmt"
 )
 
-func add_replicated_tables(name string, orig *service, services map[string]*service) map[string]*service {
+// partitioned 
+func add_partitioned_tables(name string, orig *service, services map[string]*service) map[string]*service {
 	info()
 
 	// find an existing service to modify or create a new one
@@ -21,10 +22,10 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 		}
 
 		// create the table for replicants of this table
-		replicants_name := fmt.Sprintf("%s_replicants", tname)
+		replicants_name := fmt.Sprintf("%s_partitions", tname)
 		seed.collections[replicants_name] = &collection{
 			ctype:  collectionTable,
-			key:    []string{"address"},
+			key:    []string{"part", "address"},
 			source: table.source,
 		}
 
@@ -52,7 +53,13 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			}
 			seed.collections[channel_name] = channel
 
+			// alternative design:
+			// intercept table -> channel -> table
+			// partitions table holds all partitions, including the local one
+			// second rule does not check part.
+
 			// rule to forward scratch to table
+			// TODO: only forward to table if in this partition
 			scratch_to_table := &rule{
 				supplies:  tname,
 				operation: "<+",
@@ -75,6 +82,7 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			seed.rules = append(seed.rules, scratch_to_table)
 
 			// rule to forward scratch to channel
+			// TODO: rule needs to check partition and send to those of the correct partition
 			scratch_to_channel := &rule{
 				supplies:  channel_name,
 				operation: "<~",
@@ -136,7 +144,7 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 
 	// rewrite and append rules from orig
 	for _, rule := range orig.rules {
-		// info(rule)
+		info(rule)
 		// rewrite rules feeding tables
 		if orig.collections[rule.supplies].ctype == collectionTable {
 			switch rule.operation {
