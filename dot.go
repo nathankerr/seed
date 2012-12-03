@@ -6,7 +6,7 @@ import (
 )
 
 func (s *service) toDot(name string) string {
-	dot := fmt.Sprintf("digraph %s {", name)
+	dot := fmt.Sprintf("digraph %s { margin=\"0\" size=\"4.5,7.1\" ", name)
 
 	for cname, collection := range s.collections {
 		columns := collection.key
