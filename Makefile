@@ -1,11 +1,7 @@
-first: figures
-
 .PHONY: all
 all: seed
 	-rm -rf bud
-	./seed -dot -network=true -replicate=true kvs.seed
-	dot -O -T pdf bud/*.dot
-	open bud/*.pdf
+	./seed kvs.seed
 
 seed: *.go kvs.seed
 	go build -o seed

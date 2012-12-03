@@ -5,29 +5,26 @@ import (
 )
 
 // adds a network interface by adding and handling explicit correlation data
-func add_network_interface(buds map[string]*service, group *group,
-	seed *service, sname string) map[string]*service {
+func add_network_interface(sname string, seed *service, transformed map[string]*service) map[string]*service {
 	info()
 
 	sname = strings.Title(sname) + "Server"
 
-	bud, ok := buds[sname]
+	new_seed, ok := transformed[sname]
 	if !ok {
-		bud = &service{collections: make(map[string]*collection)}
+		new_seed = &service{collections: make(map[string]*collection)}
 	}
 
 	// name the output address columns
 	output_addrs := []string{}
-	for name, _ := range group.collections {
-		collection := seed.collections[name]
+	for name, collection := range seed.collections {
 		if collection.ctype == collectionOutput {
 			output_addrs = append(output_addrs, name+"_addr")
 		}
 	}
 
 	// Add correlation information to the collections
-	for name, _ := range group.collections {
-		collection := seed.collections[name]
+	for name, collection := range seed.collections {
 		switch collection.ctype {
 		case collectionInput:
 			// add output_addrs to the beginning of key
@@ -51,15 +48,13 @@ func add_network_interface(buds map[string]*service, group *group,
 			// should not get here
 			panic(collection.ctype)
 		}
-		bud.collections[name] = collection
+		new_seed.collections[name] = collection
 
-		buds[sname] = bud
+		transformed[sname] = new_seed
 	}
 
 	// rewrite the rules to take the correlation data into account
-	for _, rulenum := range group.rules {
-		rule := seed.rules[rulenum]
-
+	for _, rule := range seed.rules {
 		inputs := []string{}
 		for _, name := range rule.collections() {
 			if seed.collections[name].ctype == collectionInput {
@@ -103,11 +98,11 @@ func add_network_interface(buds map[string]*service, group *group,
 			panic(seed.collections[rule.supplies].ctype)
 		}
 
-		bud.rules = append(bud.rules, rule)
+		new_seed.rules = append(new_seed.rules, rule)
 	}
 
 	// convert the inputs and outputs into channels
-	for _, collection := range bud.collections {
+	for _, collection := range new_seed.collections {
 		switch collection.ctype {
 		case collectionInput, collectionOutput:
 			collection.ctype = collectionChannel
@@ -119,5 +114,5 @@ func add_network_interface(buds map[string]*service, group *group,
 		}
 	}
 
-	return buds
+	return transformed
 }
