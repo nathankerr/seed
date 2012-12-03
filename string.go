@@ -6,25 +6,25 @@ import (
 )
 
 func (qc qualifiedColumn) String() string {
-	return fmt.Sprintf("%s.%s", qc.collection, qc.column)
+	return fmt.Sprintf("%s.%s", qc.Collection, qc.Column)
 }
 
 func (c *constraint) String() string {
-	return fmt.Sprintf("%s => %s", c.left.String(), c.right.String())
+	return fmt.Sprintf("%s => %s", c.Left.String(), c.Right.String())
 }
 
 func (s source) String() string {
-	return fmt.Sprint(s.name, ":", s.line)
+	return fmt.Sprint(s.Name, ":", s.Line)
 }
 
 func (s *service) String() string {
 	str := "\nCollections:"
-	for cname, collection := range s.collections {
+	for cname, collection := range s.Collections {
 		str = fmt.Sprintf("%s\n\t%s", str, collection.String(cname))
 	}
 
 	str = fmt.Sprintf("%s\nRules:", str)
-	for rnum, rule := range s.rules {
+	for rnum, rule := range s.Rules {
 		str = fmt.Sprintf("%s\n%d\t%s", str, rnum, rule)
 	}
 
@@ -33,7 +33,7 @@ func (s *service) String() string {
 
 func (c *collection) String(cname string) string {
 	var ctype string
-	switch c.ctype {
+	switch c.Type {
 	case collectionInput:
 		ctype = "input"
 	case collectionOutput:
@@ -46,19 +46,19 @@ func (c *collection) String(cname string) string {
 		ctype = "scratch"
 	default:
 		// shouldn't get here
-		panic(c.ctype)
+		panic(c.Type)
 	}
 
 	var key string
-	if len(c.key) > 0 {
+	if len(c.Key) > 0 {
 		key = fmt.Sprintf("[%s]",
-			strings.Join(c.key, ", "))
+			strings.Join(c.Key, ", "))
 	}
 
 	var values string
-	if len(c.data) > 0 {
+	if len(c.Data) > 0 {
 		values = fmt.Sprintf("=> [%s]",
-			strings.Join(c.data, ", "))
+			strings.Join(c.Data, ", "))
 	}
 
 	return fmt.Sprintf("%s %s %s %s",
@@ -90,7 +90,7 @@ func (ctype collectionType) String() string {
 
 func (r *rule) String() string {
 	columns := []string{}
-	for _, qc := range r.projection {
+	for _, qc := range r.Projection {
 		columns = append(columns,
 			fmt.Sprintf("%s", qc))
 	}
@@ -99,21 +99,21 @@ func (r *rule) String() string {
 	)
 
 	predicates := []string{}
-	for _, c := range r.predicate {
+	for _, c := range r.Predicate {
 		predicates = append(predicates,
-			fmt.Sprintf("%v => %s", c.left, c.right),
+			fmt.Sprintf("%v => %s", c.Left, c.Right),
 		)
 	}
 	predicate := ""
-	if len(r.predicate) > 0 {
+	if len(r.Predicate) > 0 {
 		predicate = fmt.Sprintf(": %s",
 			strings.Join(predicates, ", "),
 		)
 	}
 
 	return fmt.Sprintf("%s %s %s%s",
-		r.supplies,
-		r.operation,
+		r.Supplies,
+		r.Operation,
 		projection,
 		predicate,
 	)

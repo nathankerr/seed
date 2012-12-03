@@ -12,52 +12,52 @@ func add_network_interface(sname string, seed *service, transformed map[string]*
 
 	new_seed, ok := transformed[sname]
 	if !ok {
-		new_seed = &service{collections: make(map[string]*collection)}
+		new_seed = &service{Collections: make(map[string]*collection)}
 	}
 
 	// name the output address columns
 	output_addrs := []string{}
-	for name, collection := range seed.collections {
-		if collection.ctype == collectionOutput {
+	for name, collection := range seed.Collections {
+		if collection.Type == collectionOutput {
 			output_addrs = append(output_addrs, name+"_addr")
 		}
 	}
 
 	// Add correlation information to the collections
-	for name, collection := range seed.collections {
-		switch collection.ctype {
+	for name, collection := range seed.Collections {
+		switch collection.Type {
 		case collectionInput:
 			// add output_addrs to the beginning of key
 			key := []string{"@address"}
 			for _, output_addr := range output_addrs {
 				key = append(key, output_addr)
 			}
-			for _, ckey := range collection.key {
+			for _, ckey := range collection.Key {
 				key = append(key, ckey)
 			}
-			collection.key = key
+			collection.Key = key
 		case collectionOutput:
 			key := []string{"@" + name + "_addr"}
-			for _, ckey := range collection.key {
+			for _, ckey := range collection.Key {
 				key = append(key, ckey)
 			}
-			collection.key = key
+			collection.Key = key
 		case collectionTable:
 			// no-op
 		default:
 			// should not get here
-			panic(collection.ctype)
+			panic(collection.Type)
 		}
-		new_seed.collections[name] = collection
+		new_seed.Collections[name] = collection
 
 		transformed[sname] = new_seed
 	}
 
 	// rewrite the rules to take the correlation data into account
-	for _, rule := range seed.rules {
+	for _, rule := range seed.Rules {
 		inputs := []string{}
 		for _, name := range rule.collections() {
-			if seed.collections[name].ctype == collectionInput {
+			if seed.Collections[name].Type == collectionInput {
 				inputs = append(inputs, name)
 			}
 		}
@@ -65,52 +65,52 @@ func add_network_interface(sname string, seed *service, transformed map[string]*
 		// The correlation data needs to be matched in the predicates
 		for i := 1; i < len(inputs); i++ {
 			for _, output_addr := range output_addrs {
-				rule.predicate = append(rule.predicate, constraint{
-					left: qualifiedColumn{
-						collection: inputs[0],
-						column:     output_addr},
-					right: qualifiedColumn{
-						collection: inputs[i],
-						column:     output_addr},
+				rule.Predicate = append(rule.Predicate, constraint{
+					Left: qualifiedColumn{
+						Collection: inputs[0],
+						Column:     output_addr},
+					Right: qualifiedColumn{
+						Collection: inputs[i],
+						Column:     output_addr},
 				})
 			}
 		}
 
-		switch seed.collections[rule.supplies].ctype {
+		switch seed.Collections[rule.Supplies].Type {
 		case collectionOutput:
 			// convert to async insert as required by channels
-			rule.operation = "<~"
+			rule.Operation = "<~"
 			// add correlation data to projection
 			projection := []qualifiedColumn{}
 			if len(inputs) > 0 {
 				projection = append(projection, qualifiedColumn{
-					collection: inputs[0],
-					column:     rule.supplies + "_addr"})
+					Collection: inputs[0],
+					Column:     rule.Supplies + "_addr"})
 			}
-			for _, o := range rule.projection {
+			for _, o := range rule.Projection {
 				projection = append(projection, o)
 			}
-			rule.projection = projection
+			rule.Projection = projection
 		case collectionTable:
 			// no-op
 		default:
 			// should not get here
-			panic(seed.collections[rule.supplies].ctype)
+			panic(seed.Collections[rule.Supplies].Type)
 		}
 
-		new_seed.rules = append(new_seed.rules, rule)
+		new_seed.Rules = append(new_seed.Rules, rule)
 	}
 
 	// convert the inputs and outputs into channels
-	for _, collection := range new_seed.collections {
-		switch collection.ctype {
+	for _, collection := range new_seed.Collections {
+		switch collection.Type {
 		case collectionInput, collectionOutput:
-			collection.ctype = collectionChannel
+			collection.Type = collectionChannel
 		case collectionChannel, collectionTable:
 			// no-op
 		default:
 			// shouldn't get here
-			panic(collection.ctype)
+			panic(collection.Type)
 		}
 	}
 

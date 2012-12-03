@@ -11,15 +11,15 @@ func (s *service) toRuby(name string) string {
 	str := fmt.Sprintf("module %s\n", name)
 
 	str = fmt.Sprintf("%s  state do\n", str)
-	for cname, collection := range s.collections {
+	for cname, collection := range s.Collections {
 		str = fmt.Sprintf("%s    %s #%s\n", str, collection.Ruby(cname),
-			collection.source)
+			collection.Source)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
 
 	str = fmt.Sprintf("%s\n  bloom do\n", str)
-	for rule_num, rule := range s.rules {
-		str = fmt.Sprintf("%s    %s #%s rule %d\n", str, rule.Ruby(), rule.source, rule_num)
+	for rule_num, rule := range s.Rules {
+		str = fmt.Sprintf("%s    %s #%s rule %d\n", str, rule.Ruby(), rule.Source, rule_num)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
 
@@ -42,19 +42,19 @@ func (r *rule) Ruby() string {
 	}
 
 	output := []string{}
-	for _, o := range r.projection {
+	for _, o := range r.Projection {
 		output = append(output,
-			fmt.Sprintf("%s.%s", index[o.collection], o.column))
+			fmt.Sprintf("%s.%s", index[o.Collection], o.Column))
 	}
 
 	if len(collections) == 1 {
 		selecter = fmt.Sprintf("%s do |%s| [%s] end",
-			r.projection[0].collection,
+			r.Projection[0].Collection,
 			strings.Join(names, ", "),
 			strings.Join(output, ", "))
 	} else {
 		predicates := []string{}
-		for _, p := range r.predicate {
+		for _, p := range r.Predicate {
 			predicates = append(predicates, p.String())
 		}
 
@@ -68,35 +68,35 @@ func (r *rule) Ruby() string {
 	// at this point, str contains the translation of the join and projection
 	// ([]: =>) specifier. If there is a block, this needs to be put into a
 	// scratch and then the scratch needs the block to be applied to it
-	if len(r.block) > 0 {
-		scratch_name := r.source.name[:len(r.source.name)-
-			len(filepath.Ext(r.source.name))]
+	if len(r.Block) > 0 {
+		scratch_name := r.Source.Name[:len(r.Source.Name)-
+			len(filepath.Ext(r.Source.Name))]
 		scratch_name = fmt.Sprintf("%s%d_scratch",
-			scratch_name, r.source.line)
+			scratch_name, r.Source.Line)
 		scratch := fmt.Sprintf("temp :%s <= %s #%s",
-			scratch_name, selecter, r.source)
-		indented_block := strings.Replace(r.block, "\n", "\n\t\t", -1)
-		if r.block[0] == 'm' {
+			scratch_name, selecter, r.Source)
+		indented_block := strings.Replace(r.Block, "\n", "\n\t\t", -1)
+		if r.Block[0] == 'm' {
 			// map block
 			return fmt.Sprintf("%s\n\t\t%s %s %s %s",
-				scratch, r.supplies, r.operation, scratch_name, indented_block)
+				scratch, r.Supplies, r.Operation, scratch_name, indented_block)
 		} else {
 			// reduce block
 			return fmt.Sprintf("%s\n\t\t%s %s %s.reduce({}) do %s", scratch,
-				r.supplies, r.operation, scratch_name, indented_block[7:])
+				r.Supplies, r.Operation, scratch_name, indented_block[7:])
 		}
 	}
 
 	return fmt.Sprintf("%s %s %s",
-		r.supplies,
-		r.operation,
+		r.Supplies,
+		r.Operation,
 		selecter)
 }
 
 func (c *collection) Ruby(name string) string {
 	declaration := ""
 
-	switch c.ctype {
+	switch c.Type {
 	case collectionInput:
 		declaration += "interface input,"
 	case collectionOutput:
@@ -109,19 +109,19 @@ func (c *collection) Ruby(name string) string {
 		declaration += "scratch"
 	default:
 		// shouldn't get here
-		panic(c.ctype)
+		panic(c.Type)
 	}
 
 	declaration += fmt.Sprintf(" :%s, [", name)
 
-	for _, v := range c.key {
+	for _, v := range c.Key {
 		declaration += fmt.Sprintf(":%s, ", v)
 	}
 
-	if len(c.data) > 0 {
+	if len(c.Data) > 0 {
 		declaration = declaration[:len(declaration)-2] + "] => ["
 
-		for _, v := range c.data {
+		for _, v := range c.Data {
 			declaration += fmt.Sprintf(":%s, ", v)
 		}
 

@@ -31,8 +31,8 @@ func (p *parser) backup() {
 
 func parse(name, input string) *service {
 	p := &parser{}
-	p.s = &service{collections: make(map[string]*collection)}
-	p.s.source = source{name: name}
+	p.s = &service{Collections: make(map[string]*collection)}
+	p.s.Source = source{Name: name}
 
 	l := newLexer(name, input)
 	go l.run()
@@ -93,23 +93,23 @@ func parseCollection(p *parser) parsefn {
 	name := i.val
 
 	collection := new(collection)
-	collection.key = parseArray(p)
+	collection.Key = parseArray(p)
 
 	i = p.next()
 	if i.typ == itemKeyRelation {
 		columns := parseArray(p)
-		collection.data = columns
+		collection.Data = columns
 	} else {
 		p.backup()
 	}
 
-	if _, ok := p.s.collections[name]; ok {
+	if _, ok := p.s.Collections[name]; ok {
 		fatal("collection", name, "already exists")
 	}
 
-	collection.source = i.source
-	collection.ctype = collectionType
-	p.s.collections[name] = collection
+	collection.Source = i.source
+	collection.Type = collectionType
+	p.s.Collections[name] = collection
 
 	return parseSeed
 }
@@ -158,14 +158,14 @@ func parseRule(p *parser) parsefn {
 
 	// destination
 	destination := p.i
-	r := &rule{source: destination.source}
-	r.supplies = destination.val
+	r := &rule{Source: destination.source}
+	r.Supplies = destination.val
 
 	// operation
 	operation := p.next()
 	switch operation.typ {
 	case itemOperation:
-		r.operation = operation.val
+		r.Operation = operation.val
 	default:
 		fatal("expected an operation, got ", operation)
 	}
@@ -178,7 +178,7 @@ func parseRule(p *parser) parsefn {
 	// get the array contents
 	for {
 		column := parseQualifiedColumn(p)
-		r.projection = append(r.projection, column)
+		r.Projection = append(r.Projection, column)
 
 		if p.next().typ != itemArrayDelimter {
 			break
@@ -202,8 +202,8 @@ func parseRule(p *parser) parsefn {
 
 			right := parseQualifiedColumn(p)
 
-			r.predicate = append(r.predicate,
-				constraint{left: left, right: right})
+			r.Predicate = append(r.Predicate,
+				constraint{Left: left, Right: right})
 
 			if p.next().typ != itemArrayDelimter {
 				p.backup()
@@ -222,7 +222,7 @@ func parseRule(p *parser) parsefn {
 			reduce = true
 		}
 
-		r.block = p.i.val
+		r.Block = p.i.val
 
 		if p.next().typ != itemPipe {
 			fatal("expected '|', got", p.i)
@@ -231,7 +231,7 @@ func parseRule(p *parser) parsefn {
 		if p.next().typ != itemIdentifier {
 			fatal("expected identifier, got", p.i)
 		}
-		r.block = fmt.Sprintf("%s |%s", r.block, p.i.val)
+		r.Block = fmt.Sprintf("%s |%s", r.Block, p.i.val)
 
 		// reduce has two arguments
 		if reduce {
@@ -243,7 +243,7 @@ func parseRule(p *parser) parsefn {
 				fatal("expected identifier, got", p.i)
 			}
 
-			r.block = fmt.Sprintf("%s, %s", r.block, p.i.val)
+			r.Block = fmt.Sprintf("%s, %s", r.Block, p.i.val)
 		}
 
 		if p.next().typ != itemPipe {
@@ -253,7 +253,7 @@ func parseRule(p *parser) parsefn {
 		if p.next().typ != itemRuby {
 			fatal("expected ruby, got", p.i)
 		}
-		r.block = fmt.Sprintf("%s|\n\t%s\nend", r.block, p.i.val)
+		r.Block = fmt.Sprintf("%s|\n\t%s\nend", r.Block, p.i.val)
 
 		if p.next().typ != itemEnd {
 			fatal("expected 'end', got", p.i)
@@ -262,7 +262,7 @@ func parseRule(p *parser) parsefn {
 		p.backup()
 	}
 
-	p.s.rules = append(p.s.rules, r)
+	p.s.Rules = append(p.s.Rules, r)
 	return parseSeed
 }
 
@@ -283,5 +283,5 @@ func parseQualifiedColumn(p *parser) qualifiedColumn {
 		fatal("expected identifier, got", column)
 	}
 
-	return qualifiedColumn{collection: collection.val, column: column.val}
+	return qualifiedColumn{Collection: collection.val, Column: column.val}
 }

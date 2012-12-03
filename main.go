@@ -22,6 +22,8 @@ func main() {
 		"replicate tables")
 	var dot = flag.Bool("dot", false,
 		"also produce dot (graphviz) files)")
+	var json = flag.Bool("json", false,
+		"produce json versions of the services")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -108,6 +110,26 @@ func main() {
 			}
 
 			ruby := bud.toDot(name)
+			_, err = out.Write([]byte(ruby))
+			if err != nil {
+				fatal(err)
+			}
+
+			out.Close()
+		}
+	}
+
+	if *json {
+		info("Write json")
+
+		for name, bud := range seeds {
+			filename := filepath.Join(outputdir, strings.ToLower(name)+".json")
+			out, err := os.Create(filename)
+			if err != nil {
+				fatal(err)
+			}
+
+			ruby := bud.toJson(name)
 			_, err = out.Write([]byte(ruby))
 			if err != nil {
 				fatal(err)

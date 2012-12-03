@@ -10,150 +10,150 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 	// find an existing service to modify or create a new one
 	seed, ok := services[name]
 	if !ok {
-		seed = &service{collections: make(map[string]*collection)}
+		seed = &service{Collections: make(map[string]*collection)}
 	}
 
 	// add helper tables, rules
-	for tname, table := range orig.collections {
-		seed.collections[tname] = table
-		if table.ctype != collectionTable {
+	for tname, table := range orig.Collections {
+		seed.Collections[tname] = table
+		if table.Type != collectionTable {
 			continue
 		}
 
 		// create the table for replicants of this table
 		replicants_name := fmt.Sprintf("%s_replicants", tname)
-		seed.collections[replicants_name] = &collection{
-			ctype:  collectionTable,
-			key:    []string{"address"},
-			source: table.source,
+		seed.Collections[replicants_name] = &collection{
+			Type:   collectionTable,
+			Key:    []string{"address"},
+			Source: table.Source,
 		}
 
 		// add collections needed to handle each operation type
 		for _, operation := range []string{"insert", "delete", "update"} {
 			// scratch used to intercept the table operation
 			scratch_name := fmt.Sprintf("%s_%s", tname, operation)
-			seed.collections[scratch_name] = &collection{
-				ctype:  collectionScratch,
-				key:    table.key,
-				data:   table.data,
-				source: table.source,
+			seed.Collections[scratch_name] = &collection{
+				Type:   collectionScratch,
+				Key:    table.Key,
+				Data:   table.Data,
+				Source: table.Source,
 			}
 
 			// channel used for inter-replicant communication
 			channel_name := fmt.Sprintf("%s_%s_channel", tname, operation)
 			channel := &collection{
-				ctype:  collectionChannel,
-				key:    []string{"@address"},
-				data:   table.data,
-				source: table.source,
+				Type:   collectionChannel,
+				Key:    []string{"@address"},
+				Data:   table.Data,
+				Source: table.Source,
 			}
-			for _, column := range table.key {
-				channel.key = append(channel.key, column)
+			for _, column := range table.Key {
+				channel.Key = append(channel.Key, column)
 			}
-			seed.collections[channel_name] = channel
+			seed.Collections[channel_name] = channel
 
 			// rule to forward scratch to table
 			scratch_to_table := &rule{
-				supplies:  tname,
-				operation: "<+",
-				source:    table.source,
+				Supplies:  tname,
+				Operation: "<+",
+				Source:    table.Source,
 			}
-			for _, column := range table.key {
-				scratch_to_table.projection = append(scratch_to_table.projection,
+			for _, column := range table.Key {
+				scratch_to_table.Projection = append(scratch_to_table.Projection,
 					qualifiedColumn{
-						collection: scratch_name,
-						column:     column,
+						Collection: scratch_name,
+						Column:     column,
 					})
 			}
-			for _, column := range table.data {
-				scratch_to_table.projection = append(scratch_to_table.projection,
+			for _, column := range table.Data {
+				scratch_to_table.Projection = append(scratch_to_table.Projection,
 					qualifiedColumn{
-						collection: scratch_name,
-						column:     column,
+						Collection: scratch_name,
+						Column:     column,
 					})
 			}
-			seed.rules = append(seed.rules, scratch_to_table)
+			seed.Rules = append(seed.Rules, scratch_to_table)
 
 			// rule to forward scratch to channel
 			scratch_to_channel := &rule{
-				supplies:  channel_name,
-				operation: "<~",
-				projection: []qualifiedColumn{qualifiedColumn{
-					collection: replicants_name,
-					column:     "address",
+				Supplies:  channel_name,
+				Operation: "<~",
+				Projection: []qualifiedColumn{qualifiedColumn{
+					Collection: replicants_name,
+					Column:     "address",
 				}},
-				source: table.source,
+				Source: table.Source,
 			}
-			for _, column := range table.key {
-				scratch_to_channel.projection = append(scratch_to_channel.projection,
+			for _, column := range table.Key {
+				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
 					qualifiedColumn{
-						collection: scratch_name,
-						column:     column,
+						Collection: scratch_name,
+						Column:     column,
 					})
 			}
-			for _, column := range table.data {
-				scratch_to_channel.projection = append(scratch_to_channel.projection,
+			for _, column := range table.Data {
+				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
 					qualifiedColumn{
-						collection: scratch_name,
-						column:     column,
+						Collection: scratch_name,
+						Column:     column,
 					})
 			}
-			seed.rules = append(seed.rules, scratch_to_channel)
+			seed.Rules = append(seed.Rules, scratch_to_channel)
 
 			// rule to forward channel to table
 			channel_to_table := &rule{
-				supplies: tname,
-				source:   table.source,
+				Supplies: tname,
+				Source:   table.Source,
 			}
 			switch operation {
 			case "insert":
-				channel_to_table.operation = "<+"
+				channel_to_table.Operation = "<+"
 			case "delete":
-				channel_to_table.operation = "<-"
+				channel_to_table.Operation = "<-"
 			case "update":
-				channel_to_table.operation = "<+-"
+				channel_to_table.Operation = "<+-"
 			default:
 				// shouldn't get here
 				panic(operation)
 			}
-			for _, column := range table.key {
-				channel_to_table.projection = append(channel_to_table.projection,
+			for _, column := range table.Key {
+				channel_to_table.Projection = append(channel_to_table.Projection,
 					qualifiedColumn{
-						collection: channel_name,
-						column:     column,
+						Collection: channel_name,
+						Column:     column,
 					})
 			}
-			for _, column := range table.data {
-				channel_to_table.projection = append(channel_to_table.projection,
+			for _, column := range table.Data {
+				channel_to_table.Projection = append(channel_to_table.Projection,
 					qualifiedColumn{
-						collection: channel_name,
-						column:     column,
+						Collection: channel_name,
+						Column:     column,
 					})
 			}
-			seed.rules = append(seed.rules, channel_to_table)
+			seed.Rules = append(seed.Rules, channel_to_table)
 		}
 	}
 
 	// rewrite and append rules from orig
-	for _, rule := range orig.rules {
+	for _, rule := range orig.Rules {
 		// info(rule)
 		// rewrite rules feeding tables
-		if orig.collections[rule.supplies].ctype == collectionTable {
-			switch rule.operation {
+		if orig.Collections[rule.Supplies].Type == collectionTable {
+			switch rule.Operation {
 			case "<+":
-				rule.supplies += "_insert"
+				rule.Supplies += "_insert"
 			case "<-":
-				rule.supplies += "_delete"
+				rule.Supplies += "_delete"
 			case "<+-":
-				rule.supplies += "_update"
+				rule.Supplies += "_update"
 			default:
 				// shouldn't get here
-				panic(rule.operation)
+				panic(rule.Operation)
 			}
-			rule.operation = "<="
+			rule.Operation = "<="
 		}
 
-		seed.rules = append(seed.rules, rule)
+		seed.Rules = append(seed.Rules, rule)
 	}
 
 	services[name] = seed

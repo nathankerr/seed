@@ -1,16 +1,16 @@
 package main
 
 type service struct {
-	collections map[string]*collection // string is same as collection.name
-	rules       []*rule
-	source      source
+	Collections map[string]*collection // string is same as collection.name
+	Rules       []*rule
+	Source      source
 }
 
 type collection struct {
-	ctype  collectionType
-	key    []string
-	data   []string
-	source source
+	Type   collectionType
+	Key    []string
+	Data   []string
+	Source source
 }
 
 type collectionType int
@@ -24,33 +24,28 @@ const (
 )
 
 type rule struct {
-	supplies   string
-	operation  string
-	projection []qualifiedColumn
-	predicate  []constraint
-	block      string
-	source     source
+	Supplies   string
+	Operation  string
+	Projection []qualifiedColumn
+	Predicate  []constraint
+	Block      string
+	Source     source
 }
 
 type qualifiedColumn struct {
-	collection string
-	column     string
-	source     source
+	Collection string
+	Column     string
+	Source     source
 }
 
 type constraint struct {
-	left   qualifiedColumn
-	right  qualifiedColumn
-	source source
+	Left   qualifiedColumn
+	Right  qualifiedColumn
+	Source source
 }
 
 type source struct {
-	name   string
-	line   int
-	column int
-}
-
-type group struct {
-	rules       []int
-	collections map[string]collectionType
+	Name   string
+	Line   int
+	Column int
 }

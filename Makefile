@@ -1,7 +1,7 @@
 .PHONY: all
 all: seed
 	-rm -rf bud
-	./seed -dot kvs.seed
+	./seed -dot -json kvs.seed
 
 seed: *.go kvs.seed
 	go build -o seed
