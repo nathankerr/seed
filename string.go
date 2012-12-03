@@ -50,7 +50,7 @@ func (c *collection) String(cname string) string {
 	}
 
 	var key string
-	if len(c.key) > 0  {
+	if len(c.key) > 0 {
 		key = fmt.Sprintf("[%s]",
 			strings.Join(c.key, ", "))
 	}
