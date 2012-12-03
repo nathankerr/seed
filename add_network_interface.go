@@ -106,5 +106,18 @@ func add_network_interface(buds map[string]*service, group *group,
 		bud.rules = append(bud.rules, rule)
 	}
 
+	// convert the inputs and outputs into channels
+	for _, collection := range bud.collections {
+		switch collection.ctype {
+		case collectionInput, collectionOutput:
+			collection.ctype = collectionChannel
+		case collectionChannel, collectionTable:
+			// no-op
+		default:
+			// shouldn't get here
+			panic(collection.ctype)
+		}
+	}
+
 	return buds
 }
