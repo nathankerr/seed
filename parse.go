@@ -32,7 +32,7 @@ func (p *parser) backup() {
 func parse(name, input string) *service {
 	p := &parser{}
 	p.s = &service{Collections: make(map[string]*collection)}
-	p.s.Source = source{Name: name}
+	p.s.Source = source{Name: name, Line: 1, Column: 1}
 
 	l := newLexer(name, input)
 	go l.run()

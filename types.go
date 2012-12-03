@@ -35,13 +35,11 @@ type rule struct {
 type qualifiedColumn struct {
 	Collection string
 	Column     string
-	Source     source
 }
 
 type constraint struct {
-	Left   qualifiedColumn
-	Right  qualifiedColumn
-	Source source
+	Left  qualifiedColumn
+	Right qualifiedColumn
 }
 
 type source struct {

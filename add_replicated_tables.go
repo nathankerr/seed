@@ -10,7 +10,7 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 	// find an existing service to modify or create a new one
 	seed, ok := services[name]
 	if !ok {
-		seed = &service{Collections: make(map[string]*collection)}
+		seed = &service{Collections: make(map[string]*collection), Source: orig.Source}
 	}
 
 	// add helper tables, rules

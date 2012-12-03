@@ -12,7 +12,7 @@ func add_network_interface(sname string, seed *service, transformed map[string]*
 
 	new_seed, ok := transformed[sname]
 	if !ok {
-		new_seed = &service{Collections: make(map[string]*collection)}
+		new_seed = &service{Collections: make(map[string]*collection), Source: seed.Source}
 	}
 
 	// name the output address columns
@@ -85,7 +85,8 @@ func add_network_interface(sname string, seed *service, transformed map[string]*
 			if len(inputs) > 0 {
 				projection = append(projection, qualifiedColumn{
 					Collection: inputs[0],
-					Column:     rule.Supplies + "_addr"})
+					Column:     rule.Supplies + "_addr",
+				})
 			}
 			for _, o := range rule.Projection {
 				projection = append(projection, o)
