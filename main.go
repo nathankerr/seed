@@ -24,6 +24,8 @@ func main() {
 		"also produce dot (graphviz) files)")
 	var json = flag.Bool("json", false,
 		"produce json versions of the services")
+	var model = flag.Bool("model", false,
+		"produce seed like versions of the services")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -131,6 +133,26 @@ func main() {
 
 			ruby := bud.toJson(name)
 			_, err = out.Write([]byte(ruby))
+			if err != nil {
+				fatal(err)
+			}
+
+			out.Close()
+		}
+	}
+
+	if *model {
+		info("Write model")
+
+		for name, bud := range seeds {
+			filename := filepath.Join(outputdir, strings.ToLower(name)+".model")
+			out, err := os.Create(filename)
+			if err != nil {
+				fatal(err)
+			}
+
+			model := bud.toModel(name)
+			_, err = out.Write([]byte(model))
 			if err != nil {
 				fatal(err)
 			}

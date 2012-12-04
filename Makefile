@@ -1,7 +1,7 @@
 .PHONY: all
 all: seed
 	-rm -rf bud
-	./seed -dot -json kvs.seed
+	./seed -dot -json -model kvs.seed
 
 seed: *.go kvs.seed
 	go build -o seed
@@ -13,6 +13,10 @@ print: *.go tmp version.tex
 
 tmp:
 	mkdir tmp
+
+.PHONY: view-figures
+view-figures: figures
+	open "../figures/kvs.dot.pdf" "../figures/kvs-network.dot.pdf" "../figures/kvs-replicated.dot.pdf" "../figures/kvs-network-replicated.dot.pdf"
 
 .PHONY: figures
 figures: seed
@@ -29,7 +33,6 @@ figures: seed
 	./seed -dot -network=true -replicate=true kvs.seed
 	cp bud/kvsserver.dot "../figures/kvs-network-replicated.dot"
 	dot -T pdf -O ../figures/*.dot
-	open "../figures/kvs.dot.pdf" "../figures/kvs-network.dot.pdf" "../figures/kvs-replicated.dot.pdf" "../figures/kvs-network-replicated.dot.pdf"
 
 .PHONY: version.tex
 version.tex:
