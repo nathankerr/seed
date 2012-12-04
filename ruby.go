@@ -7,6 +7,8 @@ import (
 )
 
 func (s *service) toRuby(name string) string {
+	info()
+
 	name = strings.Title(name)
 	str := fmt.Sprintf("module %s\n", name)
 

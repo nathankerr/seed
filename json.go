@@ -5,6 +5,7 @@ import (
 )
 
 func (s *service) toJson(name string) string {
+	info()
 	marshaled, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
 		panic(err)

@@ -6,6 +6,8 @@ import (
 )
 
 func (s *service) toDot(name string) string {
+	info()
+
 	dot := fmt.Sprintf("digraph %s {", name)
 	dot = fmt.Sprintf("%s\n\tmargin=\"0\"", dot)
 	dot = fmt.Sprintf("%s\n\tsize=\"4.5,7.1\"", dot)
