@@ -93,6 +93,7 @@ func parseCollection(p *parser) parsefn {
 	name := i.val
 
 	collection := new(collection)
+	collection.Source = i.source
 	collection.Key = parseArray(p)
 
 	i = p.next()
@@ -107,7 +108,6 @@ func parseCollection(p *parser) parsefn {
 		fatal("collection", name, "already exists")
 	}
 
-	collection.Source = i.source
 	collection.Type = collectionType
 	p.s.Collections[name] = collection
 
