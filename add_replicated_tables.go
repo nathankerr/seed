@@ -54,9 +54,19 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 
 			// rule to forward scratch to table
 			scratch_to_table := &rule{
-				Supplies:  tname,
-				Operation: "<+",
-				Source:    table.Source,
+				Supplies: tname,
+				Source:   table.Source,
+			}
+			switch operation {
+			case "insert":
+				scratch_to_table.Operation = "<+"
+			case "delete":
+				scratch_to_table.Operation = "<-"
+			case "update":
+				scratch_to_table.Operation = "<+-"
+			default:
+				// shouldn't get here
+				panic(operation)
 			}
 			for _, column := range table.Key {
 				scratch_to_table.Projection = append(scratch_to_table.Projection,
