@@ -1,10 +1,10 @@
-package main
+package service
 
 import (
 	"fmt"
 )
 
-func (s *service) toModel(name string) string {
+func (s *Service) ToModel(name string) string {
 	info()
 	var model string
 

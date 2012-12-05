@@ -1,29 +1,30 @@
-package main
+package replication
 
 import (
 	"fmt"
+	"service"
 )
 
-func add_replicated_tables(name string, orig *service, services map[string]*service) map[string]*service {
-	info()
+func Add_replicated_tables(name string, orig *service.Service, services map[string]*service.Service) map[string]*service.Service {
+	// info()
 
 	// find an existing service to modify or create a new one
 	seed, ok := services[name]
 	if !ok {
-		seed = &service{Collections: make(map[string]*collection), Source: orig.Source}
+		seed = &service.Service{Collections: make(map[string]*service.Collection), Source: orig.Source}
 	}
 
 	// add helper tables, rules
 	for tname, table := range orig.Collections {
 		seed.Collections[tname] = table
-		if table.Type != collectionTable {
+		if table.Type != service.CollectionTable {
 			continue
 		}
 
 		// create the table for replicants of this table
 		replicants_name := fmt.Sprintf("%s_replicants", tname)
-		seed.Collections[replicants_name] = &collection{
-			Type:   collectionTable,
+		seed.Collections[replicants_name] = &service.Collection{
+			Type:   service.CollectionTable,
 			Key:    []string{"address"},
 			Source: table.Source,
 		}
@@ -32,8 +33,8 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 		for _, operation := range []string{"insert", "delete", "update"} {
 			// scratch used to intercept the table operation
 			scratch_name := fmt.Sprintf("%s_%s", tname, operation)
-			seed.Collections[scratch_name] = &collection{
-				Type:   collectionScratch,
+			seed.Collections[scratch_name] = &service.Collection{
+				Type:   service.CollectionScratch,
 				Key:    table.Key,
 				Data:   table.Data,
 				Source: table.Source,
@@ -41,8 +42,8 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 
 			// channel used for inter-replicant communication
 			channel_name := fmt.Sprintf("%s_%s_channel", tname, operation)
-			channel := &collection{
-				Type:   collectionChannel,
+			channel := &service.Collection{
+				Type:   service.CollectionChannel,
 				Key:    []string{"@address"},
 				Data:   table.Data,
 				Source: table.Source,
@@ -53,7 +54,7 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			seed.Collections[channel_name] = channel
 
 			// rule to forward scratch to table
-			scratch_to_table := &rule{
+			scratch_to_table := &service.Rule{
 				Supplies: tname,
 				Source:   table.Source,
 			}
@@ -70,14 +71,14 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			}
 			for _, column := range table.Key {
 				scratch_to_table.Projection = append(scratch_to_table.Projection,
-					qualifiedColumn{
+					service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					})
 			}
 			for _, column := range table.Data {
 				scratch_to_table.Projection = append(scratch_to_table.Projection,
-					qualifiedColumn{
+					service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					})
@@ -85,10 +86,10 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			seed.Rules = append(seed.Rules, scratch_to_table)
 
 			// rule to forward scratch to channel
-			scratch_to_channel := &rule{
+			scratch_to_channel := &service.Rule{
 				Supplies:  channel_name,
 				Operation: "<~",
-				Projection: []qualifiedColumn{qualifiedColumn{
+				Projection: []service.QualifiedColumn{service.QualifiedColumn{
 					Collection: replicants_name,
 					Column:     "address",
 				}},
@@ -96,14 +97,14 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			}
 			for _, column := range table.Key {
 				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
-					qualifiedColumn{
+					service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					})
 			}
 			for _, column := range table.Data {
 				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
-					qualifiedColumn{
+					service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					})
@@ -111,7 +112,7 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			seed.Rules = append(seed.Rules, scratch_to_channel)
 
 			// rule to forward channel to table
-			channel_to_table := &rule{
+			channel_to_table := &service.Rule{
 				Supplies: tname,
 				Source:   table.Source,
 			}
@@ -128,14 +129,14 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 			}
 			for _, column := range table.Key {
 				channel_to_table.Projection = append(channel_to_table.Projection,
-					qualifiedColumn{
+					service.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
 					})
 			}
 			for _, column := range table.Data {
 				channel_to_table.Projection = append(channel_to_table.Projection,
-					qualifiedColumn{
+					service.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
 					})
@@ -148,7 +149,7 @@ func add_replicated_tables(name string, orig *service, services map[string]*serv
 	for _, rule := range orig.Rules {
 		// info(rule)
 		// rewrite rules feeding tables
-		if orig.Collections[rule.Supplies].Type == collectionTable {
+		if orig.Collections[rule.Supplies].Type == service.CollectionTable {
 			switch rule.Operation {
 			case "<+":
 				rule.Supplies += "_insert"

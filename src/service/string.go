@@ -1,23 +1,23 @@
-package main
+package service
 
 import (
 	"fmt"
 	"strings"
 )
 
-func (qc qualifiedColumn) String() string {
+func (qc QualifiedColumn) String() string {
 	return fmt.Sprintf("%s.%s", qc.Collection, qc.Column)
 }
 
-func (c *constraint) String() string {
+func (c *Constraint) String() string {
 	return fmt.Sprintf("%s => %s", c.Left.String(), c.Right.String())
 }
 
-func (s source) String() string {
+func (s Source) String() string {
 	return fmt.Sprint(s.Name, ":", s.Line)
 }
 
-func (s *service) String() string {
+func (s *Service) String() string {
 	str := "\nCollections:"
 	for cname, collection := range s.Collections {
 		str = fmt.Sprintf("%s\n\t%s", str, collection.String(cname))
@@ -31,18 +31,18 @@ func (s *service) String() string {
 	return str
 }
 
-func (c *collection) String(cname string) string {
+func (c *Collection) String(cname string) string {
 	var ctype string
 	switch c.Type {
-	case collectionInput:
+	case CollectionInput:
 		ctype = "input"
-	case collectionOutput:
+	case CollectionOutput:
 		ctype = "output"
-	case collectionTable:
+	case CollectionTable:
 		ctype = "table"
-	case collectionChannel:
+	case CollectionChannel:
 		ctype = "channel"
-	case collectionScratch:
+	case CollectionScratch:
 		ctype = "scratch"
 	default:
 		// shouldn't get here
@@ -69,17 +69,17 @@ func (c *collection) String(cname string) string {
 	)
 }
 
-func (ctype collectionType) String() string {
+func (ctype CollectionType) String() string {
 	switch ctype {
-	case collectionInput:
+	case CollectionInput:
 		return "input"
-	case collectionOutput:
+	case CollectionOutput:
 		return "output"
-	case collectionTable:
+	case CollectionTable:
 		return "table"
-	case collectionChannel:
+	case CollectionChannel:
 		return "channel"
-	case collectionScratch:
+	case CollectionScratch:
 		return "scratch"
 	default:
 		// shouldn't get here
@@ -88,7 +88,7 @@ func (ctype collectionType) String() string {
 	return ""
 }
 
-func (r *rule) String() string {
+func (r *Rule) String() string {
 	columns := []string{}
 	for _, qc := range r.Projection {
 		columns = append(columns,

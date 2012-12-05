@@ -1,11 +1,11 @@
-package main
+package service
 
 import (
 	"fmt"
 	"strings"
 )
 
-func (s *service) toDot(name string) string {
+func (s *Service) ToDot(name string) string {
 	info()
 
 	dot := fmt.Sprintf("digraph %s {", name)
@@ -28,7 +28,7 @@ func (s *service) toDot(name string) string {
 		rule_name := fmt.Sprintf("rule%d", rule_num)
 		dot = fmt.Sprintf("%s\n\n\t%s [shape=diamond,label=\"rule %d\"] // %s", dot, rule_name, rule_num, rule.Source)
 
-		for _, collection := range rule.requires() {
+		for _, collection := range rule.Requires() {
 			dot = fmt.Sprintf("%s\n\t%s -> %s", dot, collection, rule_name)
 		}
 

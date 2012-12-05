@@ -1,12 +1,12 @@
-package main
+package service
 
-func (r *rule) collections() []string {
+func (r *Rule) Collections() []string {
 	collectionsmap := make(map[string]bool) // map only used for uniqueness
 
 	// supplies
 	collectionsmap[r.Supplies] = true
 
-	for _, requires := range r.requires() {
+	for _, requires := range r.Requires() {
 		collectionsmap[requires] = true
 	}
 
@@ -19,7 +19,7 @@ func (r *rule) collections() []string {
 	return collections
 }
 
-func (r *rule) requires() []string {
+func (r *Rule) Requires() []string {
 	requiresmap := make(map[string]bool) // map only used for uniqueness
 
 	// projection

@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 type parsefn func(p *parser) parsefn
 
 type parser struct {
-	s        *service
+	s        *Service
 	items    chan item
 	i        item // the last item
 	backedup bool // indicates i should be used instead of getting a new item
@@ -29,10 +29,10 @@ func (p *parser) backup() {
 	p.backedup = true
 }
 
-func parse(name, input string) *service {
+func Parse(name, input string) *Service {
 	p := &parser{}
-	p.s = &service{Collections: make(map[string]*collection)}
-	p.s.Source = source{Name: name, Line: 1, Column: 1}
+	p.s = &Service{Collections: make(map[string]*Collection)}
+	p.s.Source = Source{Name: name, Line: 1, Column: 1}
 
 	l := newLexer(name, input)
 	go l.run()
@@ -73,14 +73,14 @@ func parseSeed(p *parser) parsefn {
 func parseCollection(p *parser) parsefn {
 	parseinfo()
 
-	var collectionType collectionType
+	var collectionType CollectionType
 	switch p.i.typ {
 	case itemInput:
-		collectionType = collectionInput
+		collectionType = CollectionInput
 	case itemOutput:
-		collectionType = collectionOutput
+		collectionType = CollectionOutput
 	case itemTable:
-		collectionType = collectionTable
+		collectionType = CollectionTable
 	default:
 		fatal("expected input, output, table, or scratch; got ", p.i)
 	}
@@ -92,7 +92,7 @@ func parseCollection(p *parser) parsefn {
 
 	name := i.val
 
-	collection := new(collection)
+	collection := new(Collection)
 	collection.Source = i.source
 	collection.Key = parseArray(p)
 
@@ -158,7 +158,7 @@ func parseRule(p *parser) parsefn {
 
 	// destination
 	destination := p.i
-	r := &rule{Source: destination.source}
+	r := &Rule{Source: destination.source}
 	r.Supplies = destination.val
 
 	// operation
@@ -203,7 +203,7 @@ func parseRule(p *parser) parsefn {
 			right := parseQualifiedColumn(p)
 
 			r.Predicate = append(r.Predicate,
-				constraint{Left: left, Right: right})
+				Constraint{Left: left, Right: right})
 
 			if p.next().typ != itemArrayDelimter {
 				p.backup()
@@ -266,7 +266,7 @@ func parseRule(p *parser) parsefn {
 	return parseSeed
 }
 
-func parseQualifiedColumn(p *parser) qualifiedColumn {
+func parseQualifiedColumn(p *parser) QualifiedColumn {
 	parseinfo()
 
 	collection := p.next()
@@ -283,5 +283,5 @@ func parseQualifiedColumn(p *parser) qualifiedColumn {
 		fatal("expected identifier, got", column)
 	}
 
-	return qualifiedColumn{Collection: collection.val, Column: column.val}
+	return QualifiedColumn{Collection: collection.val, Column: column.val}
 }

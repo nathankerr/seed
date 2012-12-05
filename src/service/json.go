@@ -1,10 +1,10 @@
-package main
+package service
 
 import (
 	"encoding/json"
 )
 
-func (s *service) toJson(name string) string {
+func (s *Service) ToJson(name string) string {
 	info()
 	marshaled, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
@@ -13,6 +13,6 @@ func (s *service) toJson(name string) string {
 	return string(marshaled)
 }
 
-func (ct collectionType) MarshalJSON() ([]byte, error) {
+func (ct CollectionType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ct.String())
 }

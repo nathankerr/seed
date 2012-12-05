@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (s *service) toRuby(name string) string {
+func (s *Service) ToRuby(name string) string {
 	info()
 
 	name = strings.Title(name)
@@ -30,10 +30,10 @@ func (s *service) toRuby(name string) string {
 	return str
 }
 
-func (r *rule) Ruby() string {
+func (r *Rule) Ruby() string {
 	var selecter string
 
-	collections := r.requires()
+	collections := r.Requires()
 
 	index := make(map[string]string)
 	names := []string{}
@@ -95,19 +95,19 @@ func (r *rule) Ruby() string {
 		selecter)
 }
 
-func (c *collection) Ruby(name string) string {
+func (c *Collection) Ruby(name string) string {
 	declaration := ""
 
 	switch c.Type {
-	case collectionInput:
+	case CollectionInput:
 		declaration += "interface input,"
-	case collectionOutput:
+	case CollectionOutput:
 		declaration += "interface output,"
-	case collectionChannel:
+	case CollectionChannel:
 		declaration += "channel"
-	case collectionTable:
+	case CollectionTable:
 		declaration += "table"
-	case collectionScratch:
+	case CollectionScratch:
 		declaration += "scratch"
 	default:
 		// shouldn't get here

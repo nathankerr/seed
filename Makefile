@@ -1,10 +1,10 @@
 .PHONY: all
 all: seed
 	-rm -rf bud
-	./seed -dot -json -model kvs.seed
+	bin/seed -dot -json -model kvs.seed
 
-seed: *.go kvs.seed
-	go build -o seed
+seed: src/*
+	GOPATH=/Users/alaster/Projects/seed go install seed
 
 print: *.go tmp version.tex
 	./gen-print.sh

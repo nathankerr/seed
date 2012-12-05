@@ -1,7 +1,7 @@
 // lexer for seed language
 // based on http://golang.org/src/pkg/text/template/parse/lex.go
 
-package main
+package service
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 type item struct {
 	typ    itemType
 	val    string
-	source source
+	source Source
 }
 
 func (i item) String() string {
@@ -219,8 +219,8 @@ func (l *lexer) columnNumber() int {
 }
 
 // returns a source struct for the line we are on
-func (l *lexer) source() source {
-	return source{l.name, l.lineNumber(), l.columnNumber()}
+func (l *lexer) source() Source {
+	return Source{l.name, l.lineNumber(), l.columnNumber()}
 }
 
 // run lexes the input by executing state functions

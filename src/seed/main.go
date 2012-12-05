@@ -1,5 +1,6 @@
 package main
 
+// standard packages
 import (
 	"flag"
 	"fmt"
@@ -7,6 +8,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+)
+
+// others
+import (
+	"service"
+	net_transform "network"
+	"replication"
 )
 
 // flow:
@@ -39,8 +47,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	seeds := make(map[string]*service)
-	var transformed map[string]*service
+	seeds := make(map[string]*service.Service)
+	var transformed map[string]*service.Service
 
 	for _, filename := range flag.Args() {
 		filename = filepath.Clean(filename)
@@ -56,24 +64,24 @@ func main() {
 			fatal(err)
 		}
 
-		seed := parse(filename, string(seedSource))
+		seed := service.Parse(filename, string(seedSource))
 		seeds[name] = seed
 	}
 
 	if *network {
 		info("Add Network Interface")
-		transformed := make(map[string]*service)
+		transformed := make(map[string]*service.Service)
 		for sname, seed := range seeds {
-			transformed = add_network_interface(sname, seed, transformed)
+			transformed = net_transform.Add_network_interface(sname, seed, transformed)
 		}
 		seeds = transformed
 	}
 
 	if *replicate {
 		info("Add Replicated Tables")
-		transformed = make(map[string]*service)
+		transformed = make(map[string]*service.Service)
 		for sname, seed := range seeds {
-			transformed = add_replicated_tables(sname, seed, transformed)
+			transformed = replication.Add_replicated_tables(sname, seed, transformed)
 		}
 		seeds = transformed
 	}
@@ -92,7 +100,7 @@ func main() {
 			fatal(err)
 		}
 
-		ruby := bud.toRuby(name)
+		ruby := bud.ToRuby(name)
 		_, err = out.Write([]byte(ruby))
 		if err != nil {
 			fatal(err)
@@ -111,7 +119,7 @@ func main() {
 				fatal(err)
 			}
 
-			ruby := bud.toDot(name)
+			ruby := bud.ToDot(name)
 			_, err = out.Write([]byte(ruby))
 			if err != nil {
 				fatal(err)
@@ -131,7 +139,7 @@ func main() {
 				fatal(err)
 			}
 
-			ruby := bud.toJson(name)
+			ruby := bud.ToJson(name)
 			_, err = out.Write([]byte(ruby))
 			if err != nil {
 				fatal(err)
@@ -151,7 +159,7 @@ func main() {
 				fatal(err)
 			}
 
-			model := bud.toModel(name)
+			model := bud.ToModel(name)
 			_, err = out.Write([]byte(model))
 			if err != nil {
 				fatal(err)
