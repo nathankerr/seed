@@ -4,7 +4,7 @@ all: seed
 	bin/seed -dot -json -model kvs.seed
 
 seed: src/*
-	GOPATH=/Users/alaster/Projects/seed go install seed
+	GOPATH=/Users/alaster/Projects/seed go install -a seed
 
 print: *.go tmp version.tex
 	./gen-print.sh
