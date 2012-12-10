@@ -1,9 +1,9 @@
 .PHONY: all
-all: seed
+all: bin/seed
 	-rm -rf bud
 	bin/seed -dot -json -model kvs.seed
 
-seed: src/*
+bin/seed: src/*
 	GOPATH=/Users/alaster/Projects/seed go install -a seed
 
 .PHONY: view-figures
@@ -28,16 +28,6 @@ figures: seed
 	cp bud/kvsserver.dot "figures/kvs-network-replicated.dot"
 	dot -T pdf -O figures/*.dot
 
-.PHONY: version.tex
-version.tex:
-	echo > version.tex
-	git log -n1 --abbrev-commit --format=format:"%h %ai" >> version.tex
-	if [ "`git diff --shortstat`" != '' ]; then echo " [WITH MODIFICATIONS]" >> version.tex; fi
-
 .PHONY: clean
 clean:
-	-rm seed
-	-rm -rf bud
-	-rm -rf tmp
-	context --purge
-	-rm print.tex print.pdf 
+	-rm -rf bud bin pkg figures
