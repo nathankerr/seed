@@ -12,9 +12,9 @@ import (
 
 // others
 import (
-	"service"
 	net_transform "network"
 	"replication"
+	"service"
 )
 
 // flow:
@@ -67,6 +67,11 @@ func main() {
 			fatal("Loading from", *from_format, "format not supported.\n")
 		}
 
+		err = seed.Validate()
+		if err != nil {
+			fatal(err)
+		}
+
 		seeds[name] = seed
 	}
 
@@ -83,7 +88,7 @@ func main() {
 			default:
 				fatal(transformation, "not supported.\n")
 			}
-			
+
 			transformed = transform(sname, seed, transformed)
 		}
 		seeds = transformed

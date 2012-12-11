@@ -33,6 +33,10 @@ figures: bin/seed
 	cp build/kvsserver.dot "figures/kvs-network-replicated.dot"
 	dot -T pdf -O figures/*.dot
 
+.PHONY: format
+format:
+	go fmt seed service network service
+
 .PHONY: clean
 clean:
-	-rm -rf bud bin pkg figures
+	-rm -rf build bin pkg figures
