@@ -1,0 +1,27 @@
+digraph types {
+	margin="0"
+	size="4.5,7.1"
+	page="324,12"
+	node [fontname="Alegreya" fontsize="9"]
+	node [shape="record"]
+	//rankdir="LR"
+
+	Service [label="Service | {<Collections>Collections\nmap[string]*Collection | <Rules>Rules\n[]*Rule} "]
+	Service:Collections -> Collection
+	Service:Rules -> Rule
+
+	Collection [label="Collection | {<Type>Type\nCollectionType | <Key>Key\n[]string | <Data>Data\n[]string}"]
+	Collection:Type -> CollectionType
+
+	CollectionType [shape="rectangle",label="CollectionType (enum):\nCollectionInput\nCollectionOutput\nCollectionTable\nCollectionScratch\nCollectionChannel"]
+
+	Rule [label="Rule | {<Supplies>Supplies\nstring | <Operation>Operation\nstring | <Projection>Projection\n[]QualifiedColumn | <Predicate>Predicate\n[]Constraint | <Block>Block\nstring}"]
+	Rule:Projection -> QualifiedColumn
+	Rule:Predicate -> Constraint
+
+	QualifiedColumn [label="QualifiedColumn | {<Collection>Collection\nstring | <Column>Column\nstring}"]
+
+	Constraint [label="Constraint | {<Left>Left\nQualifiedColumn | <Right>Right\nQualifiedColumn}"]
+	Constraint:Left -> QualifiedColumn
+	Constraint:Right -> QualifiedColumn
+}
