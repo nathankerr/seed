@@ -4,19 +4,19 @@ import (
 	"fmt"
 )
 
-func (s *Service) ToModel(name string) string {
+func ToModel(seed *Service, name string) ([]byte, error) {
 	info()
 	var model string
 
-	for cname, collection := range s.Collections {
+	for cname, collection := range seed.Collections {
 		model = fmt.Sprintf("%s%s\t#%s\n", model, collection.String(cname), collection.Source)
 	}
 
 	model += "\n"
 
-	for rule_num, rule := range s.Rules {
+	for rule_num, rule := range seed.Rules {
 		model = fmt.Sprintf("%s%s\t#%s, rule %d\n", model, rule, rule.Source, rule_num)
 	}
 
-	return model
+	return []byte(model), nil
 }

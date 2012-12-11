@@ -6,7 +6,11 @@ import (
 	"strings"
 )
 
-func (s *Service) ToRuby(name string) string {
+func ToBloom(seed *Service, name string) ([]byte, error) {
+	return []byte(seed.toRuby(name)), nil
+}
+
+func (s *Service) toRuby(name string) string {
 	info()
 
 	name = strings.Title(name)

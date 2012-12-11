@@ -22,18 +22,14 @@ import (
 // - add network interface
 // - write bud to ruby
 func main() {
-	var outputdir = *flag.String("o", "bud",
+	var outputdir = *flag.String("o", "build",
 		"directory name to create and output the bud source")
-	var network = flag.Bool("network", true,
-		"add network interface")
-	var replicate = flag.Bool("replicate", true,
-		"replicate tables")
-	var dot = flag.Bool("dot", false,
-		"also produce dot (graphviz) files)")
-	var json = flag.Bool("json", false,
-		"produce json versions of the services")
-	var model = flag.Bool("model", false,
-		"produce seed like versions of the services")
+	var from_format = flag.String("f", "seed",
+		"format to load (seed)")
+	var to_format = flag.String("t", "bloom",
+		"formats to write separated by spaces (bloom, dot, json")
+	var transformations = flag.String("transformations", "network replicate",
+		"transformations to perform, separated by spaces")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -41,14 +37,13 @@ func main() {
 	}
 	flag.Parse()
 
-	info("Load Seeds")
 	if flag.NArg() < 1 {
 		flag.Usage()
 		os.Exit(1)
 	}
 
+	info("Load Seeds")
 	seeds := make(map[string]*service.Service)
-	var transformed map[string]*service.Service
 
 	for _, filename := range flag.Args() {
 		filename = filepath.Clean(filename)
@@ -64,103 +59,76 @@ func main() {
 			fatal(err)
 		}
 
-		seed := service.Parse(filename, string(seedSource))
+		var seed *service.Service
+		switch *from_format {
+		case "seed":
+			seed = service.Parse(filename, string(seedSource))
+		default:
+			fatal("Loading from", *from_format, "format not supported.\n")
+		}
+
 		seeds[name] = seed
 	}
 
-	if *network {
-		info("Add Network Interface")
+	info("Tranform Seeds")
+	for _, transformation := range strings.Fields(*transformations) {
 		transformed := make(map[string]*service.Service)
 		for sname, seed := range seeds {
-			transformed = net_transform.Add_network_interface(sname, seed, transformed)
+			var transform func(name string, seed *service.Service, seeds map[string]*service.Service) map[string]*service.Service
+			switch transformation {
+			case "network":
+				transform = net_transform.Add_network_interface
+			case "replicate":
+				transform = replication.Add_replicated_tables
+			default:
+				fatal(transformation, "not supported.\n")
+			}
+			
+			transformed = transform(sname, seed, transformed)
 		}
 		seeds = transformed
 	}
 
-	if *replicate {
-		info("Add Replicated Tables")
-		transformed = make(map[string]*service.Service)
-		for sname, seed := range seeds {
-			transformed = replication.Add_replicated_tables(sname, seed, transformed)
-		}
-		seeds = transformed
-	}
-
-	info("Write Ruby")
+	info("Write Seeds")
 	outputdir = filepath.Clean(outputdir)
 	err := os.MkdirAll(outputdir, 0755)
 	if err != nil {
 		fatal(err)
 	}
 
-	for name, bud := range seeds {
-		filename := filepath.Join(outputdir, strings.ToLower(name)+".rb")
-		out, err := os.Create(filename)
-		if err != nil {
-			fatal(err)
-		}
+	for name, seed := range seeds {
+		for _, format := range strings.Fields(*to_format) {
+			var extension string
+			var writer func(seed *service.Service, name string) ([]byte, error)
+			switch format {
+			case "bloom":
+				extension = "rb"
+				writer = service.ToBloom
+			case "dot":
+				extension = "dot"
+				writer = service.ToDot
+			case "json":
+				extension = "json"
+				writer = service.ToJson
+			case "service":
+				extension = "service"
+				writer = service.ToModel
+			default:
+				fatal("Writing to", format, "format not supported.\n")
+			}
 
-		ruby := bud.ToRuby(name)
-		_, err = out.Write([]byte(ruby))
-		if err != nil {
-			fatal(err)
-		}
-
-		out.Close()
-	}
-
-	if *dot {
-		info("Write Dot")
-
-		for name, bud := range seeds {
-			filename := filepath.Join(outputdir, strings.ToLower(name)+".dot")
+			filename := filepath.Join(outputdir,
+				strings.ToLower(name)+"."+extension)
 			out, err := os.Create(filename)
 			if err != nil {
 				fatal(err)
 			}
 
-			ruby := bud.ToDot(name)
-			_, err = out.Write([]byte(ruby))
+			marshalled, err := writer(seed, name)
 			if err != nil {
-				fatal(err)
+				fatal("Error while converting to", format, ":", err)
 			}
-
-			out.Close()
-		}
-	}
-
-	if *json {
-		info("Write json")
-
-		for name, bud := range seeds {
-			filename := filepath.Join(outputdir, strings.ToLower(name)+".json")
-			out, err := os.Create(filename)
-			if err != nil {
-				fatal(err)
-			}
-
-			ruby := bud.ToJson(name)
-			_, err = out.Write([]byte(ruby))
-			if err != nil {
-				fatal(err)
-			}
-
-			out.Close()
-		}
-	}
-
-	if *model {
-		info("Write model")
-
-		for name, bud := range seeds {
-			filename := filepath.Join(outputdir, strings.ToLower(name)+".model")
-			out, err := os.Create(filename)
-			if err != nil {
-				fatal(err)
-			}
-
-			model := bud.ToModel(name)
-			_, err = out.Write([]byte(model))
+			_, err = out.Write(marshalled)
 			if err != nil {
 				fatal(err)
 			}

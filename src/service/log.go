@@ -22,7 +22,7 @@ func parseinfo(args ...interface{}) {
 }
 
 func info(args ...interface{}) {
-	// return
+	return
 	printlog(args...)
 }
 

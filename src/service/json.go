@@ -4,13 +4,9 @@ import (
 	"encoding/json"
 )
 
-func (s *Service) ToJson(name string) string {
+func ToJson(seed *Service, name string) ([]byte, error) {
 	info()
-	marshaled, err := json.MarshalIndent(s, "", "\t")
-	if err != nil {
-		panic(err)
-	}
-	return string(marshaled)
+	return json.MarshalIndent(seed, "", "\t")
 }
 
 func (ct CollectionType) MarshalJSON() ([]byte, error) {
