@@ -1,7 +1,15 @@
+.PHONY: executor
+executor:
+	GOPATH=/Users/alaster/Projects/seed go install executor
+	bin/executor
+
 .PHONY: all
 all: bin/seed
 	-rm -rf build
-	bin/seed -t "bloom dot json service" kvs.seed
+	# bin/seed -t "bloom dot json service" kvs.seed
+	bin/seed -t "bloom json" -transformations "" cart.seed
+	bin/seed -t "bloom json" -transformations "network" cart.seed
+
 
 types.dot.pdf: types.dot
 	dot -O -T pdf types.dot
@@ -9,7 +17,8 @@ types.dot.pdf: types.dot
 
 .PHONY: bin/seed
 bin/seed: src/*
-	GOPATH=/Users/alaster/Projects/seed go install  seed
+	-rm -r bin pkg
+	GOPATH=/Users/alaster/Projects/seed go install seed
 
 .PHONY: view-figures
 view-figures: figures
@@ -35,7 +44,7 @@ figures: bin/seed
 
 .PHONY: format
 format:
-	go fmt seed service network service
+	go fmt seed service network service executor
 
 .PHONY: clean
 clean:
