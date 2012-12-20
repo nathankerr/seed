@@ -11,18 +11,8 @@ import (
 	"runtime"
 )
 
-func lexinfo(args ...interface{}) {
-	return
-	printlog(args...)
-}
-
-func parseinfo(args ...interface{}) {
-	return
-	printlog(args...)
-}
-
 func info(args ...interface{}) {
-	return
+	// return
 	printlog(args...)
 }
 
