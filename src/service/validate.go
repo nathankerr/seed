@@ -29,11 +29,6 @@ func (s *Service) Validate() error {
 		default:
 			return collection_error_messagef(collection, "Unknown collection type %d", collection.Type)
 		}
-
-		// there should be at least one key
-		if len(collection.Key) < 1 {
-			return collection_error_messagef(collection, "There must be at least one key column.")
-		}
 	}
 
 	for _, rule := range s.Rules {

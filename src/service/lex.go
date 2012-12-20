@@ -275,6 +275,10 @@ func lexComment(l *lexer) stateFn {
 	lexinfo()
 
 	i := strings.Index(l.input[l.pos:], "\n")
+	if i == -1 {
+		// hit the end of the file
+		return nil
+	}
 	l.pos += i + len("\n")
 	l.ignore()
 
