@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"service"
 )
 
 type collection struct {
@@ -11,7 +12,19 @@ type collection struct {
 	rows    map[string][]interface{} // storage for the data
 }
 
-func newCollection(name string, key []string, data []string, rows [][]interface{}) *collection {
+// create a new collection
+// example:
+//
+// newCollection(
+// 	"kvs",
+// 	[]string{"key"},
+// 	[]string{"value"},
+// 	[][]interface{}{
+// 		[]interface{}{1, 2},
+// 		[]interface{}{3, 4},
+// 	},
+// )
+func newCollectionFromRaw(name string, key []string, data []string, rows [][]interface{}) *collection {
 	c := &collection{
 		name:    name,
 		key:     key,
@@ -37,6 +50,29 @@ func newCollection(name string, key []string, data []string, rows [][]interface{
 			panic("row " + string(i) + "does not have the correct number of columns")
 		}
 		c.rows[c.key_for(row)] = row
+	}
+
+	return c
+}
+
+// create a collection from a service collection
+func newCollection(name string, from *service.Collection) *collection {
+	c := &collection{
+		name:    name,
+		key:     from.Key,
+		columns: make(map[string]int),
+		rows:    make(map[string][]interface{}),
+	}
+
+	// fill in the columns mapping
+	column_index := 0
+	for _, column_name := range from.Key {
+		c.columns[column_name] = column_index
+		column_index++
+	}
+	for _, column_name := range from.Data {
+		c.columns[column_name] = column_index
+		column_index++
 	}
 
 	return c

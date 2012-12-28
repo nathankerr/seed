@@ -1,6 +1,10 @@
 .PHONY: executor
 executor:
 	GOPATH=/Users/alaster/Projects/seed go install executor
+	# bin/executor
+
+.PHONY: run
+run: executor
 	bin/executor
 
 .PHONY: all
@@ -45,6 +49,10 @@ figures: bin/seed
 .PHONY: format
 format:
 	go fmt seed service network service executor
+
+.PHONY: vet
+vet:
+	go vet seed service network service executor
 
 .PHONY: clean
 clean:

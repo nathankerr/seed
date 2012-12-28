@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"github.com/msgpack/msgpack-go"
 	"io/ioutil"
+	// "log"
 	"net"
 	net_transform "network"
-	"os"
+	// "os"
 	"service"
 	"time"
 )
@@ -18,41 +19,11 @@ type input struct {
 }
 
 type message struct {
-	collection string
-	data       []interface{}
+	operation  string // "<-", "<+", ... , "", "step", "done"
+	collection collection
 }
 
 func main() {
-
-	main := newCollection(
-		"kvs",
-		[]string{"key"},
-		[]string{"value"},
-		[][]interface{}{
-			[]interface{}{1, 2},
-			[]interface{}{3, 4},
-		},
-	)
-	other := newCollection(
-		"kvs",
-		[]string{"key"},
-		[]string{"value"},
-		[][]interface{}{
-			[]interface{}{"a", 6},
-			[]interface{}{7, 8},
-		},
-	)
-	fmt.Println(main)
-	main.merge(other)
-	fmt.Println(main)
-	main.delete(other)
-	fmt.Println(main)
-
-	return
-	///////////
-	// ACTUAL EXECUTOR RUN CODE FOLLOWS
-	/////
-
 	// load the service and add a network interface
 	kvs_source, err := ioutil.ReadFile("kvs.seed")
 	if err != nil {
@@ -70,11 +41,26 @@ func main() {
 	}
 	fmt.Println("-------------------------------")
 
+	// things for handling the main loop
+	main := make(chan message)
+
 	// make the channels to connect to/from the channels
 	collection_inputs := make(map[string]chan message)
 	for name, _ := range kvs.Collections {
-		collection_inputs[name] = make(chan message)
+		channel := make(chan message)
+		collection_inputs[name] = channel
 	}
+
+	// launch the input handler
+	bud_input := make(chan message)
+	// handler_inputs = append(handler_inputs, bud_input)
+	input_collections := make(map[string]chan<- message)
+	for name, channel := range collection_inputs {
+		if kvs.Collections[name].Type == service.CollectionChannel {
+			input_collections[name] = channel
+		}
+	}
+	go budInputHandler("127.0.0.1:3000", bud_input, input_collections, main)
 
 	// Process the rules
 	// 1. make input channels for the rules
@@ -84,9 +70,10 @@ func main() {
 	collection_outputs := make(map[string][]chan<- message)
 	for rule_num, rule := range kvs.Rules {
 		// make input channel
-		rule_inputs[rule_num] = make(chan message)
+		channel := make(chan message)
+		rule_inputs[rule_num] = channel
 
-		// add the 
+		// add the rule_input to the set of channels for the collection handlers
 		for _, requires := range rule.Requires() {
 			collection_outputs[requires] = append(collection_outputs[requires], rule_inputs[rule_num])
 		}
@@ -95,7 +82,9 @@ func main() {
 		go ruleHandler(rule_num,
 			rule_inputs[rule_num],
 			collection_inputs[rule.Supplies],
-			rule)
+			kvs,
+			rule,
+			main)
 	}
 
 	// launch the collection handlers
@@ -103,21 +92,39 @@ func main() {
 		go collectionHandler(name,
 			collection_inputs[name],
 			collection_outputs[name],
-			collection)
+			collection,
+			main)
 	}
 
-	bud_input := make(chan message)
-	input_collections := make(map[string]chan<- message)
-	for name, channel := range collection_inputs {
-		if kvs.Collections[name].Type == service.CollectionChannel {
-			input_collections[name] = channel
+	// the timestep loop
+	step := message{operation: "step"}
+	for {
+		time.Sleep(2 * time.Second)
+		info("main", "------------------------------------")
+
+		// tell all handlers to step
+		for collection_name, collection_channel := range collection_inputs {
+			select {
+			case collection_channel <- step:
+			}
+			info("main", "sent step to", collection_name)
+		}
+
+		// wait for all the handlers to finish the step
+		finished := 0
+		for finished != len(collection_inputs)+len(rule_inputs) {
+			select {
+			case <-main:
+				finished++
+			}
+			info("main", finished, "of", len(collection_inputs)+len(rule_inputs))
 		}
 	}
-	budInterface("127.0.0.1:3000", bud_input, input_collections)
 }
 
-func budInterface(addr string, input <-chan message, collections map[string]chan<- message) {
-	// try out a bud-compatible network interface
+// try out a bud-compatible network interface
+func budInputHandler(addr string, input <-chan message, collections map[string]chan<- message, main chan<- message) {
+	// listen on the network
 	listener, err := net.ListenPacket("udp", "localhost:3000")
 	if err != nil {
 		panic(err)
@@ -143,41 +150,103 @@ func budInterface(addr string, input <-chan message, collections map[string]chan
 		}
 		msg := msg_reflected.Interface().([]interface{})
 		collection_name := string(msg[0].([]byte))
+		info("budInput", collection_name)
 
-		fmt.Println("received for", collection_name)
 		collection_channel, ok := collections[collection_name]
 		if !ok {
 			fmt.Println("no channel for", collection_name)
 		}
 
+		// create the collection to send
+		row := msg[1].([]interface{})
+		key := make([]string, len(row))
+		for i, _ := range row {
+			key[i] = fmt.Sprintf("column%d", i)
+		}
+		to_send := newCollectionFromRaw(
+			"bud input",
+			key,
+			nil,
+			[][]interface{}{row},
+		)
+
+		// send the collection
 		collection_channel <- message{
-			collection: collection_name,
-			data:       msg[1].([]interface{}),
+			operation:  "<+",
+			collection: *to_send,
 		}
-		fmt.Println("sent")
-		time.Sleep(10 * time.Second)
-		os.Exit(0)
+
+		info("budInput", "sent", to_send, "to", collection_name)
 	}
 }
 
-func collectionHandler(name string, input <-chan message, outputs []chan<- message, collection *service.Collection) {
+func collectionHandler(name string, input <-chan message, outputs []chan<- message, collection *service.Collection, main chan<- message) {
+	c := newCollection(name, collection)
+
+	// timestep loop
+	// sends to outputs when "step" is received
+	// otherwise, handles operation on the collection
 	for {
-		select {
-		case message := <-input:
-			fmt.Printf("[%s] %v\n", name, message.data)
-			for _, output := range outputs {
-				output <- message
+		info(name, "ready")
+		incoming_message := <-input
+		switch incoming_message.operation {
+		case "step":
+			info(name, "step")
+			outgoing_message := message{
+				operation:  "",
+				collection: *c,
 			}
+			for _, output := range outputs {
+				output <- outgoing_message
+			}
+			main <- message{operation: "done"}
+			info(name, "done")
+		case "<+", "<~":
+			info(name, "merge", incoming_message.collection.rows)
+			c.merge(&incoming_message.collection)
+			info(name, "has", c.rows)
+		case "<-":
+			info(name, "delete", incoming_message.collection.rows)
+			c.delete(&incoming_message.collection)
+		default:
+			info(name, "unhandled operation:", incoming_message.operation)
 		}
 	}
 }
 
-func ruleHandler(rule_num int, input <-chan message, output chan<- message, rule *service.Rule) {
+func ruleHandler(rule_num int, input <-chan message, output chan<- message, service *service.Service, rule *service.Rule, main chan<- message) {
+	// timestep loop
+	// 1. receive required collections
+	// 2. run rule
+	// 3. send resulting collection
+	// 4. send finished timestep to main
 	for {
-		select {
-		case message := <-input:
-			fmt.Printf("[%d] %v\n", rule_num, message.data)
-			output <- message
+		info(rule_num, "ready")
+		// create collections
+		collections := make(map[string]*collection)
+
+		// wait for all the required collections to arrive
+		for len(collections) != len(rule.Requires()) {
+			incoming_message := <-input
+			collections[incoming_message.collection.name] = &incoming_message.collection
+			info(rule_num, len(collections), "of", len(rule.Requires()))
 		}
+
+		// run rule
+		result := newCollection(rule.Supplies, service.Collections[rule.Supplies])
+		// TODO run rule
+
+		// spend result
+		output <- message{
+			operation:  rule.Operation,
+			collection: *result,
+		}
+		info(rule_num, "sent")
+
+		// tell main step is finished
+		main <- message{
+			operation: "done",
+		}
+		info(rule_num, "done")
 	}
 }

@@ -298,7 +298,7 @@ Loop:
 			l.backup()
 			word := l.input[l.start:l.pos]
 			if !l.atTerminator() {
-				fatalf("%s unexpected character %+U '%c'",
+				fatalf("%s unexpected character %U '%c'",
 					l.source(), r, r)
 			}
 
