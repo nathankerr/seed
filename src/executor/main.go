@@ -23,6 +23,36 @@ type message struct {
 }
 
 func main() {
+
+	main := newCollection(
+		"kvs",
+		[]string{"key"},
+		[]string{"value"},
+		[][]interface{}{
+			[]interface{}{1, 2},
+			[]interface{}{3, 4},
+		},
+	)
+	other := newCollection(
+		"kvs",
+		[]string{"key"},
+		[]string{"value"},
+		[][]interface{}{
+			[]interface{}{"a", 6},
+			[]interface{}{7, 8},
+		},
+	)
+	fmt.Println(main)
+	main.merge(other)
+	fmt.Println(main)
+	main.delete(other)
+	fmt.Println(main)
+
+	return
+	///////////
+	// ACTUAL EXECUTOR RUN CODE FOLLOWS
+	/////
+
 	// load the service and add a network interface
 	kvs_source, err := ioutil.ReadFile("kvs.seed")
 	if err != nil {
@@ -122,10 +152,10 @@ func budInterface(addr string, input <-chan message, collections map[string]chan
 
 		collection_channel <- message{
 			collection: collection_name,
-			data: msg[1].([]interface{}),
+			data:       msg[1].([]interface{}),
 		}
 		fmt.Println("sent")
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		os.Exit(0)
 	}
 }
