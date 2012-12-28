@@ -6,6 +6,8 @@ import (
 	"github.com/msgpack/msgpack-go"
 	"io/ioutil"
 	"net"
+	net_transform "network"
+	"os"
 	"service"
 	"time"
 )
@@ -17,17 +19,22 @@ type input struct {
 
 type message struct {
 	collection string
-	data       map[string]string
+	data       []interface{}
 }
 
 func main() {
-	// load the service
+	// load the service and add a network interface
 	kvs_source, err := ioutil.ReadFile("kvs.seed")
 	if err != nil {
 		panic(err)
 	}
-	kvs := service.Parse("kvs.seed", string(kvs_source))
+	seeds := make(map[string]*service.Service)
+	seeds["kvs"] = service.Parse("kvs.seed", string(kvs_source))
+	transformed := make(map[string]*service.Service)
+	transformed = net_transform.Add_network_interface("kvs", seeds["kvs"], transformed)
+	kvs := transformed["KvsServer"]
 
+	// print the rules, so the numbers are known for tracing
 	for num, rule := range kvs.Rules {
 		fmt.Printf("%d\t%s\n", num, rule)
 	}
@@ -39,12 +46,17 @@ func main() {
 		collection_inputs[name] = make(chan message)
 	}
 
+	// Process the rules
+	// 1. make input channels for the rules
+	// 2. collect the rule input channels for each of the collections which feed data to the channels
+	// 3. launch the rule handlers
 	rule_inputs := make([]chan message, len(kvs.Rules))
 	collection_outputs := make(map[string][]chan<- message)
 	for rule_num, rule := range kvs.Rules {
 		// make input channel
 		rule_inputs[rule_num] = make(chan message)
 
+		// add the 
 		for _, requires := range rule.Requires() {
 			collection_outputs[requires] = append(collection_outputs[requires], rule_inputs[rule_num])
 		}
@@ -56,6 +68,7 @@ func main() {
 			rule)
 	}
 
+	// launch the collection handlers
 	for name, collection := range kvs.Collections {
 		go collectionHandler(name,
 			collection_inputs[name],
@@ -63,75 +76,65 @@ func main() {
 			collection)
 	}
 
-	// example input
-	input_message := input{channel: "kvget", data: map[string]string{"key": "123"}}
-	collection_inputs["kvget"] <- message{data: input_message.data}
-	collection_inputs["kvget"] <- message{data: map[string]string{"key": "456"}}
+	bud_input := make(chan message)
+	input_collections := make(map[string]chan<- message)
+	for name, channel := range collection_inputs {
+		if kvs.Collections[name].Type == service.CollectionChannel {
+			input_collections[name] = channel
+		}
+	}
+	budInterface("127.0.0.1:3000", bud_input, input_collections)
+}
 
-	// listen_addr, err := net.ResolveUDPAddr("udp", "127.0.0.1:3000")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// listener, err := net.ListenUDP("udp", listen_addr)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	listener, err := net.ListenPacket("udp", "127.0.0.1:3000")
+func budInterface(addr string, input <-chan message, collections map[string]chan<- message) {
+	// try out a bud-compatible network interface
+	listener, err := net.ListenPacket("udp", "localhost:3000")
 	if err != nil {
 		panic(err)
 	}
 	defer listener.Close()
 
-	buf := make([]byte, 512)
-	n, _, err := listener.ReadFrom(buf)
-	if err != nil {
-		panic(err)
+	buf := make([]byte, 1024)
+	for {
+		n, _, err := listener.ReadFrom(buf)
+		if err != nil {
+			panic(err)
+		}
+
+		// msgpack format from bud:
+		// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
+		// COLUMNS depends on the column types
+		// 0: collection name
+		// 1: data
+		// 2: ??
+		msg_reflected, _, err := msgpack.Unpack(bytes.NewBuffer(buf[:n]))
+		if err != nil {
+			panic(err)
+		}
+		msg := msg_reflected.Interface().([]interface{})
+		collection_name := string(msg[0].([]byte))
+
+		fmt.Println("received for", collection_name)
+		collection_channel, ok := collections[collection_name]
+		if !ok {
+			fmt.Println("no channel for", collection_name)
+		}
+
+		collection_channel <- message{
+			collection: collection_name,
+			data: msg[1].([]interface{}),
+		}
+		fmt.Println("sent")
+		time.Sleep(10*time.Second)
+		os.Exit(0)
 	}
-
-	// msgpack format from bud:
-	// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
-	// COLUMNS depends on the column types
-	// 0: collection name
-	// 1: data
-	// 2: ??
-	msg_reflected, _, err := msgpack.Unpack(bytes.NewBuffer(buf[:n]))
-	if err != nil {
-		panic(err)
-	}
-	msg := msg_reflected.Interface().([]interface{})
-	channel_name := string(msg[0].([]byte))
-	fmt.Println(channel_name)
-	row := msg[1].([]interface{})
-	fmt.Println(row)
-
-	// // [<[]uint8 Value> <[]reflect.Value Value> <[]reflect.Value Value>]
-	// fmt.Printf("%#v\n", msg.Interface())
-	// // []interface {}{[]byte{0x73, 0x65, 0x74}, []interface {}{[]byte{0x31, 0x32, 0x37, 0x2e, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x3a, 0x33, 0x30, 0x30, 0x30}, 123, []byte{0x6b, 0x65, 0x79}, 12}, []interface {}{}}
-	// msg1 := msg.Interface().([]interface{})
-	// fmt.Printf("%d\n", len(msg1))
-	// // 3
-	// msg1_0 := msg1[0].([]byte)
-	// fmt.Printf("%#v\n", string(msg1_0))
-	// // "set"
-	// msg1_1 := msg1[1].([]interface{})
-	// fmt.Printf("%#v\n", msg1_1)
-	// //[]interface {}{[]byte{0x31, 0x32, 0x37, 0x2e, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x3a, 0x33, 0x30, 0x30, 0x30}, 123, []byte{0x6b, 0x65, 0x79}, 12}
-	// msg1_1_0 := msg1_1[0].([]byte)
-	// fmt.Printf("%#v\n", string(msg1_1_0))
-
-	// wait for the example input to be processed before exiting
-	time.Sleep(time.Second)
-	fmt.Println("done")
-
 }
 
 func collectionHandler(name string, input <-chan message, outputs []chan<- message, collection *service.Collection) {
 	for {
 		select {
 		case message := <-input:
-			fmt.Printf("[%s] %s\n", name, message.data)
+			fmt.Printf("[%s] %v\n", name, message.data)
 			for _, output := range outputs {
 				output <- message
 			}
@@ -143,7 +146,7 @@ func ruleHandler(rule_num int, input <-chan message, output chan<- message, rule
 	for {
 		select {
 		case message := <-input:
-			fmt.Printf("[%d] %s\n", rule_num, message.data)
+			fmt.Printf("[%d] %v\n", rule_num, message.data)
 			output <- message
 		}
 	}

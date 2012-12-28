@@ -6,7 +6,7 @@ executor:
 .PHONY: all
 all: bin/seed
 	-rm -rf build
-	# bin/seed -t "bloom dot json service" kvs.seed
+	bin/seed -t "bloom dot json service" -transformations "network" kvs.seed
 	bin/seed -t "bloom json" -transformations "" cart.seed
 	bin/seed -t "bloom json" -transformations "network" cart.seed
 
