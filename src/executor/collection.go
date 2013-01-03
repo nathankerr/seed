@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"service"
 )
 
@@ -15,7 +16,7 @@ type collection struct {
 // create a new collection
 // example:
 //
-// newCollection(
+// newCollectionFromRaw(
 // 	"kvs",
 // 	[]string{"key"},
 // 	[]string{"value"},
@@ -44,16 +45,27 @@ func newCollectionFromRaw(name string, key []string, data []string, rows [][]int
 	}
 
 	// fill in the rows
-	len_columns := len(c.columns)
-	for i, row := range rows {
-		if len(row) != len_columns {
-			panic("row " + string(i) + "does not have the correct number of columns")
-		}
-		c.rows[c.key_for(row)] = row
-	}
+	c.addRows(rows)
 
 	return c
 }
+
+// add rows to c
+func (c *collection) addRows(rows [][]interface{}) {
+	for _, row := range rows {
+		c.addRow(row)
+	}
+}
+
+// add a row to the collection
+func (c *collection) addRow(row []interface{}) {
+	len_columns := len(c.columns)
+	if len(row) != len_columns {
+		panic(fmt.Sprintf("row %v does not have the correct number of columns", row))
+	}
+	c.rows[c.key_for(row)] = row
+}
+
 
 // create a collection from a service collection
 func newCollection(name string, from *service.Collection) *collection {
