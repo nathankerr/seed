@@ -1,7 +1,8 @@
 .PHONY: executor
-executor:
+executor: clean
+	GOPATH=/Users/alaster/Projects/seed go test -i executor
+	GOPATH=/Users/alaster/Projects/seed go test executor
 	GOPATH=/Users/alaster/Projects/seed go install executor
-	# bin/executor
 
 .PHONY: run
 run: executor
