@@ -1,10 +1,8 @@
-package main
+package executor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
-	net_transform "network"
 	"service"
 	"time"
 )
@@ -19,20 +17,9 @@ type message struct {
 	collection collection
 }
 
-func main() {
-	// load the service and add a network interface
-	kvs_source, err := ioutil.ReadFile("kvs.seed")
-	if err != nil {
-		panic(err)
-	}
-	seeds := make(map[string]*service.Service)
-	seeds["kvs"] = service.Parse("kvs.seed", string(kvs_source))
-	transformed := make(map[string]*service.Service)
-	transformed = net_transform.Add_network_interface("kvs", seeds["kvs"], transformed)
-	kvs := transformed["KvsServer"]
-
+func Execute(s *service.Service) {
 	// print the rules, so the numbers are known for tracing
-	for num, rule := range kvs.Rules {
+	for num, rule := range s.Rules {
 		fmt.Printf("%d\t%s\n", num, rule)
 	}
 	fmt.Println("-------------------------------")
@@ -44,7 +31,7 @@ func main() {
 	collection_inputs := make(map[string]chan message)
 	collection_outputs := make(map[string][]chan<- message)
 	bud_output := make(chan message)
-	for name, collection := range kvs.Collections {
+	for name, collection := range s.Collections {
 		channel := make(chan message)
 		collection_inputs[name] = channel
 
@@ -57,7 +44,7 @@ func main() {
 	bud_input := make(chan message)
 	input_collections := make(map[string]chan<- message)
 	for name, channel := range collection_inputs {
-		if kvs.Collections[name].Type == service.CollectionChannel {
+		if s.Collections[name].Type == service.CollectionChannel {
 			input_collections[name] = channel
 		}
 	}
@@ -74,8 +61,8 @@ func main() {
 	// 1. make input channels for the rules
 	// 2. collect the rule input channels for each of the collections which feed data to the channels
 	// 3. launch the rule handlers
-	rule_inputs := make([]chan message, len(kvs.Rules))
-	for rule_num, rule := range kvs.Rules {
+	rule_inputs := make([]chan message, len(s.Rules))
+	for rule_num, rule := range s.Rules {
 		// make input channel
 		channel := make(chan message)
 		rule_inputs[rule_num] = channel
@@ -89,13 +76,13 @@ func main() {
 		go ruleHandler(rule_num,
 			rule_inputs[rule_num],
 			collection_inputs[rule.Supplies],
-			kvs,
+			s,
 			rule,
 			main)
 	}
 
 	// launch the collection handlers
-	for name, collection := range kvs.Collections {
+	for name, collection := range s.Collections {
 		go collectionHandler(name,
 			collection_inputs[name],
 			collection_outputs[name],

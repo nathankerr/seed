@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bud'
-require './bud/kvsserver.rb'
+require './build/kvsserver.rb'
 
 class Server
 	include Bud
@@ -14,6 +14,6 @@ end
 
 program = Server.new(:ip => "127.0.0.1", :port => 3000)
 
-program.kvstate_replicants <= [["127.0.0.1:3001"]]
+# program.kvstate_replicants <= [["127.0.0.1:3001"]]
 
 program.run_fg

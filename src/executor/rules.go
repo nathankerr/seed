@@ -1,4 +1,4 @@
-package main
+package executor
 
 import (
 	"errors"
@@ -19,7 +19,7 @@ func runRule(collections map[string]*collection, service *service.Service, rule 
 
 		productCollections = append(productCollections, collectionName)
 		productCollectionLengths = append(productCollectionLengths, len(collectionRows))
-	
+
 		if len(collectionRows) == 0 {
 			aCollectionIsEmpty = true
 		}
@@ -142,7 +142,7 @@ func indexesFor(productNumber int, lengths []int) ([]int, error) {
 		// handled by the next index
 		if index >= length {
 			if length == 0 {
-				index = 0 
+				index = 0
 			} else {
 				index %= length
 			}

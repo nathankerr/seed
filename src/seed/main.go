@@ -2,6 +2,7 @@ package main
 
 // standard packages
 import (
+	"executor"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -30,6 +31,7 @@ func main() {
 		"formats to write separated by spaces (bloom, dot, json")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
+	var execute = flag.Bool("execute", false, "execute the service")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -139,6 +141,15 @@ func main() {
 			}
 
 			out.Close()
+		}
+	}
+
+	if *execute {
+		info("Execute")
+		for name, seed := range seeds {
+			info("Starting", name)
+			executor.Execute(seed)
+			break
 		}
 	}
 }

@@ -1,29 +1,43 @@
-.PHONY: executor
-executor: clean
-	GOPATH=/Users/alaster/Projects/seed go test -i executor
-	GOPATH=/Users/alaster/Projects/seed go test executor
-	GOPATH=/Users/alaster/Projects/seed go install executor
-
-.PHONY: run
-run: executor
-	bin/executor
+GO=GOPATH=/Users/alaster/Projects/seed go
+PACKAGES=executor network replication seed service
 
 .PHONY: all
-all: bin/seed
-	-rm -rf build
+all: install
+	# -rm -rf build
+	# bin/seed -t "bloom dot json service" -transformations "network" -execute kvs.seed
 	bin/seed -t "bloom dot json service" -transformations "network" kvs.seed
-	bin/seed -t "bloom json" -transformations "" cart.seed
-	bin/seed -t "bloom json" -transformations "network" cart.seed
+	# bin/seed -t "bloom json" -transformations "" cart.seed
+	# bin/seed -t "bloom json" -transformations "network" cart.seed
+
+.PHONY: run
+run: install
+	bin/seed -t "bloom dot json service" -transformations "network" -execute kvs.seed
+
+.PHONY: install
+install: test
+	$(GO) install seed
+
+.PHONY: test
+test: clean vet
+	$(GO) test -i $(PACKAGES)
+	$(GO) test $(PACKAGES)
+
+.PHONY: format
+format:
+	$(GO) fmt $(PACKAGES)
+
+.PHONY: vet
+vet:
+	$(GO) vet $(PACKAGES)
+
+.PHONY: clean
+clean:
+	-rm -rf build bin pkg figures
 
 
 types.dot.pdf: types.dot
 	dot -O -T pdf types.dot
 	open types.dot.pdf
-
-.PHONY: bin/seed
-bin/seed: src/*
-	-rm -r bin pkg
-	GOPATH=/Users/alaster/Projects/seed go install seed
 
 .PHONY: view-figures
 view-figures: figures
@@ -46,15 +60,3 @@ figures: bin/seed
 	bin/seed -t dot -transformations "network replicate" kvs.seed
 	cp build/kvsserver.dot "figures/kvs-network-replicated.dot"
 	dot -T pdf -O figures/*.dot
-
-.PHONY: format
-format:
-	go fmt seed service network service executor
-
-.PHONY: vet
-vet:
-	go vet seed service network service executor
-
-.PHONY: clean
-clean:
-	-rm -rf build bin pkg figures
