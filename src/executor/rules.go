@@ -46,13 +46,36 @@ func runRule(collections map[string]*collection, service *service.Service, rule 
 			rows[collectionName] = allRows[collectionName][rowNumber]
 		}
 
-		// add the columns to the result row
-		result := []interface{}{}
-		for _, qc := range rule.Projection {
-			columnIndex := collections[qc.Collection].columns[qc.Column]
-			result = append(result, rows[qc.Collection][columnIndex])
+		// determine if this product should be skipped
+		skip := true
+		if len(rule.Predicate) == 0 {
+			skip = false
 		}
-		results.addRow(result)
+		for _, constraint := range rule.Predicate {
+			// get the left row
+			lqc := constraint.Left
+			leftColumnIndex := collections[lqc.Collection].columns[lqc.Column]
+			left := rows[lqc.Collection][leftColumnIndex]
+
+			// get the right row
+			rqc := constraint.Right
+			rightColumnIndex := collections[rqc.Collection].columns[rqc.Column]
+			right := rows[rqc.Collection][rightColumnIndex]
+
+			if left == right {
+				skip = false
+			}
+		}
+
+		// add the columns to the result row if the product is not skipped
+		if !skip {
+			result := []interface{}{}
+			for _, qc := range rule.Projection {
+				columnIndex := collections[qc.Collection].columns[qc.Column]
+				result = append(result, rows[qc.Collection][columnIndex])
+			}
+			results.addRow(result)
+		}
 	}
 
 	return results

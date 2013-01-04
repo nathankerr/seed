@@ -1,6 +1,7 @@
 package main
 
 import (
+	"service"
 	"testing"
 	"testing/quick"
 )
@@ -252,6 +253,52 @@ func TestProduct(t *testing.T) {
 			"[3,4]": []interface{}{3, 4},
 			"[3,5]": []interface{}{3, 5},
 			"[3,6]": []interface{}{3, 6},
+		},
+	}
+
+	result := runRule(collections, service, service.Rules[0])
+
+	if !collectionsAreEquivalent(expected, result) {
+		t.Errorf("\nexpected:\t%v\ngot:\t\t%v", expected, result)
+	}
+}
+
+func TestFilteredProduct(t *testing.T) {
+	service := service.Parse("projection test",
+		"input a [key]"+
+			"input b [key]"+
+			"table intersection [both]"+
+			"intersection <+ [a.key]: a.key => b.key")
+
+	collections := make(map[string]*collection)
+
+	collections["a"] = newCollection("a", service.Collections["a"])
+	collections["a"].addRows([][]interface{}{
+		[]interface{}{1},
+		[]interface{}{2},
+		[]interface{}{3},
+		[]interface{}{4},
+		[]interface{}{5},
+		[]interface{}{6},
+	},
+	)
+
+	collections["b"] = newCollection("b", service.Collections["b"])
+	collections["b"].addRows([][]interface{}{
+		[]interface{}{4},
+		[]interface{}{5},
+		[]interface{}{6},
+	},
+	)
+
+	expected := &collection{
+		name:    "intersection",
+		key:     []string{"both"},
+		columns: map[string]int{"both": 0},
+		rows: map[string][]interface{}{
+			"[4]": []interface{}{4},
+			"[5]": []interface{}{5},
+			"[6]": []interface{}{6},
 		},
 	}
 
