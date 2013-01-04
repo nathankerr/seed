@@ -11,7 +11,7 @@ class SimpleKvsServer
     # kvput <~ [["127.0.0.1:3000", 1, 2],["127.0.0.1:3000", 3, 4]]
     channel :kvput, [:@address, :key] => [:value]
 
-    # kvget <~ [["127.0.0.1:3000", "127.0.0.1:46637", 1]]
+    # kvget <~ [["127.0.0.1:3000", "127.0.0.1:3001", 1]]
     channel :kvget, [:@address, :client, :key]
     channel :kvget_response, [:@client, :key] => [:value]
 
