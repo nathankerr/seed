@@ -99,6 +99,7 @@ func main() {
 	// the timestep loop
 	step := message{operation: "step"}
 	for {
+		startTime := time.Now()
 		time.Sleep(2 * time.Second)
 		info("main", "------------------------------------")
 
@@ -119,6 +120,8 @@ func main() {
 			}
 			info("main", finished, "of", len(collection_inputs)+len(rule_inputs))
 		}
+
+		info("main", "step took", time.Since(startTime))
 	}
 }
 

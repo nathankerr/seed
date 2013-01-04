@@ -13,16 +13,23 @@ func runRule(collections map[string]*collection, service *service.Service, rule 
 	productCollections := []string{}
 	productCollectionLengths := []int{}
 	allRows := map[string][][]interface{}{}
+	totalLength := 0
 	for _, collectionName := range rule.Requires() {
 		collectionRows := collections[collectionName].rows
 
 		productCollections = append(productCollections, collectionName)
 		productCollectionLengths = append(productCollectionLengths, len(collectionRows))
+		totalLength += len(collectionRows)
 
 		// assign row numbers for each row in the collection
 		for _, row := range collectionRows {
 			allRows[collectionName] = append(allRows[collectionName], row)
 		}
+	}
+
+	// if there are no rows, then there is no need to do work
+	if totalLength == 0 {
+		return results
 	}
 
 	// find out how many rows result from the product of the collections
