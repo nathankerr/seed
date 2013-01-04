@@ -2,7 +2,61 @@ package main
 
 import (
 	"errors"
+	"service"
 )
+
+// builds a new collection from the input collections according to the rule
+func runRule(collections map[string]*collection, service *service.Service, rule *service.Rule) *collection {
+	results := newCollection(rule.Supplies, service.Collections[rule.Supplies])
+
+	// setup index based access to the collections and rows
+	productCollections := []string{}
+	productCollectionLengths := []int{}
+	allRows := map[string][][]interface{}{}
+	for _, collectionName := range rule.Requires() {
+		collectionRows := collections[collectionName].rows
+
+		productCollections = append(productCollections, collectionName)
+		productCollectionLengths = append(productCollectionLengths, len(collectionRows))
+
+		// assign row numbers for each row in the collection
+		for _, row := range collectionRows {
+			allRows[collectionName] = append(allRows[collectionName], row)
+		}
+	}
+
+	// find out how many rows result from the product of the collections
+	numberOfProductRows, err := numberOfProducts(productCollectionLengths)
+	if err != nil {
+		panic(err)
+	}
+
+	// loop through the input rows (result of the product)
+	for productNumber := 0; productNumber < numberOfProductRows; productNumber++ {
+		// get the indexes for each collection from the productNumber
+		indexes, err := indexesFor(productNumber, productCollectionLengths)
+		if err != nil {
+			panic(err)
+		}
+
+		// get the rows for this product
+		rows := make(map[string][]interface{}) // collectionName: row
+		for index, rowNumber := range indexes {
+			collectionName := productCollections[index]
+			rows[collectionName] = allRows[collectionName][rowNumber]
+		}
+
+		// add the columns to the result row
+		result := []interface{}{}
+		for _, qc := range rule.Projection {
+			columnIndex := collections[qc.Collection].columns[qc.Column]
+			result = append(result, rows[qc.Collection][columnIndex])
+		}
+		results.addRow(result)
+	}
+
+	return results
+}
 
 func indexesFor(productNumber int, lengths []int) ([]int, error) {
 	// productNumber must be non-negative
@@ -16,7 +70,7 @@ func indexesFor(productNumber int, lengths []int) ([]int, error) {
 			return nil, errors.New("lengths must be positive")
 		}
 	}
-	
+
 	// productNumber cannot be greater than the number of possible products
 	numberOfProducts1, err := numberOfProducts(lengths)
 	if err != nil {
@@ -91,7 +145,6 @@ func productNumberFor(indexes []int, lengths []int) (int, error) {
 
 	return productNumber, nil
 }
-
 
 func numberOfProducts(lengths []int) (int, error) {
 	products := 1

@@ -1,11 +1,11 @@
 package main
 
-import(
+import (
 	"testing"
 	"testing/quick"
 )
 
-func TestNumberOfProducts (t *testing.T) {
+func TestNumberOfProducts(t *testing.T) {
 	lengths := []int{2}
 	expected := 2
 	products, _ := numberOfProducts(lengths)
@@ -13,14 +13,14 @@ func TestNumberOfProducts (t *testing.T) {
 		t.Errorf("%v != %v", expected, products)
 	}
 
-	lengths = []int{2,2}
+	lengths = []int{2, 2}
 	expected = 4
 	products, _ = numberOfProducts(lengths)
 	if products != expected {
 		t.Errorf("%v != %v", expected, products)
 	}
 
-	lengths = []int{1,3,5}
+	lengths = []int{1, 3, 5}
 	expected = 15
 	products, _ = numberOfProducts(lengths)
 	if products != expected {
@@ -28,7 +28,7 @@ func TestNumberOfProducts (t *testing.T) {
 	}
 }
 
-func TestNumberOfProductsQuick (t *testing.T) {
+func TestNumberOfProductsQuick(t *testing.T) {
 	f := func(lengths []int) bool {
 		containsNonPositive := false
 		for _, length := range lengths {
@@ -54,7 +54,7 @@ func TestNumberOfProductsQuick (t *testing.T) {
 	}
 }
 
-func TestIndexesFor (t *testing.T) {
+func TestIndexesFor(t *testing.T) {
 	checkExpectedProductNumberIndexes(
 		map[int][]int{
 			0: []int{0},
@@ -104,7 +104,7 @@ func checkExpectedProductNumberIndexes(expected map[int][]int, lengths []int, t 
 	}
 }
 
-func TestIndexesForQuick (t *testing.T) {
+func TestIndexesForQuick(t *testing.T) {
 	f := func(productNumber int, lengths []int) bool {
 		indexes, err := indexesFor(productNumber, lengths)
 
@@ -154,8 +154,8 @@ func TestIndexesForQuick (t *testing.T) {
 	}
 }
 
-func TestProductNumberFor (t *testing.T) {
-	lengths := []int{3,3}
+func TestProductNumberFor(t *testing.T) {
+	lengths := []int{3, 3}
 	expected := map[int][]int{
 		0: []int{0, 0},
 		1: []int{1, 0},
@@ -179,3 +179,146 @@ func TestProductNumberFor (t *testing.T) {
 		}
 	}
 }
+
+func TestProjection(t *testing.T) {
+	service := service.Parse("projection test",
+		"input in [unimportant, key] => [value]"+
+			"table keep [key] => [value]"+
+			"keep <+ [in.key, in.value]")
+
+	collections := make(map[string]*collection)
+
+	collections["in"] = newCollection("in", service.Collections["in"])
+	collections["in"].addRows([][]interface{}{
+		[]interface{}{1, 2, 3},
+		[]interface{}{4, 5, 6},
+	},
+	)
+
+	result := runRule(collections, service, service.Rules[0])
+	// t.Errorf("%#v", result)
+
+	expected := &collection{
+		name:    "keep",
+		key:     []string{"key"},
+		columns: map[string]int{"key": 0, "value": 1},
+		rows: map[string][]interface{}{
+			"[2]": []interface{}{2, 3},
+			"[5]": []interface{}{5, 6},
+		},
+	}
+
+	if !collectionsAreEquivalent(expected, result) {
+		t.Errorf("\nexpected:\t%v\ngot:\t\t%v", expected, result)
+	}
+}
+
+func TestProduct(t *testing.T) {
+	service := service.Parse("projection test",
+		"input a [key]"+
+			"input b [key]"+
+			"table product [a, b]"+
+			"product <+ [a.key, b.key]")
+
+	collections := make(map[string]*collection)
+
+	collections["a"] = newCollection("a", service.Collections["a"])
+	collections["a"].addRows([][]interface{}{
+		[]interface{}{1},
+		[]interface{}{2},
+		[]interface{}{3},
+	},
+	)
+
+	collections["b"] = newCollection("b", service.Collections["b"])
+	collections["b"].addRows([][]interface{}{
+		[]interface{}{4},
+		[]interface{}{5},
+		[]interface{}{6},
+	},
+	)
+
+	expected := &collection{
+		name:    "product",
+		key:     []string{"a", "b"},
+		columns: map[string]int{"a": 0, "b": 1},
+		rows: map[string][]interface{}{
+			"[1,4]": []interface{}{1, 4},
+			"[1,5]": []interface{}{1, 5},
+			"[1,6]": []interface{}{1, 6},
+			"[2,4]": []interface{}{2, 4},
+			"[2,5]": []interface{}{2, 5},
+			"[2,6]": []interface{}{2, 6},
+			"[3,4]": []interface{}{3, 4},
+			"[3,5]": []interface{}{3, 5},
+			"[3,6]": []interface{}{3, 6},
+		},
+	}
+
+	result := runRule(collections, service, service.Rules[0])
+
+	if !collectionsAreEquivalent(expected, result) {
+		t.Errorf("\nexpected:\t%v\ngot:\t\t%v", expected, result)
+	}
+}
+
+// determines if two collections are equivalent
+func collectionsAreEquivalent(a, b *collection) bool {
+	// check the names
+	// string
+	if a.name != b.name {
+		return false
+	}
+
+	// check the keys
+	// []string
+	if len(a.key) != len(b.key) {
+		return false
+	}
+	for i, value := range a.key {
+		if b.key[i] != value {
+			return false
+		}
+	}
+
+	// check the columns
+	// map[string]int
+	if len(a.columns) != len(b.columns) {
+		return false
+	}
+	for columnName, index := range a.columns {
+		bindex, ok := b.columns[columnName]
+		if !ok {
+			return false
+		}
+
+		if index != bindex {
+			return false
+		}
+	}
+
+	// check the rows
+	// map[string][]interface{}
+	if len(b.rows) != len(a.rows) {
+		return false
+	}
+	for key, row := range a.rows {
+		bRow, ok := b.rows[key]
+		if !ok {
+			return false
+		}
+
+		// []interface{}
+		if len(bRow) != len(row) {
+			return false
+		}
+		for i, column := range row {
+			if bRow[i] != column {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+

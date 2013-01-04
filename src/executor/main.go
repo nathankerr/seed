@@ -249,29 +249,3 @@ func ruleHandler(rule_num int, input <-chan message, output chan<- message, serv
 		info(rule_num, "done")
 	}
 }
-
-func runRule(collections map[string]*collection, service *service.Service, rule *service.Rule) *collection {
-	results := newCollection(rule.Supplies, service.Collections[rule.Supplies])
-
-	// loop through the input rows
-	// NOTE: currently only works with one service.Requires
-	for _, row := range collections[rule.Requires()[0]].rows {
-		result := []interface{}{}
-		// add the columns to the result row
-		for _, qc := range rule.Projection {
-			collection, ok := collections[qc.Collection]
-			if !ok {
-				panic("collection not found: " + qc.Collection)
-			}
-			columnIndex, ok := collection.columns[qc.Column]
-			if !ok {
-				panic("column not found: " + qc.Column)
-			}
-
-			result = append(result, row[columnIndex])
-		}
-		results.addRow(result)
-	}
-
-	return results
-}
