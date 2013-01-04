@@ -321,4 +321,3 @@ func collectionsAreEquivalent(a, b *collection) bool {
 
 	return true
 }
-

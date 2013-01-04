@@ -66,7 +66,6 @@ func (c *collection) addRow(row []interface{}) {
 	c.rows[c.key_for(row)] = row
 }
 
-
 // create a collection from a service collection
 func newCollection(name string, from *service.Collection) *collection {
 	c := &collection{
