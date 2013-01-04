@@ -13,13 +13,16 @@ func runRule(collections map[string]*collection, service *service.Service, rule 
 	productCollections := []string{}
 	productCollectionLengths := []int{}
 	allRows := map[string][][]interface{}{}
-	totalLength := 0
+	aCollectionIsEmpty := false
 	for _, collectionName := range rule.Requires() {
 		collectionRows := collections[collectionName].rows
 
 		productCollections = append(productCollections, collectionName)
 		productCollectionLengths = append(productCollectionLengths, len(collectionRows))
-		totalLength += len(collectionRows)
+	
+		if len(collectionRows) == 0 {
+			aCollectionIsEmpty = true
+		}
 
 		// assign row numbers for each row in the collection
 		for _, row := range collectionRows {
@@ -27,8 +30,8 @@ func runRule(collections map[string]*collection, service *service.Service, rule 
 		}
 	}
 
-	// if there are no rows, then there is no need to do work
-	if totalLength == 0 {
+	// if there are no rows, then the rule can't be completed
+	if aCollectionIsEmpty {
 		return results
 	}
 
@@ -96,8 +99,8 @@ func indexesFor(productNumber int, lengths []int) ([]int, error) {
 
 	// lengths must be positive
 	for _, length := range lengths {
-		if length <= 0 {
-			return nil, errors.New("lengths must be positive")
+		if length < 0 {
+			return nil, errors.New("lengths must be non-negative")
 		}
 	}
 
@@ -138,7 +141,11 @@ func indexesFor(productNumber int, lengths []int) ([]int, error) {
 		// any remaining part of productNumber will be
 		// handled by the next index
 		if index >= length {
-			index %= length
+			if length == 0 {
+				index = 0 
+			} else {
+				index %= length
+			}
 		}
 
 		indexes = append(indexes, index)
@@ -158,8 +165,8 @@ func productNumberFor(indexes []int, lengths []int) (int, error) {
 		if indexes[i] < 0 {
 			return -1, errors.New("indexes must be non-negative")
 		}
-		if lengths[i] <= 0 {
-			return -1, errors.New("lengths must be positive")
+		if lengths[i] < 0 {
+			return -1, errors.New("lengths must be non-negative")
 		}
 	}
 
@@ -179,10 +186,12 @@ func productNumberFor(indexes []int, lengths []int) (int, error) {
 func numberOfProducts(lengths []int) (int, error) {
 	products := 1
 	for _, length := range lengths {
-		if length <= 0 {
-			return -1, errors.New("lengths must be positive")
+		if length < 0 {
+			return -1, errors.New("lengths must be non-negative")
 		}
-		products *= length
+		if length != 0 {
+			products *= length
+		}
 	}
 	return products, nil
 }

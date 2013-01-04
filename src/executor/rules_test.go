@@ -31,18 +31,18 @@ func TestNumberOfProducts(t *testing.T) {
 
 func TestNumberOfProductsQuick(t *testing.T) {
 	f := func(lengths []int) bool {
-		containsNonPositive := false
+		containsNegative := false
 		for _, length := range lengths {
 			if length <= 0 {
-				containsNonPositive = true
+				containsNegative = true
 				break
 			}
 		}
 
 		products, err := numberOfProducts(lengths)
 
-		if containsNonPositive {
-			return err != nil && err.Error() == "lengths must be positive"
+		if containsNegative {
+			return err != nil && err.Error() == "lengths must be non-negative"
 		}
 
 		for _, length := range lengths {
@@ -116,10 +116,10 @@ func TestIndexesForQuick(t *testing.T) {
 					return true
 				}
 				return false
-			case "lengths must be positive":
+			case "lengths must be non-negative":
 				containsNonPositive := false
 				for _, length := range lengths {
-					if length <= 0 {
+					if length < 0 {
 						containsNonPositive = true
 						break
 					}
