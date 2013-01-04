@@ -1,0 +1,7 @@
+channel :kvput, [:@address, :key] => [:value]
+channel :kvdel, [:@address, :key]
+channel :kvget, [:@address, :kvget_response_addr, :key]
+channel :kvget_response, [:@kvget_response_addr, :key] => [:value]
+stdio <~ kvget_response.inspected
+kvput <~ [["127.0.0.1:3000", 1, 2],["127.0.0.1:3000", 3, 4]]
+kvget <~ [["127.0.0.1:3000", "127.0.0.1:3001", 1]]

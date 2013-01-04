@@ -1,14 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/msgpack/msgpack-go"
 	"io/ioutil"
-	// "log"
 	"net"
 	net_transform "network"
-	// "os"
 	"service"
 	"time"
 )
@@ -46,28 +42,39 @@ func main() {
 
 	// make the channels to connect to/from the channels
 	collection_inputs := make(map[string]chan message)
-	for name, _ := range kvs.Collections {
+	collection_outputs := make(map[string][]chan<- message)
+	bud_output := make(chan message)
+	for name, collection := range kvs.Collections {
 		channel := make(chan message)
 		collection_inputs[name] = channel
+
+		if collection.Type == service.CollectionChannel {
+			collection_outputs[name] = append(collection_outputs[name], bud_output)
+		}
 	}
 
-	// launch the input handler
+	// launch the bud input and output handlers
 	bud_input := make(chan message)
-	// handler_inputs = append(handler_inputs, bud_input)
 	input_collections := make(map[string]chan<- message)
 	for name, channel := range collection_inputs {
 		if kvs.Collections[name].Type == service.CollectionChannel {
 			input_collections[name] = channel
 		}
 	}
-	go budInputHandler("127.0.0.1:3000", bud_input, input_collections, main)
+	// the PacketConn for both
+	listener, err := net.ListenPacket("udp", "localhost:3000")
+	if err != nil {
+		panic(err)
+	}
+	defer listener.Close()
+	go budInputHandler(listener, bud_input, input_collections, main)
+	go budOutputHandler(listener, bud_output)
 
 	// Process the rules
 	// 1. make input channels for the rules
 	// 2. collect the rule input channels for each of the collections which feed data to the channels
 	// 3. launch the rule handlers
 	rule_inputs := make([]chan message, len(kvs.Rules))
-	collection_outputs := make(map[string][]chan<- message)
 	for rule_num, rule := range kvs.Rules {
 		// make input channel
 		channel := make(chan message)
@@ -101,14 +108,14 @@ func main() {
 	for {
 		startTime := time.Now()
 		time.Sleep(2 * time.Second)
-		info("main", "------------------------------------")
+		info("main", "--------------------------------------------")
 
 		// tell all handlers to step
 		for collection_name, collection_channel := range collection_inputs {
 			select {
 			case collection_channel <- step:
 			}
-			info("main", "sent step to", collection_name)
+			flowinfo("main", "sent step to", collection_name)
 		}
 
 		// wait for all the handlers to finish the step
@@ -118,68 +125,10 @@ func main() {
 			case <-main:
 				finished++
 			}
-			info("main", finished, "of", len(collection_inputs)+len(rule_inputs))
+			flowinfo("main", finished, "of", len(collection_inputs)+len(rule_inputs))
 		}
 
 		info("main", "step took", time.Since(startTime))
-	}
-}
-
-// try out a bud-compatible network interface
-func budInputHandler(addr string, input <-chan message, collections map[string]chan<- message, main chan<- message) {
-	// listen on the network
-	listener, err := net.ListenPacket("udp", "localhost:3000")
-	if err != nil {
-		panic(err)
-	}
-	defer listener.Close()
-
-	buf := make([]byte, 1024)
-	for {
-		n, _, err := listener.ReadFrom(buf)
-		if err != nil {
-			panic(err)
-		}
-
-		// msgpack format from bud:
-		// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
-		// COLUMNS depends on the column types
-		// 0: collection name
-		// 1: data
-		// 2: ??
-		msg_reflected, _, err := msgpack.Unpack(bytes.NewBuffer(buf[:n]))
-		if err != nil {
-			panic(err)
-		}
-		msg := msg_reflected.Interface().([]interface{})
-		collection_name := string(msg[0].([]byte))
-		info("budInput", collection_name)
-
-		collection_channel, ok := collections[collection_name]
-		if !ok {
-			fmt.Println("no channel for", collection_name)
-		}
-
-		// create the collection to send
-		row := msg[1].([]interface{})
-		key := make([]string, len(row))
-		for i, _ := range row {
-			key[i] = fmt.Sprintf("column%d", i)
-		}
-		to_send := newCollectionFromRaw(
-			"bud input",
-			key,
-			nil,
-			[][]interface{}{row},
-		)
-
-		// send the collection
-		collection_channel <- message{
-			operation:  "<+",
-			collection: *to_send,
-		}
-
-		info("budInput", "sent", to_send, "to", collection_name)
 	}
 }
 
@@ -190,11 +139,11 @@ func collectionHandler(name string, input <-chan message, outputs []chan<- messa
 	// sends to outputs when "step" is received
 	// otherwise, handles operation on the collection
 	for {
-		info(name, "ready")
+		flowinfo(name, "ready")
 		incoming_message := <-input
 		switch incoming_message.operation {
 		case "step":
-			info(name, "step")
+			flowinfo(name, "step")
 			outgoing_message := message{
 				operation:  "",
 				collection: *c,
@@ -203,17 +152,21 @@ func collectionHandler(name string, input <-chan message, outputs []chan<- messa
 				output <- outgoing_message
 			}
 			main <- message{operation: "done"}
-			info(name, "done")
+			flowinfo(name, "done")
 		case "<+", "<~":
-			info(name, "merge", incoming_message.collection.rows)
+			operationinfo(name, "merge", incoming_message.collection.rows)
 			c.merge(&incoming_message.collection)
-			info(name, "has", c.rows)
 		case "<-":
-			info(name, "delete", incoming_message.collection.rows)
+			operationinfo(name, "delete", incoming_message.collection.rows)
 			c.delete(&incoming_message.collection)
+		case "<+-":
+			operationinfo(name, "delete/merge", incoming_message.collection.rows)
+			c.delete(&incoming_message.collection)
+			c.merge(&incoming_message.collection)
 		default:
 			info(name, "unhandled operation:", incoming_message.operation)
 		}
+		monitorinfo(name, "has", c.rows)
 	}
 }
 
@@ -224,7 +177,7 @@ func ruleHandler(rule_num int, input <-chan message, output chan<- message, serv
 	// 3. send resulting collection
 	// 4. send finished timestep to main
 	for {
-		info(rule_num, "ready")
+		flowinfo(rule_num, "ready")
 		// create collections
 		collections := make(map[string]*collection)
 
@@ -232,7 +185,7 @@ func ruleHandler(rule_num int, input <-chan message, output chan<- message, serv
 		for len(collections) != len(rule.Requires()) {
 			incoming_message := <-input
 			collections[incoming_message.collection.name] = &incoming_message.collection
-			info(rule_num, len(collections), "of", len(rule.Requires()))
+			flowinfo(rule_num, len(collections), "of", len(rule.Requires()))
 		}
 
 		// run rule
@@ -243,12 +196,12 @@ func ruleHandler(rule_num int, input <-chan message, output chan<- message, serv
 			operation:  rule.Operation,
 			collection: *result,
 		}
-		info(rule_num, "sent")
+		flowinfo(rule_num, "sent")
 
 		// tell main step is finished
 		main <- message{
 			operation: "done",
 		}
-		info(rule_num, "done")
+		flowinfo(rule_num, "done")
 	}
 }

@@ -12,13 +12,28 @@ import (
 	"time"
 )
 
+func operationinfo(id interface{}, args ...interface{}) {
+	return
+	printlog(id, args...)
+}
+
+func monitorinfo(id interface{}, args ...interface{}) {
+	return
+	printlog(id, args...)
+}
+
+func flowinfo(id interface{}, args ...interface{}) {
+	return
+	printlog(id, args...)
+}
+
 func info(id interface{}, args ...interface{}) {
 	printlog(id, args...)
 }
 
 // include source location with log output
 func printlog(id interface{}, args ...interface{}) {
-	info := fmt.Sprintf("%v [%v] ", time.Now(), id)
+	info := fmt.Sprintf("%v [%v] ", time.Now().Format("15:04:05.000000"), id)
 
 	// pc, file, line, ok := runtime.Caller(2)
 	// if ok {
