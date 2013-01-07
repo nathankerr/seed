@@ -5,16 +5,20 @@ import (
 	"fmt"
 	"github.com/msgpack/msgpack-go"
 	"net"
+	"reflect"
+	"service"
 )
 
 // try out a bud-compatible network interface
-func budInputHandler(listener net.PacketConn, input <-chan message, collections map[string]chan<- message, main chan<- message) {
+func budInputHandler(listener net.PacketConn, input <-chan message, collections map[string]chan<- message, main chan<- message, seed *service.Service) {
 	buf := make([]byte, 1024)
 	for {
 		n, _, err := listener.ReadFrom(buf)
 		if err != nil {
 			panic(err)
 		}
+
+		// fmt.Printf("received %#v\n", buf[:n])
 
 		// msgpack format from bud:
 		// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
@@ -39,7 +43,7 @@ func budInputHandler(listener net.PacketConn, input <-chan message, collections 
 		}
 		// msg := msg_reflected.Interface().([]interface{})
 		collection_name := string(msg[0].([]byte))
-		info("budInput", collection_name)
+		// info("budInput", collection_name)
 
 		collection_channel, ok := collections[collection_name]
 		if !ok {
@@ -47,17 +51,43 @@ func budInputHandler(listener net.PacketConn, input <-chan message, collections 
 		}
 
 		// create the collection to send
-		row := msg[1].([]interface{})
-		key := make([]string, len(row))
-		for i, _ := range row {
-			key[i] = fmt.Sprintf("column%d", i)
+		// row := msg[1].([]interface{})
+		// key := make([]string, len(row))
+		// for i, _ := range row {
+		// 	key[i] = fmt.Sprintf("column%d", i)
+		// }
+		// to_send := newCollectionFromRaw(
+		// 	collection_name,
+		// 	key,
+		// 	nil,
+		// 	[][]interface{}{row},
+		// )
+		to_send := newCollection(collection_name, seed.Collections[collection_name])
+		switch r := msg[1].(type) {
+		// case [][]interface{}:
+		// 	fmt.Println("double array")
+		// 	to_send.addRows(r)
+		case []interface{}:
+			// fmt.Println("have", r)
+SingleInterfaceLoop:
+			for _, row := range r {
+				switch row_typed := row.(type) {
+				case []interface{}:
+					to_send.addRow(row_typed)
+				case []uint8: // really a single row
+					row_filled := []interface{}{}
+					for _, column := range r {
+						row_filled = append(row_filled, column)
+					}
+					to_send.addRow(row_filled)
+					break SingleInterfaceLoop
+				default:
+					panic("unknown type:" + reflect.TypeOf(row).String())
+				}
+			}
+		default:
+			panic("unknown type:" + reflect.TypeOf(r).String())
 		}
-		to_send := newCollectionFromRaw(
-			"bud input",
-			key,
-			nil,
-			[][]interface{}{row},
-		)
 
 		// send the collection
 		collection_channel <- message{
@@ -74,8 +104,9 @@ func budOutputHandler(conn net.PacketConn, input <-chan message) {
 	for {
 		message := <-input
 
-		monitorinfo("budOutput", "has", message)
+		// monitorinfo("budOutput", message.collection)
 		collection := message.collection
+		monitorinfo("budOutput", collection.name, ": ", collection.String())
 
 		// find the address column
 		addressColumn := -1
@@ -96,46 +127,56 @@ func budOutputHandler(conn net.PacketConn, input <-chan message) {
 				panic(err)
 			}
 
+			// don't send to self
+			if address.String() == "127.0.0.1:3000" {
+				continue
+			}
+
 			// create the payload
 			outputMessage := bytes.NewBuffer([]byte{})
 
-			// msgpack format from bud:
-			// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
-			// COLUMNS depends on the column types
-			// 0: collection name
-			// 1: data
-			// 2: ??
-
-			// collection name []byte
-			_, err = msgpack.PackBytes(outputMessage, []byte(collection.name))
-			if err != nil {
-				panic(err)
-			}
-
-			// data [][]interface{}
-			data := [][]interface{}{}
 			for _, row := range collection.rows {
-				data = append(data, row)
-			}
-			_, err = msgpack.Pack(outputMessage, data)
-			if err != nil {
-				panic(err)
-			}
+				// msgpack format from bud:
+				// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
+				// COLUMNS depends on the column types
+				// 0: collection name
+				// 1: data
+				// 2: ??
 
-			// ?? []interface{}
-			_, err = msgpack.Pack(outputMessage, []interface{}{})
-			if err != nil {
-				panic(err)
+				// collection name []byte
+				collection_name := []byte(collection.name)
+
+				// data [][]interface{}
+				data := []interface{}{}
+
+				for _, column := range row {
+					data = append(data, column)	
+				}
+
+				// works for one row
+				// for _, row := range collection.rows {
+				// 	for _, column := range row {
+				// 		data = append(data, column)	
+				// 	}
+				// }
+				// fmt.Printf("\nHERE: %#v\n", data)
+
+				// ?? []interface{}
+				part3 := []interface{}{}
+
+				_, err = msgpack.Pack(outputMessage, []interface{}{collection_name, data, part3})
+				if err != nil {
+					panic(err)
+				}
+
+				// send the message
+				_, err = conn.WriteTo(outputMessage.Bytes(), address)
+				if err != nil {
+					panic(err)
+				}
+
+				info("budOutput", "sent to", string(row[addressColumn].([]byte)), row)
 			}
-
-			// send the message
-			_, err = conn.WriteTo(outputMessage.Bytes(), address)
-			if err != nil {
-				panic(err)
-			}
-
-			info("budOutput", "sent to", string(row[addressColumn].([]byte)))
-
 		}
 	}
 }

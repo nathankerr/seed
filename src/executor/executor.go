@@ -54,7 +54,7 @@ func Execute(s *service.Service) {
 		panic(err)
 	}
 	defer listener.Close()
-	go budInputHandler(listener, bud_input, input_collections, main)
+	go budInputHandler(listener, bud_input, input_collections, main, s)
 	go budOutputHandler(listener, bud_output)
 
 	// Process the rules
@@ -138,6 +138,16 @@ func collectionHandler(name string, input <-chan message, outputs []chan<- messa
 			for _, output := range outputs {
 				output <- outgoing_message
 			}
+			switch collection.Type {
+			case service.CollectionInput, service.CollectionOutput, service.CollectionScratch, service.CollectionChannel:
+				// temporary collections
+				c.rows = map[string][]interface{}{}
+			case service.CollectionTable:
+				// persistent collections
+				// no-op
+			default:
+				panic(fmt.Sprintf("unhandled collection type: %v", collection.Type))
+			}
 			main <- message{operation: "done"}
 			flowinfo(name, "done")
 		case "<+", "<~":
@@ -153,7 +163,7 @@ func collectionHandler(name string, input <-chan message, outputs []chan<- messa
 		default:
 			info(name, "unhandled operation:", incoming_message.operation)
 		}
-		monitorinfo(name, "has", c.rows)
+		monitorinfo(name, c)
 	}
 }
 
@@ -177,6 +187,7 @@ func ruleHandler(rule_num int, input <-chan message, output chan<- message, serv
 
 		// run rule
 		result := runRule(collections, service, rule)
+		monitorinfo(rule_num, result)
 
 		// spend result
 		output <- message{

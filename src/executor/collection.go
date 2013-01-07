@@ -3,7 +3,9 @@ package executor
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"service"
+	"strings"
 )
 
 type collection struct {
@@ -107,7 +109,7 @@ func (c *collection) key_for(row []interface{}) string {
 // and have them in the same order
 func (c *collection) merge(to_merge *collection) {
 	if len(c.columns) != len(to_merge.columns) {
-		panic("merge not possible as collections have different numbers of columns")
+		panic(fmt.Sprintf("merge not possible from\n\t%v\nto\n\t%v\nas the collections have different numbers of columns.", to_merge, c))
 	}
 
 	for _, row := range to_merge.rows {
@@ -124,4 +126,25 @@ func (c *collection) delete(to_delete *collection) {
 	for _, row := range to_delete.rows {
 		delete(c.rows, c.key_for(row))
 	}
+}
+
+// pretty print data
+func (c *collection) String() string {
+	rows := []string{}
+	for _, row := range c.rows {
+		columns := []string{}
+		for _ , column := range row {
+			switch columnTyped := column.(type) {
+			case []uint8:
+				columns = append(columns, string(columnTyped))
+			case int8:
+				columns = append(columns, fmt.Sprintf("%#v", columnTyped))
+			default:
+				panic("unhandled type:" + reflect.TypeOf(column).String())
+			}
+		}
+		rows = append(rows, fmt.Sprintf("[%s]", strings.Join(columns, ", ")))
+	}
+
+	return fmt.Sprintf("[%s]", strings.Join(rows, ", "))
 }

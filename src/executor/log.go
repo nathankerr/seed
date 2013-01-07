@@ -18,7 +18,7 @@ func operationinfo(id interface{}, args ...interface{}) {
 }
 
 func monitorinfo(id interface{}, args ...interface{}) {
-	return
+	// return
 	printlog(id, args...)
 }
 
