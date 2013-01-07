@@ -133,7 +133,7 @@ func (c *collection) String() string {
 	rows := []string{}
 	for _, row := range c.rows {
 		columns := []string{}
-		for _ , column := range row {
+		for _, column := range row {
 			switch columnTyped := column.(type) {
 			case []uint8:
 				columns = append(columns, string(columnTyped))

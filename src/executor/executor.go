@@ -94,7 +94,7 @@ func Execute(s *service.Service) {
 	step := message{operation: "step"}
 	for {
 		startTime := time.Now()
-		time.Sleep(2 * time.Second)
+		// time.Sleep(2 * time.Second)
 		info("main", "--------------------------------------------")
 
 		// tell all handlers to step
@@ -104,6 +104,8 @@ func Execute(s *service.Service) {
 			}
 			flowinfo("main", "sent step to", collection_name)
 		}
+		bud_output <- step
+		flowinfo("main", "sent step to", "budOutput")
 
 		// wait for all the handlers to finish the step
 		finished := 0

@@ -69,7 +69,7 @@ func budInputHandler(listener net.PacketConn, input <-chan message, collections 
 		// 	to_send.addRows(r)
 		case []interface{}:
 			// fmt.Println("have", r)
-SingleInterfaceLoop:
+		SingleInterfaceLoop:
 			for _, row := range r {
 				switch row_typed := row.(type) {
 				case []interface{}:
@@ -101,82 +101,86 @@ SingleInterfaceLoop:
 
 // a bud compatible sender network interface
 func budOutputHandler(conn net.PacketConn, input <-chan message) {
+	collections := make(map[string]*collection)
 	for {
 		message := <-input
-
-		// monitorinfo("budOutput", message.collection)
-		collection := message.collection
-		monitorinfo("budOutput", collection.name, ": ", collection.String())
-
-		// find the address column
-		addressColumn := -1
-		for name, index := range collection.columns {
-			if name[0] == '@' {
-				addressColumn = index
-				break
+		switch message.operation {
+		case "": // is blank because all channels send to the output handlers; collections don't know what their operations are
+			collection, ok := collections[message.collection.name]
+			if !ok {
+				collections[message.collection.name] = &message.collection
+			} else {
+				collection.merge(&message.collection)
 			}
-		}
-		if addressColumn == -1 {
-			panic("no address column in " + collection.name)
-		}
+		case "step": // when stepping, send all collected rows then empty set to send
+			// send rows
+			for _, collection := range collections {
+				monitorinfo("budOutput", collection.name, ": ", collection.String())
 
-		for _, row := range collection.rows {
-			// get the address to send to
-			address, err := net.ResolveUDPAddr("udp", string(row[addressColumn].([]uint8)))
-			if err != nil {
-				panic(err)
-			}
-
-			// don't send to self
-			if address.String() == "127.0.0.1:3000" {
-				continue
-			}
-
-			// create the payload
-			outputMessage := bytes.NewBuffer([]byte{})
-
-			for _, row := range collection.rows {
-				// msgpack format from bud:
-				// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
-				// COLUMNS depends on the column types
-				// 0: collection name
-				// 1: data
-				// 2: ??
-
-				// collection name []byte
-				collection_name := []byte(collection.name)
-
-				// data [][]interface{}
-				data := []interface{}{}
-
-				for _, column := range row {
-					data = append(data, column)	
+				// find the address column
+				addressColumn := -1
+				for name, index := range collection.columns {
+					if name[0] == '@' {
+						addressColumn = index
+						break
+					}
+				}
+				if addressColumn == -1 {
+					panic("no address column in " + collection.name)
 				}
 
-				// works for one row
-				// for _, row := range collection.rows {
-				// 	for _, column := range row {
-				// 		data = append(data, column)	
-				// 	}
-				// }
-				// fmt.Printf("\nHERE: %#v\n", data)
+				for _, row := range collection.rows {
+					// get the address to send to
+					address, err := net.ResolveUDPAddr("udp", string(row[addressColumn].([]uint8)))
+					if err != nil {
+						panic(err)
+					}
 
-				// ?? []interface{}
-				part3 := []interface{}{}
+					// don't send to self
+					if address.String() == "127.0.0.1:3000" {
+						continue
+					}
 
-				_, err = msgpack.Pack(outputMessage, []interface{}{collection_name, data, part3})
-				if err != nil {
-					panic(err)
+					// create the payload
+					outputMessage := bytes.NewBuffer([]byte{})
+
+					// msgpack format from bud:
+					// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
+					// COLUMNS depends on the column types
+					// 0: collection name
+					// 1: data
+					// 2: ??
+
+					// collection name []byte
+					collection_name := []byte(collection.name)
+
+					// data [][]interface{}
+					data := []interface{}{}
+
+					for _, column := range row {
+						data = append(data, column)
+					}
+
+					// ?? []interface{}
+					part3 := []interface{}{}
+
+					_, err = msgpack.Pack(outputMessage, []interface{}{collection_name, data, part3})
+					if err != nil {
+						panic(err)
+					}
+
+					// send the message
+					_, err = conn.WriteTo(outputMessage.Bytes(), address)
+					if err != nil {
+						panic(err)
+					}
+
+					info("budOutput", "sent to", string(row[addressColumn].([]byte)), row)
 				}
-
-				// send the message
-				_, err = conn.WriteTo(outputMessage.Bytes(), address)
-				if err != nil {
-					panic(err)
-				}
-
-				info("budOutput", "sent to", string(row[addressColumn].([]byte)), row)
 			}
+			collections = make(map[string]*collection)
+		default:
+			panic("unhandled operation: " + message.operation)
 		}
 	}
 }
