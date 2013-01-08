@@ -114,6 +114,9 @@ func main() {
 			case "dot":
 				extension = "dot"
 				writer = service.ToDot
+			case "go":
+				extension = "go"
+				writer = service.ToGo
 			case "json":
 				extension = "json"
 				writer = service.ToJson

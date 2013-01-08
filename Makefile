@@ -1,13 +1,19 @@
 GO=GOPATH=/Users/alaster/Projects/seed go
-PACKAGES=executor network replication seed service
+COMMANDS=seed demo
+PACKAGES=$(COMMANDS) executor network replication service
 
 .PHONY: all
 all: install
 	# -rm -rf build
+	bin/seed -t "service go" -transformations "network" kvs.seed
 	# bin/seed -t "bloom dot json service" -transformations "network" -execute kvs.seed
-	bin/seed -t "bloom dot json service" -transformations "network" kvs.seed
+	# bin/seed -t "bloom dot json service" -transformations "network" kvs.seed
 	# bin/seed -t "bloom json" -transformations "" cart.seed
 	# bin/seed -t "bloom json" -transformations "network" cart.seed
+
+.PHONY: demo
+demo: install
+	bin/demo
 
 .PHONY: run
 run: install
@@ -15,7 +21,7 @@ run: install
 
 .PHONY: install
 install: test
-	$(GO) install seed
+	$(GO) install $(COMMANDS)
 
 .PHONY: test
 test: clean vet
