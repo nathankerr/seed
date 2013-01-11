@@ -2,7 +2,7 @@ package main
 
 // standard packages
 import (
-	"executor"
+	executor "executorng"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -27,8 +27,8 @@ func main() {
 		"directory name to create and output the bud source")
 	var from_format = flag.String("f", "seed",
 		"format to load (seed)")
-	var to_format = flag.String("t", "bloom",
-		"formats to write separated by spaces (bloom, dot, json")
+	var to_format = flag.String("t", "go",
+		"formats to write separated by spaces (bloom, dot, go, json, service")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
 	var execute = flag.Bool("execute", false, "execute the service")
@@ -77,7 +77,7 @@ func main() {
 		seeds[name] = seed
 	}
 
-	info("Tranform Seeds")
+	info("Transform Seeds")
 	for _, transformation := range strings.Fields(*transformations) {
 		transformed := make(map[string]*service.Service)
 		for sname, seed := range seeds {

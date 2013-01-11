@@ -25,7 +25,7 @@ func ToGo(seed *Service, name string) ([]byte, error) {
 	// rules
 	str = fmt.Sprintf("%s\n\t\tRules: []*service.Rule{", str)
 	for _, rule := range seed.Rules {
-		str = fmt.Sprintf("%s\n\t\t\t%v,", str, rule.toGo("\t\t\t\t"))	
+		str = fmt.Sprintf("%s\n\t\t\t%v,", str, rule.toGo("\t\t\t\t"))
 	}
 	str = fmt.Sprintf("%s\n\t\t},", str)
 
@@ -37,7 +37,6 @@ func ToGo(seed *Service, name string) ([]byte, error) {
 
 	// close main
 	str = fmt.Sprintf("%s\n}\n", str)
-
 
 	return []byte(str), nil
 }
@@ -70,7 +69,7 @@ func (c *Collection) toGo(indent string) string {
 	str = fmt.Sprintf("%s%sData: %#v,\n", str, indent, c.Data)
 
 	// source
-	str = fmt.Sprintf("%s%sSource: %v,\n", str, indent, c.Source.toGo(indent + "\t"))
+	str = fmt.Sprintf("%s%sSource: %v,\n", str, indent, c.Source.toGo(indent+"\t"))
 
 	if len(indent) > 0 {
 		indent = indent[:len(indent)-1]
@@ -91,14 +90,14 @@ func (r *Rule) toGo(indent string) string {
 	// Projection
 	str = fmt.Sprintf("%s%sProjection: []QualifiedColumn{\n", str, indent)
 	for _, qc := range r.Projection {
-		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, qc.toGo(indent + "\t\t"))
+		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, qc.toGo(indent+"\t\t"))
 	}
 	str = fmt.Sprintf("%s%s},\n", str, indent)
 
 	// Predicate
 	str = fmt.Sprintf("%s%sPredicate: []Constraint{", str, indent)
 	for _, c := range r.Predicate {
-		str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, c.toGo(indent + "\t\t"))
+		str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, c.toGo(indent+"\t\t"))
 	}
 	if len(r.Predicate) > 0 {
 		str = fmt.Sprintf("%s%s},\n", str, indent)
@@ -111,7 +110,7 @@ func (r *Rule) toGo(indent string) string {
 	str = fmt.Sprintf("%s%sBlock:     %#v,\n", str, indent, r.Block)
 
 	// Source
-	str = fmt.Sprintf("%s%sSource: %v,\n", str, indent, r.Source.toGo(indent + "\t"))
+	str = fmt.Sprintf("%s%sSource: %v,\n", str, indent, r.Source.toGo(indent+"\t"))
 
 	if len(indent) > 0 {
 		indent = indent[:len(indent)-1]
@@ -159,10 +158,10 @@ func (c Constraint) toGo(indent string) string {
 	str := fmt.Sprintf("service.Constraint{")
 
 	// Left
-	str = fmt.Sprintf("%s\n%sLeft: %v,\n", str, indent, c.Left.toGo(indent + "\t"))
+	str = fmt.Sprintf("%s\n%sLeft: %v,\n", str, indent, c.Left.toGo(indent+"\t"))
 
 	// Right
-	str = fmt.Sprintf("%s%sRight: %v,\n", str, indent, c.Right.toGo(indent + "\t"))
+	str = fmt.Sprintf("%s%sRight: %v,\n", str, indent, c.Right.toGo(indent+"\t"))
 
 	if len(indent) > 0 {
 		indent = indent[:len(indent)-1]

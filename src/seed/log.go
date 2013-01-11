@@ -12,7 +12,7 @@ import (
 )
 
 func info(args ...interface{}) {
-	// return
+	return
 	printlog(args...)
 }
 

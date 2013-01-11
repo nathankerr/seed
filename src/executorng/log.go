@@ -1,4 +1,4 @@
-package service
+package executorng
 
 // control output verbosity by toggling lexinfo, parseinfo, and info on and off
 // by enabling/disabling the return statements.
@@ -11,36 +11,26 @@ import (
 	"runtime"
 )
 
-func lexinfo(args ...interface{}) {
+func info(id interface{}, args ...interface{}) {
+	// return
+	printlog(id, args...)
+}
+
+func timeinfo(id interface{}, args ...interface{}) {
 	return
-	printlog(args...)
+	printlog(id, args...)
 }
 
-func parseinfo(args ...interface{}) {
+// control communication information
+func controlinfo(id interface{}, args ...interface{}) {
 	return
-	printlog(args...)
+	printlog(id, args...)
 }
 
-func info(args ...interface{}) {
-	return
-	printlog(args...)
-}
-
-func fatal(args ...interface{}) {
-	printlog(args...)
-	os.Exit(1)
-}
-
-func fatalf(format string, args ...interface{}) {
-	printlog(fmt.Sprintf(format, args...))
-	os.Exit(1)
-}
-
-// include source location with log output
-func printlog(args ...interface{}) {
+func fatal(id interface{}, args ...interface{}) {
 	info := ""
 
-	pc, file, line, ok := runtime.Caller(2)
+	pc, file, line, ok := runtime.Caller(1)
 	if ok {
 		basepath, err := filepath.Abs(".")
 		if err != nil {
@@ -58,6 +48,17 @@ func printlog(args ...interface{}) {
 			info += ": "
 		}
 	}
+
+	info += fmt.Sprintf("[%v] ", id)
+	info += fmt.Sprintln(args...)
+
+	fmt.Print(info)
+	os.Exit(1)
+}
+
+// include source location with log output
+func printlog(id interface{}, args ...interface{}) {
+	info := fmt.Sprintf("[%v] ", id)
 	info += fmt.Sprintln(args...)
 
 	fmt.Printf("%s", info)
