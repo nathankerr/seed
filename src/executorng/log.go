@@ -17,7 +17,7 @@ func info(id interface{}, args ...interface{}) {
 }
 
 func timeinfo(id interface{}, args ...interface{}) {
-	return
+	// return
 	printlog(id, args...)
 }
 

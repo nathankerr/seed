@@ -7,13 +7,14 @@ import (
 func collectionHandler(collectionName string, s *service.Service, channels channels) {
 	controlinfo(collectionName, "started")
 	input := channels.collections[collectionName]
-
-	immediateRuleChannels := ruleChannels(false, collectionName, s, channels)
-	deferredRuleChannels := ruleChannels(true, collectionName, s, channels)
-
 	c := s.Collections[collectionName]
 
-	data := tupleSet{}
+	immediates := ruleChannels(false, collectionName, s, channels)
+	deferreds := ruleChannels(true, collectionName, s, channels)
+
+	controlinfo(collectionName, "sends to", immediates, deferreds)
+
+	// data := tupleSet{}
 
 	for {
 		message := <-input
@@ -21,9 +22,14 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 
 		switch message.operation {
 		case "immediate":
-			// sendToAll(messageContainer{}, immediateRuleChannels)
+			// info(collectionName, "immediate")
+			sendToAll(messageContainer{operation: "data"}, immediates)
+			channels.finished <- true
+			controlinfo(collectionName, "finished with", message)
 		case "deferred":
-			// sendToAll(messageContainer{}, deferredRuleChannels)
+			// info(collectionName, "deferred")
+			controlinfo(collectionName, "sending to", deferreds)
+			sendToAll(messageContainer{operation: "data"}, deferreds)
 			switch c.Type {
 			case service.CollectionInput, service.CollectionOutput, service.CollectionScratch, service.CollectionChannel:
 				// temporary collections
@@ -34,16 +40,18 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 			default:
 				fatal(collectionName, "unhandled collection type", c.Type)
 			}
+			channels.finished <- true
+			controlinfo(collectionName, "finished with", message)
+		case "data":
+			//TODO
 		default:
 			fatal(collectionName, "unhandled message:", message)
 		}
 
-		channels.finished <- true
-		controlinfo(collectionName, "finished with", message)
 	}
 }
 
-func ruleChannels (deferred bool, collectionName string, s *service.Service, channels channels) []chan<- messageContainer {
+func ruleChannels(deferred bool, collectionName string, s *service.Service, channels channels) []chan<- messageContainer {
 	ruleChannels := []chan<- messageContainer{}
 	for ruleNum, rule := range s.Rules {
 		if (deferred && rule.Operation == "<=") || (!deferred && rule.Operation != "<=") {
@@ -61,12 +69,14 @@ func ruleChannels (deferred bool, collectionName string, s *service.Service, cha
 
 func collectionToMessage(name string, collection tupleSet) messageContainer {
 	message := messageContainer{
-		operation: "data",
+		operation:  "data",
 		collection: name,
-		data: tupleSet{},
+		data:       []tuple{},
 	}
 
 	for _, tuple := range collection {
-		data.add(tuple)
+		message.data = append(message.data, tuple)
 	}
+
+	return message
 }

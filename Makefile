@@ -7,7 +7,7 @@ PATH+=:$(PWD)/bin
 .PHONY: all
 all: install
 	# -rm -rf build
-	seed -t "service go" -transformations "network" kvs.seed
+	seed -t "service go" -transformations "network" -execute -timeout=5s -sleep=10ms kvs.seed
 	# seed -t "bloom dot json service" -transformations "network" -execute kvs.seed
 	# seed -t "bloom dot json service" -transformations "network" kvs.seed
 	# seed -t "bloom json" -transformations "" cart.seed

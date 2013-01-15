@@ -1,21 +1,20 @@
 package executorng
 
 import (
-	"fmt"
 	"service"
 	"time"
 )
 
 type messageContainer struct {
-	operation string // "immediate", "deferred", "data"
+	operation  string // "immediate", "deferred", "data"
 	collection string
-	data tupleSet
+	data       []tuple
 }
 
 // A concurrent service executor
 // Collection and rule handlers work as concurrent processes
 // managed by the control loop in this function.
-func Execute(s *service.Service) {
+func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration time.Duration) {
 	// launch the handlers
 	channels := makeChannels(s)
 	for collectionName, _ := range s.Collections {
@@ -35,11 +34,27 @@ func Execute(s *service.Service) {
 		toControl = append(toControl, ruleChannel)
 	}
 
-	fmt.Println(s)
+	info("execute", "service", s)
+	info("execute", "channels", channels)
+
+	// setup and start the timeout
+	// timeout should only happen when timeoutDuration != 0
+	var timeout <-chan time.Time
+	if timeoutDuration != 0 {
+		timeout = time.After(timeoutDuration)
+	}
 	// control loop
 	for {
-		// time.Sleep(2*time.Second)
 		startTime := time.Now()
+		time.Sleep(sleepDuration)
+
+		// check for timeout
+		select {
+		case <-timeout:
+			info("execute", "Timeout")
+			return
+		default:
+		}
 
 		// phase 1: execute immediate rules
 		sendAndWaitTilFinished(
@@ -51,7 +66,7 @@ func Execute(s *service.Service) {
 			messageContainer{operation: "deferred"},
 			toControl, channels.finished)
 
-		timeinfo("control", "timestep took", time.Since(startTime))
+		timeinfo("execute", "timestep took", time.Since(startTime))
 	}
 }
 
@@ -59,7 +74,7 @@ func sendAndWaitTilFinished(message messageContainer, toControl []chan<- message
 	sendToAll(message, toControl)
 	for finished := 0; finished < len(toControl); finished++ {
 		<-finishedChannel
-		controlinfo("control", finished, "of", len(toControl))
+		controlinfo("execute", finished, "of", len(toControl))
 	}
 }
 

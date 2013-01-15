@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // others
@@ -32,6 +33,8 @@ func main() {
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
 	var execute = flag.Bool("execute", false, "execute the service")
+	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
+	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -151,7 +154,24 @@ func main() {
 		info("Execute")
 		for name, seed := range seeds {
 			info("Starting", name)
-			executor.Execute(seed)
+
+			var sleepDuration time.Duration
+			if *sleep != "" {
+				sleepDuration, err = time.ParseDuration(*sleep)
+				if err != nil {
+					fatal(err)
+				}
+			}
+
+			var timeoutDuration time.Duration
+			if *timeout != "" {
+				timeoutDuration, err = time.ParseDuration(*timeout)
+				if err != nil {
+					fatal(err)
+				}
+			}
+
+			executor.Execute(seed, timeoutDuration, sleepDuration)
 			break
 		}
 	}
