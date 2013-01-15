@@ -1,23 +1,21 @@
-GO=GOPATH=/Users/alaster/Projects/seed go
-COMMANDS=seed demo
+PWD=$(shell pwd)
+GO=GOPATH=$(PWD) go
+COMMANDS=seed
 PACKAGES=$(COMMANDS) executor network replication service executorng
+PATH+=:$(PWD)/bin
 
 .PHONY: all
 all: install
 	# -rm -rf build
-	bin/seed -t "service go" -transformations "network" kvs.seed
-	# bin/seed -t "bloom dot json service" -transformations "network" -execute kvs.seed
-	# bin/seed -t "bloom dot json service" -transformations "network" kvs.seed
-	# bin/seed -t "bloom json" -transformations "" cart.seed
-	# bin/seed -t "bloom json" -transformations "network" cart.seed
-
-.PHONY: demo
-demo: install
-	bin/demo
+	seed -t "service go" -transformations "network" kvs.seed
+	# seed -t "bloom dot json service" -transformations "network" -execute kvs.seed
+	# seed -t "bloom dot json service" -transformations "network" kvs.seed
+	# seed -t "bloom json" -transformations "" cart.seed
+	# seed -t "bloom json" -transformations "network" cart.seed
 
 .PHONY: run
 run: install
-	bin/seed -t "bloom dot json service" -transformations "network" -execute kvs.seed
+	seed -t "bloom dot json service go" -transformations "network" -execute kvs.seed
 
 .PHONY: install
 install:
@@ -40,7 +38,6 @@ vet:
 clean:
 	-rm -rf build bin pkg figures
 
-
 types.dot.pdf: types.dot
 	dot -O -T pdf types.dot
 	open types.dot.pdf
@@ -50,19 +47,19 @@ view-figures: figures
 	open "figures/kvs.dot.pdf" "figures/kvs-network.dot.pdf" "figures/kvs-replicated.dot.pdf" "figures/kvs-network-replicated.dot.pdf"
 
 .PHONY: figures
-figures: bin/seed
+figures: install
 	-rm -rf figures
 	mkdir figures
 	-rm -rf build
-	bin/seed -t dot -transformations "" kvs.seed
+	seed -t dot -transformations "" kvs.seed
 	cp build/kvs.dot "figures/kvs.dot"
 	rm -rf build
-	bin/seed -t dot -transformations "network" kvs.seed
+	seed -t dot -transformations "network" kvs.seed
 	cp build/kvsserver.dot "figures/kvs-network.dot"
 	rm -rf build
-	bin/seed -t dot -transformations "replicate" kvs.seed
+	seed -t dot -transformations "replicate" kvs.seed
 	cp build/kvs.dot "figures/kvs-replicated.dot"
 	rm -rf build
-	bin/seed -t dot -transformations "network replicate" kvs.seed
+	seed -t dot -transformations "network replicate" kvs.seed
 	cp build/kvsserver.dot "figures/kvs-network-replicated.dot"
 	dot -T pdf -O figures/*.dot

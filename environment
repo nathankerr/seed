@@ -1,2 +1,2 @@
-export GOPATH=/Users/alaster/Projects/seed
-export PATH=/Users/alaster/Projects/seed/bin:$PATH
+export GOPATH=`pwd`
+export PATH=$GOPATH/bin:$PATH
