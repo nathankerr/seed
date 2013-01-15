@@ -1,11 +1,24 @@
 package executorng
 
 import (
+	"errors"
 	"service"
 )
 
-func ruleHandler(ruleNumber int, s *service.Service, channels channels) {
+type ruleHandler struct {
+	number   int
+	s        *service.Service
+	channels channels
+}
+
+func handleRule(ruleNumber int, s *service.Service, channels channels) {
 	controlinfo(ruleNumber, "started")
+	handler := ruleHandler{
+		number:   ruleNumber,
+		s:        s,
+		channels: channels,
+	}
+
 	input := channels.rules[ruleNumber]
 	rule := s.Rules[ruleNumber]
 	dataMessages := []messageContainer{}
@@ -17,14 +30,14 @@ func ruleHandler(ruleNumber int, s *service.Service, channels channels) {
 		switch message.operation {
 		case "immediate":
 			if rule.Operation == "<=" {
-				runRule(ruleNumber, s, channels, dataMessages)
+				handler.run(dataMessages)
 			}
 			dataMessages = []messageContainer{}
 			channels.finished <- true
 			controlinfo(ruleNumber, "finished with", message)
 		case "deferred":
 			if rule.Operation != "<=" {
-				runRule(ruleNumber, s, channels, dataMessages)
+				handler.run(dataMessages)
 			}
 			dataMessages = []messageContainer{}
 			channels.finished <- true
@@ -38,23 +51,23 @@ func ruleHandler(ruleNumber int, s *service.Service, channels channels) {
 	}
 }
 
-func runRule(ruleNumber int, s *service.Service, channels channels, dataMessages []messageContainer) {
+func (handler *ruleHandler) run(dataMessages []messageContainer) {
 	// get the data needed to calculate the results
-	_ = getRequiredData(ruleNumber, s.Rules[ruleNumber], dataMessages, channels.rules[ruleNumber])
+	data := handler.getRequiredData(dataMessages)
 
 	// calculate results
-	results := []tuple{}
+	results := handler.calculateResults(data)
 
 	// send results
-	outputName := s.Rules[ruleNumber].Supplies
-	channels.collections[outputName] <- messageContainer{
+	outputName := handler.s.Rules[handler.number].Supplies
+	handler.channels.collections[outputName] <- messageContainer{
 		operation:  "data",
 		collection: outputName,
 		data:       results,
 	}
 }
 
-func getRequiredData(ruleNumber int, rule *service.Rule, dataMessages []messageContainer, input <-chan messageContainer) map[string][]tuple {
+func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map[string][]tuple {
 	data := map[string][]tuple{}
 
 	// process cached data
@@ -63,17 +76,210 @@ func getRequiredData(ruleNumber int, rule *service.Rule, dataMessages []messageC
 	}
 
 	// receive other needed data
-	for stillNeeded := len(rule.Requires()) - len(dataMessages); stillNeeded > 0; stillNeeded-- {
+	required := len(handler.s.Rules[handler.number].Requires())
+	input := handler.channels.rules[handler.number]
+	for stillNeeded := required - len(dataMessages); stillNeeded > 0; stillNeeded-- {
 		message := <-input
-		controlinfo(ruleNumber, "received", message)
+		controlinfo(handler.number, "received", message)
 
 		switch message.operation {
 		case "data":
 			data[message.collection] = message.data
 		default:
-			fatal(ruleNumber, "unhandled message", message)
+			fatal(handler.number, "unhandled message", message)
 		}
 	}
 
+	if _, ok := data[""]; ok {
+		fatal(handler.number, "received data without a collecion name")
+	}
+
 	return data
+}
+
+func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
+	// validate data and handle errors
+	err := handler.validateData(data)
+	if err != nil {
+		switch err.Error() {
+		case "empty tuple set":
+			return []tuple{}
+		default:
+			fatal(handler.number, err)
+		}
+	}
+
+	// get indexes for resolving collection.column references
+	indexes := handler.indexes()
+
+	// get the number of products
+	lengths := []int{}
+	for _, tuples := range data {
+		lengths = append(lengths, len(tuples))
+	}
+	numberOfProducts := numberOfProducts(lengths)
+
+	rule := handler.s.Rules[handler.number]
+	results := []tuple{}
+	for productNumber := 0; productNumber < numberOfProducts; productNumber++ {
+		// get the tuples for this product
+		tuples := tuplesFor(productNumber, data)
+
+		// skip this product if the predicate is not fulfilled
+		skip := true
+		if len(rule.Predicate) == 0 {
+			skip = false
+		}
+		for _, constraint := range rule.Predicate {
+			// get the left row
+			lqc := constraint.Left
+			leftColumnIndex := indexes[lqc.Collection][lqc.Column]
+			left := tuples[lqc.Collection][leftColumnIndex]
+
+			// get the right row
+			rqc := constraint.Right
+			rightColumnIndex := indexes[rqc.Collection][rqc.Column]
+			right := tuples[rqc.Collection][rightColumnIndex]
+
+			if left == right {
+				skip = false
+			}
+		}
+		if skip {
+			continue
+		}
+
+		// generate the result row and add to the set of results
+		result := tuple{}
+		for _, qc := range rule.Projection {
+			columnIndex := indexes[qc.Collection][qc.Column]
+			result = append(result, tuples[qc.Collection][columnIndex])
+		}
+		results = append(results, result)
+	}
+
+	return results
+}
+
+func (handler *ruleHandler) validateData(data map[string][]tuple) error {
+	for collectionName, tuples := range data {
+		collection := handler.s.Collections[collectionName]
+
+		// each set of tuples should contain tuples
+		if len(tuples) < 1 {
+			return errors.New("empty tuple set")
+		}
+
+		// each tuple should have the correct length
+		correctLength := len(collection.Key) + len(collection.Data)
+		for _, tuple := range tuples {
+			if len(tuple) != correctLength {
+				return errors.New("tuple has the wrong length")
+			}
+		}
+	}
+
+	return nil
+}
+
+func numberOfProducts(lengths []int) int {
+	products := 1
+	for _, length := range lengths {
+		if length != 0 {
+			products *= length
+		}
+	}
+	return products
+}
+
+func tuplesFor(productNumber int, data map[string][]tuple) map[string]tuple {
+	collections := []string{}
+	lengths := []int{}
+	for collection, tuples := range data {
+		collections = append(collections, collection)
+		lengths = append(lengths, len(tuples))
+	}
+
+	// this is sort of a reverse base coversion which starts with
+	// the least significant digit
+	// indexes holds the digits, indexes[0] is least significant
+	indexes := make([]int, 0)
+	for i, length := range lengths {
+		index := productNumber
+
+		// find out how many products have already been
+		// represented and remove them from consideration by
+		// this index
+		productsBeforeThis, err := productNumberFor(indexes, lengths[:i])
+		if err != nil {
+			panic(err)
+		}
+		index -= productsBeforeThis
+
+		// now the index is just a factor off
+		// find the factor and remove it
+		factor := numberOfProducts(lengths[:i])
+		index /= factor
+
+		// now limit the index to what it can hold (length)
+		// any remaining part of productNumber will be
+		// handled by the next index
+		if index >= length {
+			if length == 0 {
+				index = 0
+			} else {
+				index %= length
+			}
+		}
+
+		indexes = append(indexes, index)
+	}
+
+	productData := map[string]tuple{}
+	for _, index := range indexes {
+		collectionName := collections[index]
+		productData[collectionName] = data[collectionName][index]
+	}
+	return productData
+}
+
+func productNumberFor(indexes []int, lengths []int) (int, error) {
+	// indexes and arrays must be the same length
+	if len(indexes) != len(lengths) {
+		return -1, errors.New("indexes and lengths must have the same lengths")
+	}
+
+	// check ranges for indexes and lengths
+	for i, _ := range indexes {
+		if indexes[i] < 0 {
+			return -1, errors.New("indexes must be non-negative")
+		}
+		if lengths[i] < 0 {
+			return -1, errors.New("lengths must be non-negative")
+		}
+	}
+
+	productNumber := 0
+	for i, _ := range indexes {
+		factor := numberOfProducts(lengths[:i])
+		productNumber += factor * indexes[i]
+	}
+
+	return productNumber, nil
+}
+
+func (handler *ruleHandler) indexes() map[string]map[string]int {
+	indexes := map[string]map[string]int{}
+	rule := handler.s.Rules[handler.number]
+
+	for _, collectionName := range rule.Requires() {
+		collection := handler.s.Collections[collectionName]
+		indexes[collectionName] = map[string]int{}
+
+		for index, columnName := range collection.Key {
+			indexes[collectionName][columnName] = index
+		}
+	}
+
+	return indexes
 }

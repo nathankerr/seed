@@ -21,7 +21,7 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 		go collectionHandler(collectionName, s, channels)
 	}
 	for ruleNumber, _ := range s.Rules {
-		go ruleHandler(ruleNumber, s, channels)
+		go handleRule(ruleNumber, s, channels)
 	}
 	go budCommunicator(s, channels)
 

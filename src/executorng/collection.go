@@ -29,7 +29,7 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 		case "deferred":
 			// info(collectionName, "deferred")
 			controlinfo(collectionName, "sending to", deferreds)
-			sendToAll(messageContainer{operation: "data"}, deferreds)
+			sendToAll(messageContainer{collection: collectionName, operation: "data"}, deferreds)
 			switch c.Type {
 			case service.CollectionInput, service.CollectionOutput, service.CollectionScratch, service.CollectionChannel:
 				// temporary collections
