@@ -210,10 +210,7 @@ func tuplesFor(productNumber int, data map[string][]tuple) map[string]tuple {
 		// find out how many products have already been
 		// represented and remove them from consideration by
 		// this index
-		productsBeforeThis, err := productNumberFor(indexes, lengths[:i])
-		if err != nil {
-			panic(err)
-		}
+		productsBeforeThis := productNumberFor(indexes, lengths[:i])
 		index -= productsBeforeThis
 
 		// now the index is just a factor off
@@ -243,31 +240,19 @@ func tuplesFor(productNumber int, data map[string][]tuple) map[string]tuple {
 	return productData
 }
 
-func productNumberFor(indexes []int, lengths []int) (int, error) {
-	// indexes and arrays must be the same length
-	if len(indexes) != len(lengths) {
-		return -1, errors.New("indexes and lengths must have the same lengths")
-	}
-
-	// check ranges for indexes and lengths
-	for i, _ := range indexes {
-		if indexes[i] < 0 {
-			return -1, errors.New("indexes must be non-negative")
-		}
-		if lengths[i] < 0 {
-			return -1, errors.New("lengths must be non-negative")
-		}
-	}
-
+// given a set of indexes, return the product number
+func productNumberFor(indexes []int, lengths []int) int {
 	productNumber := 0
 	for i, _ := range indexes {
 		factor := numberOfProducts(lengths[:i])
 		productNumber += factor * indexes[i]
 	}
 
-	return productNumber, nil
+	return productNumber
 }
 
+// returns a map of maps telling what the slice index of a column is
+// indexes[collectionName][columnName]
 func (handler *ruleHandler) indexes() map[string]map[string]int {
 	indexes := map[string]map[string]int{}
 	rule := handler.s.Rules[handler.number]
