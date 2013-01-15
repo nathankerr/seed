@@ -9,7 +9,13 @@ func budCommunicator(s *service.Service, channels channels) {
 	for {
 		message := <-channels.distribution
 		controlinfo("budCommunicator", "received", message)
-		channels.finished <- true
-		controlinfo("budCommunicator", "finished with", message)
+
+		switch message.operation {
+		case "immediate", "deferred":
+			channels.finished <- true
+			controlinfo("budCommunicator", "finished with", message)
+		default:
+			fatal("budCommunicator", "unhandled message:", message)
+		}
 	}
 }
