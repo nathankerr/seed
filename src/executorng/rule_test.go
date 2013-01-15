@@ -2,7 +2,6 @@ package executorng
 
 /*
 TO TEST:
-	- tuplesFor
 	- validateData
 	- calculateResults
 	- getRequiredData
@@ -159,6 +158,107 @@ func TestProductNumberFor(t *testing.T) {
 			if resultProductNumber != expectedProductNumber {
 				t.Errorf("productNumberFor(%v, %v)=%v; expected %v",
 					indexes, lengths, expectedProductNumber, resultProductNumber)
+			}
+		}
+	}
+}
+
+func TestIndexesFor(t *testing.T) {
+	tests := [][]interface{}{}
+
+	tests = append(tests, []interface{}{
+		[]int{3, 3}, // lengths
+		map[int][]int{ // expected
+			0: []int{0, 0},
+			1: []int{1, 0},
+			2: []int{2, 0},
+			3: []int{0, 1},
+			4: []int{1, 1},
+			5: []int{2, 1},
+			6: []int{0, 2},
+			7: []int{1, 2},
+			8: []int{2, 2},
+		},
+	})
+
+	for _, test := range tests {
+		lengths := test[0].([]int)
+		expected := test[1].(map[int][]int)
+
+		for productNumber, expectedIndexes := range expected {
+			result := indexesFor(productNumber, lengths)
+
+			for i, expectedIndex := range expectedIndexes {
+				resultIndex := result[i]
+
+				if resultIndex != expectedIndex {
+					t.Errorf("expected %v, got %v",
+						expectedIndex, resultIndex)
+				}
+			}
+		}
+	}
+}
+
+func TestTuplesFor(t *testing.T) {
+	tests := [][]interface{}{}
+
+	tests = append(tests, []interface{}{
+		0, //productNumber
+		map[string][]tuple{ // data
+			"a": []tuple{
+				tuple{1, 2},
+				tuple{3, 4},
+			},
+			"b": []tuple{
+				tuple{5, 6},
+				tuple{7, 8},
+			},
+		},
+		map[string]tuple{ // expected
+			"a": tuple{1, 2},
+			"b": tuple{5, 6},
+		},
+	})
+
+	for _, test := range tests {
+		productNumber := test[0].(int)
+		data := test[1].(map[string][]tuple)
+		expected := test[2].(map[string]tuple)
+
+		result := tuplesFor(productNumber, data)
+
+		// compare lengths
+		resultLength := len(result)
+		expectedLength := len(expected)
+		if resultLength != expectedLength {
+			t.Errorf("expected length of %v, got %v for %v and %v",
+				expectedLength, resultLength, expected, result)
+		}
+
+		// compare tuples
+		for expectedCollectionName, expectedTuple := range expected {
+			resultTuple, ok := result[expectedCollectionName]
+			if !ok {
+				t.Errorf("expected a collection named %v, result does not have one",
+					expectedCollectionName)
+			}
+
+			// compare tuple lengths
+			expectedTupleLength := len(expectedTuple)
+			resultTupleLength := len(resultTuple)
+			if resultTupleLength != expectedTupleLength {
+				t.Errorf("expected tuple length of %v, got %v",
+					expectedTupleLength, resultTupleLength)
+			}
+
+			// compare tuple contents
+			for columnIndex, expectedColumn := range expectedTuple {
+				resultColumn := resultTuple[columnIndex]
+				if resultColumn != expectedColumn {
+					t.Errorf("expected %v, got %v",
+						expectedColumn, resultColumn)
+				}
 			}
 		}
 	}

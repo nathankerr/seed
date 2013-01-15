@@ -200,6 +200,17 @@ func tuplesFor(productNumber int, data map[string][]tuple) map[string]tuple {
 		lengths = append(lengths, len(tuples))
 	}
 
+	indexes := indexesFor(productNumber, lengths)
+
+	productData := map[string]tuple{}
+	for nameIndex, columnIndex := range indexes {
+		collectionName := collections[nameIndex]
+		productData[collectionName] = data[collectionName][columnIndex]
+	}
+	return productData
+}
+
+func indexesFor(productNumber int, lengths []int) []int {
 	// this is sort of a reverse base coversion which starts with
 	// the least significant digit
 	// indexes holds the digits, indexes[0] is least significant
@@ -232,12 +243,7 @@ func tuplesFor(productNumber int, data map[string][]tuple) map[string]tuple {
 		indexes = append(indexes, index)
 	}
 
-	productData := map[string]tuple{}
-	for _, index := range indexes {
-		collectionName := collections[index]
-		productData[collectionName] = data[collectionName][index]
-	}
-	return productData
+	return indexes
 }
 
 // given a set of indexes, return the product number
