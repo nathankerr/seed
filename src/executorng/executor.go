@@ -7,7 +7,9 @@ import (
 )
 
 type messageContainer struct {
-	operation string // "immediate", "deferred", "done"
+	operation string // "immediate", "deferred", "data"
+	collection string
+	data tupleSet
 }
 
 // A concurrent service executor
@@ -54,11 +56,15 @@ func Execute(s *service.Service) {
 }
 
 func sendAndWaitTilFinished(message messageContainer, toControl []chan<- messageContainer, finishedChannel <-chan bool) {
-	for _, channel := range toControl {
-		channel <- message
-	}
+	sendToAll(message, toControl)
 	for finished := 0; finished < len(toControl); finished++ {
 		<-finishedChannel
 		controlinfo("control", finished, "of", len(toControl))
+	}
+}
+
+func sendToAll(message messageContainer, channels []chan<- messageContainer) {
+	for _, channel := range channels {
+		channel <- message
 	}
 }
