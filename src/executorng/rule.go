@@ -30,6 +30,7 @@ func ruleHandler(ruleNumber int, s *service.Service, channels channels) {
 			channels.finished <- true
 			controlinfo(ruleNumber, "finished with", message)
 		case "data":
+			// cache data received before an immediate or deferred message initiates execution
 			dataMessages = append(dataMessages, message)
 		default:
 			fatal(ruleNumber, "unhandled message:", message)
@@ -38,36 +39,41 @@ func ruleHandler(ruleNumber int, s *service.Service, channels channels) {
 }
 
 func runRule(ruleNumber int, s *service.Service, channels channels, dataMessages []messageContainer) {
-	rule := s.Rules[ruleNumber]
-	requires := rule.Requires()
-	input := channels.rules[ruleNumber]
+	// get the data needed to calculate the results
+	_ = getRequiredData(ruleNumber, s.Rules[ruleNumber], dataMessages, channels.rules[ruleNumber])
 
+	// calculate results
+	results := []tuple{}
+
+	// send results
 	outputName := s.Rules[ruleNumber].Supplies
-	output := channels.collections[outputName]
-	controlinfo(ruleNumber, "sends to", outputName)
-	controlinfo(ruleNumber, "requires", requires)
+	channels.collections[outputName] <- messageContainer{
+		operation:  "data",
+		collection: outputName,
+		data:       results,
+	}
+}
 
-	//TODO handle early recieved dataMessages
+func getRequiredData(ruleNumber int, rule *service.Rule, dataMessages []messageContainer, input <-chan messageContainer) map[string][]tuple {
+	data := map[string][]tuple{}
 
-	stillRequired := len(requires) - len(dataMessages)
+	// process cached data
+	for _, message := range dataMessages {
+		data[message.collection] = message.data
+	}
 
-	for i := 0; i < stillRequired; i++ {
+	// receive other needed data
+	for stillNeeded := len(rule.Requires()) - len(dataMessages); stillNeeded > 0; stillNeeded-- {
 		message := <-input
 		controlinfo(ruleNumber, "received", message)
 
 		switch message.operation {
 		case "data":
-			// TODO: store data
+			data[message.collection] = message.data
 		default:
 			fatal(ruleNumber, "unhandled message", message)
 		}
 	}
 
-	resultMessage := messageContainer{
-		operation:  "data",
-		collection: outputName,
-		data:       []tuple{},
-	}
-	controlinfo(ruleNumber, "sending", resultMessage)
-	output <- resultMessage
+	return data
 }
