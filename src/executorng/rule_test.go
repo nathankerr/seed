@@ -19,22 +19,18 @@ func TestIndexes(t *testing.T) {
 
 	// two collections, both included
 	tests = append(tests, []interface{}{
-		ruleHandler{
+		ruleHandler{ // hander
 			number: 0,
 			s: service.Parse("two collections",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
 					"keep <+ [in.key, in.value]"),
 		},
-		map[string]map[string]int{
+		map[string]map[string]int{ // expected
 			"in": map[string]int{
 				"unimportant": 0,
 				"key":         1,
 				"value":       2,
-			},
-			"keep": map[string]int{
-				"key":   0,
-				"value": 1,
 			},
 		},
 	})
@@ -71,10 +67,6 @@ func TestIndexes(t *testing.T) {
 				"key":         1,
 				"value":       2,
 			},
-			"keep": map[string]int{
-				"key":   0,
-				"value": 1,
-			},
 		},
 	})
 
@@ -84,12 +76,33 @@ func TestIndexes(t *testing.T) {
 
 		result := handler.indexes()
 
-		for collectionName, columns := range result {
-			for columnName, resultIndex := range columns {
-				expectedIndex := expected[collectionName][columnName]
-				if resultIndex != expectedIndex {
-					t.Errorf("%v:\n-----\nexpected[%v][%v] = %v; got %v",
-						handler.s, collectionName, columnName, expectedIndex, resultIndex)
+		// compare lengths
+		expectedLength := len(expected)
+		resultLength := len(result)
+		if resultLength != expectedLength {
+			t.Errorf("expected length of %v, got %v for %v and %v",
+				expectedLength, resultLength, expected, result)
+		}
+
+		// compare contents
+		for expectedCollectionName, expectedColumns := range expected {
+			resultColumns, ok := result[expectedCollectionName]
+			if !ok {
+				t.Errorf("expected collection name, %v, does not exist in result %v",
+					expectedCollectionName, result)
+			}
+
+			// compare column contents
+			for expectedColumnName, expectedColumnIndex := range expectedColumns {
+				resultColumnIndex, ok := resultColumns[expectedColumnName]
+				if !ok {
+					t.Errorf("expected column name, %v, does not exist in result columns %v",
+						expectedColumnName, resultColumns)
+				}
+
+				if resultColumnIndex != expectedColumnIndex {
+					t.Errorf("expected %v, got %v for %v in %v and %v",
+						expectedColumnIndex, resultColumnIndex, expectedColumnName, expectedColumns, resultColumns)
 				}
 			}
 		}
@@ -258,6 +271,71 @@ func TestTuplesFor(t *testing.T) {
 				if resultColumn != expectedColumn {
 					t.Errorf("expected %v, got %v",
 						expectedColumn, resultColumn)
+				}
+			}
+		}
+	}
+}
+
+func TestCalculateResults(t *testing.T) {
+	tests := [][]interface{}{}
+
+	// projection
+	tests = append(tests, []interface{}{
+		ruleHandler{ // handler
+			number: 0,
+			s: service.Parse("projection test",
+				"input in [unimportant, key] => [value]"+
+					"table keep [key] => [value]"+
+					"keep <+ [in.key, in.value]"),
+			//channels: ,
+		},
+		map[string][]tuple{ // data
+			"in": []tuple{
+				tuple{1, 2, 3},
+				tuple{4, 5, 6},
+			},
+		},
+		[]tuple{ // expected
+			tuple{2, 3},
+			tuple{5, 6},
+		},
+	})
+
+	for _, test := range tests {
+		handler := test[0].(ruleHandler)
+		data := test[1].(map[string][]tuple)
+		expected := test[2].([]tuple)
+
+		result := handler.calculateResults(data)
+
+		// compare lengths
+		expectedLength := len(expected)
+		resultLength := len(result)
+		if resultLength != expectedLength {
+			t.Errorf("expected length of %v, got %v for %v and %v",
+				expectedLength, resultLength, expected, result)
+		}
+
+		// compare tuples
+		for tupleIndex, expectedTuple := range expected {
+			resultTuple := result[tupleIndex]
+
+			// compare tuple lengths
+			expectedTupleLength := len(expectedTuple)
+			resultTupleLength := len(resultTuple)
+			if resultTupleLength != expectedTupleLength {
+				t.Errorf("expected length of %v, got %v for %v and %v",
+					expectedTupleLength, resultTupleLength, expectedTuple, resultTuple)
+			}
+
+			// compare tuple contents
+			for columnIndex, expectedColumn := range expectedTuple {
+				resultColumn := resultTuple[columnIndex]
+
+				if resultColumn != expectedColumn {
+					t.Errorf("expected %v, got %v in comparing %v and %v",
+						expectedColumn, resultColumn, expectedTuple, resultTuple)
 				}
 			}
 		}

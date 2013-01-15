@@ -2,6 +2,7 @@ package executorng
 
 import (
 	"errors"
+	"fmt"
 	"service"
 )
 
@@ -149,11 +150,14 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 			continue
 		}
 
+		fmt.Println(indexes)
 		// generate the result row and add to the set of results
 		result := tuple{}
 		for _, qc := range rule.Projection {
 			columnIndex := indexes[qc.Collection][qc.Column]
 			result = append(result, tuples[qc.Collection][columnIndex])
+			fmt.Printf("indexes[%v][%v]=%v\ntuples[%v][%v]=%v\n\n",
+				qc.Collection, qc.Column, columnIndex, qc.Collection, columnIndex, tuples[qc.Collection][columnIndex])
 		}
 		results = append(results, result)
 	}
@@ -269,6 +273,11 @@ func (handler *ruleHandler) indexes() map[string]map[string]int {
 
 		for index, columnName := range collection.Key {
 			indexes[collectionName][columnName] = index
+		}
+
+		baseIndex := len(collection.Key)
+		for index, columnName := range collection.Data {
+			indexes[collectionName][columnName] = baseIndex + index
 		}
 	}
 
