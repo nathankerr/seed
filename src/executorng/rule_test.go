@@ -3,13 +3,13 @@ package executorng
 /*
 TO TEST:
 	- validateData
-	- calculateResults
 	- getRequiredData
 	- run
 	- handleRule
 */
 
 import (
+	"encoding/json"
 	"service"
 	"testing"
 )
@@ -146,6 +146,18 @@ func TestNumberOfProducts(t *testing.T) {
 func TestProductNumberFor(t *testing.T) {
 	tests := [][]interface{}{}
 
+	// 2x2
+	tests = append(tests, []interface{}{
+		[]int{2, 2}, // lengths
+		map[int][]int{ // expected
+			0: []int{0, 0},
+			1: []int{1, 0},
+			2: []int{0, 1},
+			3: []int{1, 1},
+		},
+	})
+
+	// 3x3
 	tests = append(tests, []interface{}{
 		[]int{3, 3}, // lengths
 		map[int][]int{ // expected
@@ -179,6 +191,61 @@ func TestProductNumberFor(t *testing.T) {
 func TestIndexesFor(t *testing.T) {
 	tests := [][]interface{}{}
 
+	// 1x1
+	tests = append(tests, []interface{}{
+		[]int{1, 1}, // lengths
+		map[int][]int{ // expected
+			0: []int{0, 0},
+		},
+	})
+
+	// 1x2
+	tests = append(tests, []interface{}{
+		[]int{1, 2}, // lengths
+		map[int][]int{ // expected
+			0: []int{0, 0},
+			1: []int{0, 1},
+		},
+	})
+
+	// 2x2
+	tests = append(tests, []interface{}{
+		[]int{2, 2}, // lengths
+		map[int][]int{ // expected
+			0: []int{0, 0},
+			1: []int{1, 0},
+			2: []int{0, 1},
+			3: []int{1, 1},
+		},
+	})
+
+	// 2x3
+	tests = append(tests, []interface{}{
+		[]int{2, 3}, // lengths
+		map[int][]int{ // expected
+			0: []int{0, 0},
+			1: []int{1, 0},
+			2: []int{0, 1},
+			3: []int{1, 1},
+			4: []int{0, 2},
+			5: []int{1, 2},
+		},
+	})
+
+	// 3x2
+	tests = append(tests, []interface{}{
+		[]int{3, 2}, // lengths
+		map[int][]int{ // expected
+			0: []int{0, 0},
+			1: []int{1, 0},
+			2: []int{2, 0},
+			3: []int{0, 1},
+			4: []int{1, 1},
+			5: []int{2, 1},
+		},
+	})
+
+	// 3x3
 	tests = append(tests, []interface{}{
 		[]int{3, 3}, // lengths
 		map[int][]int{ // expected
@@ -205,8 +272,8 @@ func TestIndexesFor(t *testing.T) {
 				resultIndex := result[i]
 
 				if resultIndex != expectedIndex {
-					t.Errorf("expected %v, got %v",
-						expectedIndex, resultIndex)
+					t.Errorf("expected %v, got %v for %v and %v",
+						expectedIndex, resultIndex, expectedIndexes, result)
 				}
 			}
 		}
@@ -217,7 +284,6 @@ func TestTuplesFor(t *testing.T) {
 	tests := [][]interface{}{}
 
 	tests = append(tests, []interface{}{
-		0, //productNumber
 		map[string][]tuple{ // data
 			"a": []tuple{
 				tuple{1, 2},
@@ -228,49 +294,129 @@ func TestTuplesFor(t *testing.T) {
 				tuple{7, 8},
 			},
 		},
-		map[string]tuple{ // expected
-			"a": tuple{1, 2},
-			"b": tuple{5, 6},
+		[]string{ // collections
+			"a",
+			"b",
+		},
+		map[int]map[string]tuple{ // expected[productNumber][collection]
+			0: map[string]tuple{
+				"a": tuple{1, 2},
+				"b": tuple{5, 6},
+			},
+			1: map[string]tuple{
+				"a": tuple{3, 4},
+				"b": tuple{5, 6},
+			},
+		},
+	})
+
+	// same as for product test in TestCalculateResults
+	tests = append(tests, []interface{}{
+		map[string][]tuple{ // data
+			"a": []tuple{
+				tuple{1},
+				tuple{2},
+				tuple{3},
+			},
+			"b": []tuple{
+				tuple{4},
+				tuple{5},
+				tuple{6},
+			},
+		},
+		[]string{ //collections
+			"a",
+			"b",
+		},
+		map[int]map[string]tuple{ // expected[productNumber][collection]
+			0: map[string]tuple{
+				"a": tuple{1},
+				"b": tuple{4},
+			},
+			1: map[string]tuple{
+				"a": tuple{2},
+				"b": tuple{4},
+			},
+			2: map[string]tuple{
+				"a": tuple{3},
+				"b": tuple{4},
+			},
+			3: map[string]tuple{
+				"a": tuple{1},
+				"b": tuple{5},
+			},
+			4: map[string]tuple{
+				"a": tuple{2},
+				"b": tuple{5},
+			},
+			5: map[string]tuple{
+				"a": tuple{3},
+				"b": tuple{5},
+			},
+			6: map[string]tuple{
+				"a": tuple{1},
+				"b": tuple{6},
+			},
+			7: map[string]tuple{
+				"a": tuple{2},
+				"b": tuple{6},
+			},
+			8: map[string]tuple{
+				"a": tuple{3},
+				"b": tuple{6},
+			},
 		},
 	})
 
 	for _, test := range tests {
-		productNumber := test[0].(int)
-		data := test[1].(map[string][]tuple)
-		expected := test[2].(map[string]tuple)
+		data := test[0].(map[string][]tuple)
+		collections := test[1].([]string)
+		expectedProducts := test[2].(map[int]map[string]tuple)
 
-		result := tuplesFor(productNumber, data)
-
-		// compare lengths
-		resultLength := len(result)
-		expectedLength := len(expected)
-		if resultLength != expectedLength {
-			t.Errorf("expected length of %v, got %v for %v and %v",
-				expectedLength, resultLength, expected, result)
+		lengths := []int{}
+		for _, collection := range collections {
+			tuples := data[collection]
+			lengths = append(lengths, len(tuples))
 		}
 
-		// compare tuples
-		for expectedCollectionName, expectedTuple := range expected {
-			resultTuple, ok := result[expectedCollectionName]
-			if !ok {
-				t.Errorf("expected a collection named %v, result does not have one",
-					expectedCollectionName)
+		for productNumber, expected := range expectedProducts {
+			result := tuplesFor(productNumber, collections, lengths, data)
+
+			// compare lengths
+			resultLength := len(result)
+			expectedLength := len(expected)
+			if resultLength != expectedLength {
+				t.Errorf("expected length of %v, got %v for %v and %v",
+					expectedLength, resultLength, expected, result)
 			}
 
-			// compare tuple lengths
-			expectedTupleLength := len(expectedTuple)
-			resultTupleLength := len(resultTuple)
-			if resultTupleLength != expectedTupleLength {
-				t.Errorf("expected tuple length of %v, got %v",
-					expectedTupleLength, resultTupleLength)
-			}
+			// compare tuples
+			for expectedCollectionName, expectedTuple := range expected {
+				resultTuple, ok := result[expectedCollectionName]
+				if !ok {
+					t.Errorf("expected a collection named %v, result does not have one",
+						expectedCollectionName)
+				}
 
-			// compare tuple contents
-			for columnIndex, expectedColumn := range expectedTuple {
-				resultColumn := resultTuple[columnIndex]
-				if resultColumn != expectedColumn {
-					t.Errorf("expected %v, got %v",
-						expectedColumn, resultColumn)
+				// compare tuple lengths
+				expectedTupleLength := len(expectedTuple)
+				resultTupleLength := len(resultTuple)
+				if resultTupleLength != expectedTupleLength {
+					t.Errorf("expected tuple length of %v, got %v",
+						expectedTupleLength, resultTupleLength)
+				}
+
+				// compare tuple contents
+				equal := true
+				for columnIndex, expectedColumn := range expectedTuple {
+					resultColumn := resultTuple[columnIndex]
+					if resultColumn != expectedColumn {
+						equal = false
+					}
+				}
+				if !equal {
+					t.Errorf("expected %v, got %v from %v and %v for productNumber %v",
+						expectedTuple, resultTuple, expected, result, productNumber)
 				}
 			}
 		}
@@ -302,6 +448,75 @@ func TestCalculateResults(t *testing.T) {
 		},
 	})
 
+	// product
+	tests = append(tests, []interface{}{
+		ruleHandler{ // handler
+			number: 0,
+			s: service.Parse("product test",
+				"input a [key]"+
+					"input b [key]"+
+					"table keep [key]"+
+					"keep <+ [a.key, b.key]"),
+			//channels: ,
+		},
+		map[string][]tuple{ // data
+			"a": []tuple{
+				tuple{1},
+				tuple{2},
+				tuple{3},
+			},
+			"b": []tuple{
+				tuple{4},
+				tuple{5},
+				tuple{6},
+			},
+		},
+		[]tuple{ // expected
+			tuple{1, 4},
+			tuple{2, 4},
+			tuple{3, 4},
+			tuple{1, 5},
+			tuple{2, 5},
+			tuple{3, 5},
+			tuple{1, 6},
+			tuple{2, 6},
+			tuple{3, 6},
+		},
+	})
+
+	// filter
+	tests = append(tests, []interface{}{
+		ruleHandler{ // handler
+			number: 0,
+			s: service.Parse("filter test",
+				"input a [key]"+
+					"input b [key]"+
+					"table intersection [both]"+
+					"intersection <+ [a.key]: a.key => b.key"),
+			//channels: ,
+		},
+		map[string][]tuple{ // data
+			"a": []tuple{
+				tuple{1},
+				tuple{2},
+				tuple{3},
+				tuple{4},
+				tuple{5},
+				tuple{6},
+			},
+			"b": []tuple{
+				tuple{4},
+				tuple{5},
+				tuple{6},
+			},
+		},
+		[]tuple{ // expected
+			tuple{4},
+			tuple{5},
+			tuple{6},
+		},
+	})
+
 	for _, test := range tests {
 		handler := test[0].(ruleHandler)
 		data := test[1].(map[string][]tuple)
@@ -317,26 +532,28 @@ func TestCalculateResults(t *testing.T) {
 				expectedLength, resultLength, expected, result)
 		}
 
-		// compare tuples
-		for tupleIndex, expectedTuple := range expected {
-			resultTuple := result[tupleIndex]
-
-			// compare tuple lengths
-			expectedTupleLength := len(expectedTuple)
-			resultTupleLength := len(resultTuple)
-			if resultTupleLength != expectedTupleLength {
-				t.Errorf("expected length of %v, got %v for %v and %v",
-					expectedTupleLength, resultTupleLength, expectedTuple, resultTuple)
+		// turn the list of result tuples into a map
+		resultTuples := map[string]tuple{}
+		for _, tuple := range expected {
+			jsonified, err := json.Marshal(tuple)
+			if err != nil {
+				panic(err)
 			}
 
-			// compare tuple contents
-			for columnIndex, expectedColumn := range expectedTuple {
-				resultColumn := resultTuple[columnIndex]
+			resultTuples[string(jsonified)] = tuple
+		}
 
-				if resultColumn != expectedColumn {
-					t.Errorf("expected %v, got %v in comparing %v and %v",
-						expectedColumn, resultColumn, expectedTuple, resultTuple)
-				}
+		// check to see if the expected tuples are in the result
+		for _, expectedTuple := range expected {
+			jsonifiedExpectedTuple, err := json.Marshal(expectedTuple)
+			if err != nil {
+				panic(err)
+			}
+
+			_, ok := resultTuples[string(jsonifiedExpectedTuple)]
+			if !ok {
+				t.Errorf("%v not found in result %v",
+					expectedTuple, result)
 			}
 		}
 	}

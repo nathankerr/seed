@@ -2,7 +2,6 @@ package executorng
 
 import (
 	"errors"
-	"fmt"
 	"service"
 )
 
@@ -92,7 +91,7 @@ func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map
 	}
 
 	if _, ok := data[""]; ok {
-		fatal(handler.number, "received data without a collecion name")
+		fatal(handler.number, "received data without a collection name")
 	}
 
 	return data
@@ -114,8 +113,10 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 	indexes := handler.indexes()
 
 	// get the number of products
+	collections := []string{}
 	lengths := []int{}
-	for _, tuples := range data {
+	for collection, tuples := range data {
+		collections = append(collections, collection)
 		lengths = append(lengths, len(tuples))
 	}
 	numberOfProducts := numberOfProducts(lengths)
@@ -124,7 +125,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 	results := []tuple{}
 	for productNumber := 0; productNumber < numberOfProducts; productNumber++ {
 		// get the tuples for this product
-		tuples := tuplesFor(productNumber, data)
+		tuples := tuplesFor(productNumber, collections, lengths, data)
 
 		// skip this product if the predicate is not fulfilled
 		skip := true
@@ -132,12 +133,12 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 			skip = false
 		}
 		for _, constraint := range rule.Predicate {
-			// get the left row
+			// get the left column
 			lqc := constraint.Left
 			leftColumnIndex := indexes[lqc.Collection][lqc.Column]
 			left := tuples[lqc.Collection][leftColumnIndex]
 
-			// get the right row
+			// get the right column
 			rqc := constraint.Right
 			rightColumnIndex := indexes[rqc.Collection][rqc.Column]
 			right := tuples[rqc.Collection][rightColumnIndex]
@@ -150,14 +151,11 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 			continue
 		}
 
-		fmt.Println(indexes)
 		// generate the result row and add to the set of results
 		result := tuple{}
 		for _, qc := range rule.Projection {
 			columnIndex := indexes[qc.Collection][qc.Column]
 			result = append(result, tuples[qc.Collection][columnIndex])
-			fmt.Printf("indexes[%v][%v]=%v\ntuples[%v][%v]=%v\n\n",
-				qc.Collection, qc.Column, columnIndex, qc.Collection, columnIndex, tuples[qc.Collection][columnIndex])
 		}
 		results = append(results, result)
 	}
@@ -196,29 +194,21 @@ func numberOfProducts(lengths []int) int {
 	return products
 }
 
-func tuplesFor(productNumber int, data map[string][]tuple) map[string]tuple {
-	collections := []string{}
-	lengths := []int{}
-	for collection, tuples := range data {
-		collections = append(collections, collection)
-		lengths = append(lengths, len(tuples))
-	}
-
-	indexes := indexesFor(productNumber, lengths)
-
-	productData := map[string]tuple{}
-	for nameIndex, columnIndex := range indexes {
+func tuplesFor(productNumber int, collections []string, lengths []int, data map[string][]tuple) map[string]tuple {
+	tupleIndexes := indexesFor(productNumber, lengths)
+	tuples := map[string]tuple{}
+	for nameIndex, tupleIndex := range tupleIndexes {
 		collectionName := collections[nameIndex]
-		productData[collectionName] = data[collectionName][columnIndex]
+		tuples[collectionName] = data[collectionName][tupleIndex]
 	}
-	return productData
+	return tuples
 }
 
 func indexesFor(productNumber int, lengths []int) []int {
-	// this is sort of a reverse base coversion which starts with
+	// this is sort of a reverse base conversion which starts with
 	// the least significant digit
 	// indexes holds the digits, indexes[0] is least significant
-	indexes := make([]int, 0)
+	indexes := []int{}
 	for i, length := range lengths {
 		index := productNumber
 
