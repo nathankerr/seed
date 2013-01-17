@@ -1,4 +1,4 @@
-package executorng
+package executor
 
 import (
 	"service"

@@ -1,12 +1,12 @@
 PWD=$(shell pwd)
 GO=GOPATH=$(PWD) go
 COMMANDS=seed
-PACKAGES=$(COMMANDS) executor network replication service executorng
+PACKAGES=$(COMMANDS) executor network replication service
 PATH+=:$(PWD)/bin
 
 .PHONY: all
 all: install
-	$(GO) test executorng
+	$(GO) test executor
 
 none:
 	# -rm -rf build

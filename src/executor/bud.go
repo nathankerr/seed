@@ -9,178 +9,216 @@ import (
 	"service"
 )
 
-// try out a bud-compatible network interface
-func budInputHandler(listener net.PacketConn, input <-chan message, collections map[string]chan<- message, main chan<- message, seed *service.Service) {
-	buf := make([]byte, 1024)
-	for {
-		n, _, err := listener.ReadFrom(buf)
-		if err != nil {
-			panic(err)
-		}
+type bud struct {
+	address  string
+	listener net.PacketConn
+	s        *service.Service
+	channels channels
+}
 
-		// fmt.Printf("received %#v\n", buf[:n])
-
-		// msgpack format from bud:
-		// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
-		// COLUMNS depends on the column types
-		// 0: collection name
-		// 1: data
-		// 2: ??
-		msg_reflected, _, err := msgpack.Unpack(bytes.NewBuffer(buf[:n]))
-		if err != nil {
-			panic(err)
-		}
-		var msg []interface{}
-		switch msg_typed := msg_reflected.Interface().(type) {
-		case []interface{}:
-			msg = []interface{}(msg_typed)
-		case []uint8:
-			// some other message??
-			info("budInput", "[]uint8: ", string(msg_typed))
-			continue
-		default:
-			panic(fmt.Sprintf("%v\n", msg_reflected))
-		}
-		// msg := msg_reflected.Interface().([]interface{})
-		collection_name := string(msg[0].([]byte))
-		// info("budInput", collection_name)
-
-		collection_channel, ok := collections[collection_name]
-		if !ok {
-			fmt.Println("no channel for", collection_name)
-		}
-
-		// create the collection to send
-		// row := msg[1].([]interface{})
-		// key := make([]string, len(row))
-		// for i, _ := range row {
-		// 	key[i] = fmt.Sprintf("column%d", i)
-		// }
-		// to_send := newCollectionFromRaw(
-		// 	collection_name,
-		// 	key,
-		// 	nil,
-		// 	[][]interface{}{row},
-		// )
-		to_send := newCollection(collection_name, seed.Collections[collection_name])
-		switch r := msg[1].(type) {
-		// case [][]interface{}:
-		// 	fmt.Println("double array")
-		// 	to_send.addRows(r)
-		case []interface{}:
-			// fmt.Println("have", r)
-		SingleInterfaceLoop:
-			for _, row := range r {
-				switch row_typed := row.(type) {
-				case []interface{}:
-					to_send.addRow(row_typed)
-				case []uint8: // really a single row
-					row_filled := []interface{}{}
-					for _, column := range r {
-						row_filled = append(row_filled, column)
-					}
-					to_send.addRow(row_filled)
-					break SingleInterfaceLoop
-				default:
-					panic("unknown type:" + reflect.TypeOf(row).String())
-				}
-			}
-		default:
-			panic("unknown type:" + reflect.TypeOf(r).String())
-		}
-
-		// send the collection
-		collection_channel <- message{
-			operation:  "<+",
-			collection: *to_send,
-		}
-
-		flowinfo("budInput", "sent", to_send, "to", collection_name)
+func (bud *bud) listen() {
+	var err error
+	bud.listener, err = net.ListenPacket("udp", bud.address)
+	if err != nil {
+		fatal("budCommunicator", err)
 	}
 }
 
-// a bud compatible sender network interface
-func budOutputHandler(conn net.PacketConn, input <-chan message) {
-	collections := make(map[string]*collection)
+func (bud *bud) close() {
+	// bud.listener.Close()
+}
+
+func (bud *bud) networkReader() {
+	buffer := make([]byte, 1024)
 	for {
-		message := <-input
+		// receive from network
+		n, _, err := bud.listener.ReadFrom(buffer)
+		if err != nil {
+			panic(err)
+		}
+
+		// unmarshal data
+		collectionName, tuples := bud.unmarshal(buffer[:n])
+
+		// validate data (only lengths)
+		collection, ok := bud.s.Collections[collectionName]
+		if !ok {
+			// unknown collection, drop message
+			continue
+		}
+		expectedLength := len(collection.Key) + len(collection.Data)
+		for _, tuple := range tuples {
+			if len(tuple) != expectedLength {
+				// don't try to send to channels when data lengths don't match
+				networkerror("budInputReader", "expected lenght of", expectedLength, "for", tuple, "for collection", collectionName)
+				continue
+			}
+		}
+
+		// send to correct collection
+		channel := bud.channels.collections[collectionName]
+		channel <- messageContainer{
+			operation:  "<~",
+			collection: collectionName,
+			data:       tuples,
+		}
+	}
+}
+
+func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []tuple) {
+	// msgpack format from bud:
+	// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
+	// COLUMNS depends on the column types
+	// 0: collection name
+	// 1: data
+	// 2: ??
+	msgReflected, _, err := msgpack.Unpack(bytes.NewBuffer(buf))
+	if err != nil {
+		panic(err)
+	}
+	var msg []interface{}
+	switch msgTyped := msgReflected.Interface().(type) {
+	case []interface{}:
+		msg = []interface{}(msgTyped)
+	case []uint8:
+		// some other message??
+		info("budInputReader", "[]uint8: ", string(msgTyped))
+		return "", []tuple{}
+	default:
+		panic(fmt.Sprintf("%v\n", msgReflected))
+	}
+
+	collectionName = string(msg[0].([]byte))
+
+	tuples = []tuple{}
+	switch r := msg[1].(type) {
+	case []interface{}:
+	SingleInterfaceLoop:
+		for _, row := range r {
+			switch rowTyped := row.(type) {
+			case []interface{}:
+				tuples = append(tuples, rowTyped)
+			case []uint8: // really a single row
+				rowFilled := []interface{}{}
+				for _, column := range r {
+					rowFilled = append(rowFilled, column)
+				}
+				tuples = append(tuples, rowFilled)
+				break SingleInterfaceLoop
+			default:
+				panic("unknown type:" + reflect.TypeOf(row).String())
+			}
+		}
+	default:
+		panic("unknown type:" + reflect.TypeOf(r).String())
+	}
+
+	return collectionName, tuples
+}
+
+func (bud *bud) marshal(collectionName string, tuple tuple) []byte {
+	// create the payload
+	outputMessage := bytes.NewBuffer([]byte{})
+
+	// msgpack format from bud:
+	// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
+	// COLUMNS depends on the column types
+	// 0: collection name
+	// 1: data
+	// 2: ??
+
+	// collection name []byte
+	// collectionName := []byte(collectionName)
+
+	// // data [][]interface{}
+	// data := message.data
+
+	// // ?? []interface{}
+	// part3 := []interface{}{}
+
+	_, err := msgpack.Pack(outputMessage, []interface{}{
+		collectionName,
+		tuple,
+		[]interface{}{},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return outputMessage.Bytes()
+}
+
+func (bud *bud) send(message messageContainer) {
+	flowinfo("budCommunicator", "sending", message.String())
+	// make sure the collection is known
+	collection, ok := bud.s.Collections[message.collection]
+	if !ok {
+		panic(fmt.Sprintf("unknown collection from %v", message))
+	}
+
+	// find the address column
+	addressColumn := -1
+	for index, name := range collection.Key {
+		if name[0] == '@' {
+			addressColumn = index
+			break
+		}
+	}
+	if addressColumn == -1 {
+		panic("no address column for collection " + message.collection)
+	}
+
+	for _, tuple := range message.data {
+		// get the address to send to
+		address, err := net.ResolveUDPAddr("udp", string(tuple[addressColumn].([]uint8)))
+		if err != nil {
+			panic(err)
+		}
+
+		// don't send to self
+		if address.String() == bud.address {
+			continue
+		}
+
+		// marshal the tuple
+		marshalled := bud.marshal(message.collection, tuple)
+
+		// send the tuple
+		_, err = bud.listener.WriteTo(marshalled, address)
+		if err != nil {
+			panic(err)
+		}
+
+		flowinfo("budCommunicator", "sent", tuple.String(), "to", string(tuple[addressColumn].([]byte)))
+	}
+}
+
+func budCommunicator(s *service.Service, channels channels, address string) {
+	bud := bud{
+		address:  address,
+		s:        s,
+		channels: channels,
+	}
+
+	bud.listen()
+	defer bud.close()
+
+	go bud.networkReader()
+
+	controlinfo("budCommunicator", "started")
+	for {
+		message := <-channels.distribution
+		controlinfo("budCommunicator", "received", message)
+
 		switch message.operation {
-		case "": // is blank because all channels send to the output handlers; collections don't know what their operations are
-			collection, ok := collections[message.collection.name]
-			if !ok {
-				collections[message.collection.name] = &message.collection
-			} else {
-				collection.merge(&message.collection)
-			}
-		case "step": // when stepping, send all collected rows then empty set to send
-			// send rows
-			for _, collection := range collections {
-				monitorinfo("budOutput", collection.name, ": ", collection.String())
-
-				// find the address column
-				addressColumn := -1
-				for name, index := range collection.columns {
-					if name[0] == '@' {
-						addressColumn = index
-						break
-					}
-				}
-				if addressColumn == -1 {
-					panic("no address column in " + collection.name)
-				}
-
-				for _, row := range collection.rows {
-					// get the address to send to
-					address, err := net.ResolveUDPAddr("udp", string(row[addressColumn].([]uint8)))
-					if err != nil {
-						panic(err)
-					}
-
-					// don't send to self
-					if address.String() == "127.0.0.1:3000" {
-						continue
-					}
-
-					// create the payload
-					outputMessage := bytes.NewBuffer([]byte{})
-
-					// msgpack format from bud:
-					// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
-					// COLUMNS depends on the column types
-					// 0: collection name
-					// 1: data
-					// 2: ??
-
-					// collection name []byte
-					collection_name := []byte(collection.name)
-
-					// data [][]interface{}
-					data := []interface{}{}
-
-					for _, column := range row {
-						data = append(data, column)
-					}
-
-					// ?? []interface{}
-					part3 := []interface{}{}
-
-					_, err = msgpack.Pack(outputMessage, []interface{}{collection_name, data, part3})
-					if err != nil {
-						panic(err)
-					}
-
-					// send the message
-					_, err = conn.WriteTo(outputMessage.Bytes(), address)
-					if err != nil {
-						panic(err)
-					}
-
-					info("budOutput", "sent to", string(row[addressColumn].([]byte)), row)
-				}
-			}
-			collections = make(map[string]*collection)
+		case "immediate", "deferred":
+			channels.finished <- true
+			controlinfo("budCommunicator", "finished with", message)
+		case "data":
+			flowinfo("budCommunicator", "received", message)
+			bud.send(message)
 		default:
-			panic("unhandled operation: " + message.operation)
+			fatal("budCommunicator", "unhandled message:", message)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package executorng
+package executor
 
 /*
 TO TEST:
@@ -137,7 +137,7 @@ func TestNumberOfProducts(t *testing.T) {
 		result := numberOfProducts(lengths)
 
 		if result != expected {
-			t.Errorf("expected numberOfProducts(%v)=%v; got",
+			t.Errorf("expected numberOfProducts(%v)=%v; got %v",
 				lengths, expected, result)
 		}
 	}

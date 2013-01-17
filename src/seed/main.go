@@ -2,7 +2,7 @@ package main
 
 // standard packages
 import (
-	executor "executorng"
+	"executor"
 	"flag"
 	"fmt"
 	"io/ioutil"
