@@ -25,7 +25,7 @@ func (bud *bud) listen() {
 }
 
 func (bud *bud) close() {
-	bud.listener.Close()
+	// bud.listener.Close()
 }
 
 func (bud *bud) networkReader() {
@@ -149,6 +149,8 @@ func (bud *bud) marshal(collectionName string, tuple tuple) []byte {
 }
 
 func (bud *bud) send(message messageContainer) {
+	flowinfo("budCommunicator", "sending", message.String())
+	// make sure the collection is known
 	collection, ok := bud.s.Collections[message.collection]
 	if !ok {
 		panic(fmt.Sprintf("unknown collection from %v", message))
@@ -187,7 +189,7 @@ func (bud *bud) send(message messageContainer) {
 			panic(err)
 		}
 
-		info("budOutput", "sent to", string(tuple[addressColumn].([]byte)), tuple)
+		flowinfo("budCommunicator", "sent", tuple.String(), "to", string(tuple[addressColumn].([]byte)))
 	}
 }
 

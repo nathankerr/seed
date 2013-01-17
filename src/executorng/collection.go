@@ -50,6 +50,9 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 
 	immediates := ruleChannels(false, collectionName, s, channels)
 	deferreds := ruleChannels(true, collectionName, s, channels)
+	if c.Type == service.CollectionChannel {
+		deferreds = append(deferreds, channels.distribution)
+	}
 
 	controlinfo(collectionName, "sends to", immediates, deferreds)
 
@@ -87,7 +90,7 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 			channels.finished <- true
 			controlinfo(collectionName, "finished with", message)
 		case "data", "<~":
-			flowinfo(collectionName, "received", message)
+			flowinfo(collectionName, "received", message.String())
 			for _, tuple := range message.data {
 				data.add(tuple)
 			}

@@ -21,7 +21,7 @@ func (tuple *tuple) String() string {
 		case []byte:
 			columns = append(columns, string(typed))
 		default:
-			columns = append(columns, fmt.Sprintf("%v", column))
+			columns = append(columns, fmt.Sprintf("%#v", column))
 		}
 	}
 
@@ -31,10 +31,10 @@ func (tuple *tuple) String() string {
 func (mc *messageContainer) String() string {
 	tuples := []string{}
 	for _, tuple := range mc.data {
-		tuples = append(tuples, fmt.Sprintf("%s", tuple))
+		tuples = append(tuples, tuple.String())
 	}
 	return fmt.Sprintf("{%s %s [%s]}",
-		mc.operation, mc.collection, strings.Join(tuples, ", "))
+		mc.collection, mc.operation, strings.Join(tuples, ", "))
 }
 
 // A concurrent service executor

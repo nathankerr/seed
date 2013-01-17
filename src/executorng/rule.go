@@ -44,7 +44,7 @@ func handleRule(ruleNumber int, s *service.Service, channels channels) {
 			controlinfo(ruleNumber, "finished with", message)
 		case "data":
 			// cache data received before an immediate or deferred message initiates execution
-			flowinfo(handler.number, "received", message)
+			flowinfo(handler.number, "received", message.String())
 			dataMessages = append(dataMessages, message)
 		default:
 			fatal(ruleNumber, "unhandled message:", message)
@@ -67,7 +67,7 @@ func (handler *ruleHandler) run(dataMessages []messageContainer) {
 		data:       results,
 	}
 	handler.channels.collections[outputName] <- outputMessage
-	flowinfo(handler.number, "sent", outputMessage, "to", outputName)
+	flowinfo(handler.number, "sent", outputMessage.String(), "to", outputName)
 }
 
 func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map[string][]tuple {
@@ -87,7 +87,7 @@ func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map
 
 		switch message.operation {
 		case "data":
-			flowinfo(handler.number, "received", message)
+			flowinfo(handler.number, "received", message.String())
 			data[message.collection] = message.data
 		default:
 			fatal(handler.number, "unhandled message", message)

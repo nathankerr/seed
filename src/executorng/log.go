@@ -18,7 +18,7 @@ func networkerror(id interface{}, args ...interface{}) {
 
 // data sent and received between go routines
 func flowinfo(id interface{}, args ...interface{}) {
-	// return
+	return
 	printlog(id, args...)
 }
 
