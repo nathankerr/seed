@@ -1,8 +1,47 @@
 package executorng
 
 import (
+	"encoding/json"
 	"service"
 )
+
+type tupleSet struct {
+	tuples          map[string]tuple
+	keyEnds         int
+	numberOfColumns int
+	collectionName  string
+}
+
+// tuples are unique according to their key columns
+// the key columns are a subset of the columns starting at the beginning
+// encoding the key columns in json gives a way to uniquely encode the columns
+// a map is then used (with the encoded key) to store the tuples
+func (ts *tupleSet) add(tuple tuple) {
+	if len(tuple) != ts.numberOfColumns {
+		fatal(ts.collectionName, "expected", ts.numberOfColumns, "columns for", tuple)
+	}
+
+	key, err := json.Marshal(tuple[:ts.keyEnds])
+	if err != nil {
+		panic(err)
+	}
+
+	ts.tuples[string(key)] = tuple
+}
+
+func (ts *tupleSet) message() messageContainer {
+	message := messageContainer{
+		operation:  "data",
+		collection: ts.collectionName,
+		data:       []tuple{},
+	}
+
+	for _, tuple := range ts.tuples {
+		message.data = append(message.data, tuple)
+	}
+
+	return message
+}
 
 func collectionHandler(collectionName string, s *service.Service, channels channels) {
 	controlinfo(collectionName, "started")
@@ -14,7 +53,12 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 
 	controlinfo(collectionName, "sends to", immediates, deferreds)
 
-	// data := tupleSet{}
+	data := tupleSet{
+		tuples:          map[string]tuple{},
+		keyEnds:         len(c.Key),
+		numberOfColumns: len(c.Key) + len(c.Data),
+		collectionName:  collectionName,
+	}
 
 	for {
 		message := <-input
@@ -23,17 +67,17 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 		switch message.operation {
 		case "immediate":
 			// info(collectionName, "immediate")
-			sendToAll(messageContainer{operation: "data"}, immediates)
+			sendToAll(data.message(), immediates)
 			channels.finished <- true
 			controlinfo(collectionName, "finished with", message)
 		case "deferred":
 			// info(collectionName, "deferred")
 			controlinfo(collectionName, "sending to", deferreds)
-			sendToAll(messageContainer{collection: collectionName, operation: "data"}, deferreds)
+			sendToAll(data.message(), deferreds)
 			switch c.Type {
 			case service.CollectionInput, service.CollectionOutput, service.CollectionScratch, service.CollectionChannel:
-				// temporary collections
-				// TODO: empty collection
+				// temporary collections are emptied
+				data.tuples = map[string]tuple{}
 			case service.CollectionTable:
 				// persistent collections
 				// no-op
@@ -42,8 +86,11 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 			}
 			channels.finished <- true
 			controlinfo(collectionName, "finished with", message)
-		case "data":
-			//TODO
+		case "data", "<~":
+			flowinfo(collectionName, "received", message)
+			for _, tuple := range message.data {
+				data.add(tuple)
+			}
 		default:
 			fatal(collectionName, "unhandled message:", message)
 		}
@@ -65,18 +112,4 @@ func ruleChannels(deferred bool, collectionName string, s *service.Service, chan
 		}
 	}
 	return ruleChannels
-}
-
-func collectionToMessage(name string, collection tupleSet) messageContainer {
-	message := messageContainer{
-		operation:  "data",
-		collection: name,
-		data:       []tuple{},
-	}
-
-	for _, tuple := range collection {
-		message.data = append(message.data, tuple)
-	}
-
-	return message
 }

@@ -35,6 +35,7 @@ func main() {
 	var execute = flag.Bool("execute", false, "execute the service")
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
+	var address = flag.String("address", "127.0.0.1:3000", "address the bud communicator uses")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -171,7 +172,7 @@ func main() {
 				}
 			}
 
-			executor.Execute(seed, timeoutDuration, sleepDuration)
+			executor.Execute(seed, timeoutDuration, sleepDuration, *address)
 			break
 		}
 	}

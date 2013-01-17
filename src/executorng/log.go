@@ -11,6 +11,17 @@ import (
 	"runtime"
 )
 
+func networkerror(id interface{}, args ...interface{}) {
+	// return
+	printlog(id, args...)
+}
+
+// data sent and received between go routines
+func flowinfo(id interface{}, args ...interface{}) {
+	// return
+	printlog(id, args...)
+}
+
 func info(id interface{}, args ...interface{}) {
 	// return
 	printlog(id, args...)
