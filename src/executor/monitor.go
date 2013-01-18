@@ -132,7 +132,14 @@ window.addEventListener("load", init, false);
 </script>
 </head>
 <body>
-<div id="output"></div>
+<input type="button" onclick="showMessage('clicked')" />
+<div id="viz"></div>
+<div id="block1"></div>
+<div id="block2"></div>
+<div id="block3"></div>
+<div id="block4"></div>
+<div id="block5"></div>
+<div id="block6"></div>
 </body>
 </html>
 `))
