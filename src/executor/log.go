@@ -11,6 +11,12 @@ import (
 	"runtime"
 )
 
+// centralized monitoring info
+func monitorinfo(id interface{}, args ...interface{}) {
+	return
+	printlog(id, args...)
+}
+
 func networkerror(id interface{}, args ...interface{}) {
 	// return
 	printlog(id, args...)

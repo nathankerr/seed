@@ -2,6 +2,7 @@ package executor
 
 import (
 	"errors"
+	"fmt"
 	"service"
 )
 
@@ -29,18 +30,24 @@ func handleRule(ruleNumber int, s *service.Service, channels channels) {
 
 		switch message.operation {
 		case "immediate":
+			var results messageContainer
 			if rule.Operation == "<=" {
-				handler.run(dataMessages)
+				results = handler.run(dataMessages)
 			}
 			dataMessages = []messageContainer{}
-			channels.finished <- true
+			results.operation = "done"
+			results.collection = fmt.Sprint(handler.number)
+			channels.control <- results
 			controlinfo(ruleNumber, "finished with", message)
 		case "deferred":
+			var results messageContainer
 			if rule.Operation != "<=" {
-				handler.run(dataMessages)
+				results = handler.run(dataMessages)
 			}
 			dataMessages = []messageContainer{}
-			channels.finished <- true
+			results.operation = "done"
+			results.collection = fmt.Sprint(handler.number)
+			channels.control <- results
 			controlinfo(ruleNumber, "finished with", message)
 		case "data":
 			// cache data received before an immediate or deferred message initiates execution
@@ -52,7 +59,7 @@ func handleRule(ruleNumber int, s *service.Service, channels channels) {
 	}
 }
 
-func (handler *ruleHandler) run(dataMessages []messageContainer) {
+func (handler *ruleHandler) run(dataMessages []messageContainer) messageContainer {
 	// get the data needed to calculate the results
 	data := handler.getRequiredData(dataMessages)
 
@@ -68,6 +75,8 @@ func (handler *ruleHandler) run(dataMessages []messageContainer) {
 	}
 	handler.channels.collections[outputName] <- outputMessage
 	flowinfo(handler.number, "sent", outputMessage.String(), "to", outputName)
+
+	return outputMessage
 }
 
 func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map[string][]tuple {

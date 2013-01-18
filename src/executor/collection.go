@@ -70,13 +70,16 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 		switch message.operation {
 		case "immediate":
 			// info(collectionName, "immediate")
-			sendToAll(data.message(), immediates)
-			channels.finished <- true
+			dataMessage := data.message()
+			sendToAll(dataMessage, immediates)
+			dataMessage.operation = "done"
+			channels.control <- dataMessage
 			controlinfo(collectionName, "finished with", message)
 		case "deferred":
 			// info(collectionName, "deferred")
 			controlinfo(collectionName, "sending to", deferreds)
-			sendToAll(data.message(), deferreds)
+			dataMessage := data.message()
+			sendToAll(dataMessage, deferreds)
 			switch c.Type {
 			case service.CollectionInput, service.CollectionOutput, service.CollectionScratch, service.CollectionChannel:
 				// temporary collections are emptied
@@ -87,7 +90,8 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 			default:
 				fatal(collectionName, "unhandled collection type", c.Type)
 			}
-			channels.finished <- true
+			dataMessage.operation = "done"
+			channels.control <- dataMessage
 			controlinfo(collectionName, "finished with", message)
 		case "data", "<~":
 			flowinfo(collectionName, "received", message.String())

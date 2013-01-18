@@ -9,7 +9,7 @@ import (
 
 type tuple []interface{}
 type messageContainer struct {
-	operation  string // "immediate", "deferred", "data"
+	operation  string // "immediate", "deferred", "data", "done"
 	collection string
 	data       []tuple
 }
@@ -85,21 +85,22 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 		// phase 1: execute immediate rules
 		sendAndWaitTilFinished(
 			messageContainer{operation: "immediate"},
-			toControl, channels.finished)
+			toControl, channels.control)
 
 		// phase 2: execute deferred rules
 		sendAndWaitTilFinished(
 			messageContainer{operation: "deferred"},
-			toControl, channels.finished)
+			toControl, channels.control)
 
 		timeinfo("execute", "timestep took", time.Since(startTime))
 	}
 }
 
-func sendAndWaitTilFinished(message messageContainer, toControl []chan<- messageContainer, finishedChannel <-chan bool) {
+func sendAndWaitTilFinished(message messageContainer, toControl []chan<- messageContainer, controlChannel <-chan messageContainer) {
 	sendToAll(message, toControl)
 	for finished := 0; finished < len(toControl); finished++ {
-		<-finishedChannel
+		message := <-controlChannel
+		monitorinfo("MONITOR", message.String())
 		controlinfo("execute", finished, "of", len(toControl))
 	}
 }

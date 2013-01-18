@@ -212,7 +212,7 @@ func budCommunicator(s *service.Service, channels channels, address string) {
 
 		switch message.operation {
 		case "immediate", "deferred":
-			channels.finished <- true
+			channels.control <- messageContainer{operation: "done", collection: "budCommunicator"}
 			controlinfo("budCommunicator", "finished with", message)
 		case "data":
 			flowinfo("budCommunicator", "received", message)

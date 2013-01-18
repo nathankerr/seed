@@ -5,7 +5,7 @@ import (
 )
 
 type channels struct {
-	finished     chan bool
+	control      chan messageContainer
 	distribution chan messageContainer
 	collections  map[string]chan messageContainer
 	rules        []chan messageContainer
@@ -14,7 +14,7 @@ type channels struct {
 func makeChannels(s *service.Service) channels {
 	var channels channels
 
-	channels.finished = make(chan bool)
+	channels.control = make(chan messageContainer)
 	channels.distribution = make(chan messageContainer)
 
 	channels.collections = make(map[string]chan messageContainer)
