@@ -40,7 +40,7 @@ func (mc *messageContainer) String() string {
 // A concurrent service executor
 // Collection and rule handlers work as concurrent processes
 // managed by the control loop in this function.
-func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration time.Duration, address string) {
+func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration time.Duration, address string, monitorAddress string) {
 	// launch the handlers
 	channels := makeChannels(s)
 	for collectionName, _ := range s.Collections {
@@ -63,6 +63,14 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 	info("execute", "service", s)
 	info("execute", "channels", channels)
 
+	monitor := false
+	// var monitorChannel chan monitorMessage
+	monitorChannel := make(chan monitorMessage)
+	if monitorAddress != "" {
+		monitor = true
+		go startMonitor(monitorAddress, monitorChannel)
+	}
+
 	// setup and start the timeout
 	// timeout should only happen when timeoutDuration != 0
 	var timeout <-chan time.Time
@@ -71,6 +79,11 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 	}
 	// control loop
 	for {
+		breakBeforeDeferred := false
+		if monitor {
+			// message = <-monitorChannel
+		}
+
 		startTime := time.Now()
 		time.Sleep(sleepDuration)
 
@@ -87,12 +100,19 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 			messageContainer{operation: "immediate"},
 			toControl, channels.control)
 
+		if breakBeforeDeferred {
+			// handle monitor control
+		}
+
 		// phase 2: execute deferred rules
 		sendAndWaitTilFinished(
 			messageContainer{operation: "deferred"},
 			toControl, channels.control)
 
 		timeinfo("execute", "timestep took", time.Since(startTime))
+		if monitor {
+			monitorChannel <- monitorMessage{operation: "time", data: time.Since(startTime)}
+		}
 	}
 }
 

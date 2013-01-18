@@ -33,8 +33,9 @@ func info(id interface{}, args ...interface{}) {
 	printlog(id, args...)
 }
 
+// timing information from executor
 func timeinfo(id interface{}, args ...interface{}) {
-	// return
+	return
 	printlog(id, args...)
 }
 
