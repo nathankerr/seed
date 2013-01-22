@@ -68,7 +68,7 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 	monitorChannel := make(chan monitorMessage)
 	if monitorAddress != "" {
 		monitor = true
-		go startMonitor(monitorAddress, monitorChannel)
+		go startMonitor(monitorAddress, monitorChannel, s)
 	}
 
 	// setup and start the timeout
@@ -119,7 +119,7 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 			}
 
 			monitorChannel <- monitorMessage{
-				Block: "time",
+				Block: "_time",
 				Data:  time.Since(startTime),
 			}
 		}

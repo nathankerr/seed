@@ -3,9 +3,12 @@ package executor
 import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"service"
+	"strconv"
 )
 
 type monitorMessage struct {
@@ -63,7 +66,7 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 	return sockets
 }
 
-func startMonitor(address string, channel chan monitorMessage) {
+func startMonitor(address string, channel chan monitorMessage, s *service.Service) {
 	monitorAddress = address
 	go monitorServer(address)
 
@@ -72,7 +75,7 @@ func startMonitor(address string, channel chan monitorMessage) {
 		select {
 		case message := <-channel:
 			monitorinfo("_monitor", message)
-			// data := []byte(fmt.Sprintf("MESSAGE %s %v", message.operation, message.data))
+			message.Data = renderHTML(message, s)
 			data, err := json.Marshal(message)
 			if err != nil {
 				panic(err)
@@ -100,6 +103,53 @@ func socketHandler(ws *websocket.Conn) {
 	<-done
 }
 
+func renderHTML(message monitorMessage, s *service.Service) string {
+	collection, ok := s.Collections[message.Block]
+	if !ok {
+		number, err := strconv.ParseInt(message.Block, 0, 0)
+		if err == nil {
+			rule := s.Rules[number]
+			collection = s.Collections[rule.Supplies]
+		} else {
+			switch message.Block {
+			case "_time", "budCommunicator":
+				return fmt.Sprint(message.Data)
+			default:
+				panic("unhandled block: " + message.Block)
+			}
+		}
+	}
+
+	table := "<table><tr>"
+
+	// add headers
+	for _, column := range collection.Key {
+		table += fmt.Sprintf("<th>%s</th>", column)
+	}
+	for _, column := range collection.Data {
+		table += fmt.Sprintf("<th>%s</th>", column)
+	}
+	table += "</tr>"
+
+	rows := message.Data.([]tuple)
+	for _, row := range rows {
+		table += "<tr>"
+		for _, column := range row {
+			switch typed := column.(type) {
+			case []byte:
+				table += fmt.Sprintf("<td>%s</td>", string(typed))
+			default:
+				table += fmt.Sprintf("<td>%v</td>", column)
+			}
+		}
+		table += "</tr>"
+	}
+
+	table += "</table>"
+
+	return table
+}
+
 func rootHandler(w http.ResponseWriter, req *http.Request) {
 	rootTemplate.Execute(w, monitorAddress)
 }
@@ -116,7 +166,7 @@ function showMessage(m) {
 	var p = document.createElement("p")
 	p.innerHTML = m
 
-	var logBlock = document.getElementById("log")
+	var logBlock = document.getElementById("_log")
 	if (logBlock == null) {
 		return
 	}
@@ -134,7 +184,7 @@ function showMessage(m) {
 function onMessage(e) {
 	var message = JSON.parse(e.data)
 	
-	knownBlockNames[message.Block] = true
+	knownBlockNames[message.Block] = message.Data
 	setNewBlockNames()
 
 	var block = document.getElementById(message.Block)
@@ -196,9 +246,14 @@ function newBlock(title) {
 }
 
 function createBlock(blockTitle) {
+	var block = document.getElementById(blockTitle)
+	if (block != null) {
+		showMessage("block already open")
+		return
+	}
+
 	showMessage("creating block")
 
-	// var blockTitle = document.getElementById("newBlockName").value
 	var block = newBlock(blockTitle)
 	var content = block.children[1]
 
@@ -211,6 +266,12 @@ function createBlock(blockTitle) {
 	resizeBlocks()
 
 	content.style.height = Number(block.style.height.match("[0-9]+")[0]) - 40 + "px"
+
+	// add data if we have it
+	var data = knownBlockNames[blockTitle]
+	if (data != null) {
+		content.innerHTML = data
+	}
 }
 
 function resizeBlocks() {
@@ -261,7 +322,7 @@ function focusBlock(block) {
 
 function init() {
 	knownBlockNames = {}
-	knownBlockNames["log"] = true
+	knownBlockNames["_log"] = true
 
 	websocket = new WebSocket("ws://{{.}}/socket");
 	websocket.onmessage = onMessage;
@@ -281,7 +342,7 @@ function init() {
 	blocks.style.width = window.innerWidth - focusWidth + "px"
 	blocks.style.height = window.innerHeight + "px"
 
-	createBlock("log")
+	createBlock("_log")
 
 	showMessage("started")
 }
@@ -339,6 +400,15 @@ div {
 
 #control {
 	top: 0px;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+td {
+	text-align: center;
 }
 
 </style>
