@@ -96,7 +96,7 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 		}
 
 		// phase 1: execute immediate rules
-		sendAndWaitTilFinished(
+		messages := sendAndWaitTilFinished(
 			messageContainer{operation: "immediate"},
 			toControl, channels.control)
 
@@ -105,24 +105,37 @@ func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration ti
 		}
 
 		// phase 2: execute deferred rules
-		sendAndWaitTilFinished(
+		messages = sendAndWaitTilFinished(
 			messageContainer{operation: "deferred"},
 			toControl, channels.control)
 
 		timeinfo("execute", "timestep took", time.Since(startTime))
 		if monitor {
-			monitorChannel <- monitorMessage{operation: "time", data: time.Since(startTime)}
+			for _, message := range messages {
+				monitorChannel <- monitorMessage{
+					Block: message.collection,
+					Data:  message.data,
+				}
+			}
+
+			monitorChannel <- monitorMessage{
+				Block: "time",
+				Data:  time.Since(startTime),
+			}
 		}
 	}
 }
 
-func sendAndWaitTilFinished(message messageContainer, toControl []chan<- messageContainer, controlChannel <-chan messageContainer) {
+func sendAndWaitTilFinished(message messageContainer, toControl []chan<- messageContainer, controlChannel <-chan messageContainer) []messageContainer {
+	messages := []messageContainer{}
 	sendToAll(message, toControl)
 	for finished := 0; finished < len(toControl); finished++ {
 		message := <-controlChannel
+		messages = append(messages, message)
 		monitorinfo("MONITOR", message.String())
 		controlinfo("execute", finished, "of", len(toControl))
 	}
+	return messages
 }
 
 func sendToAll(message messageContainer, channels []chan<- messageContainer) {

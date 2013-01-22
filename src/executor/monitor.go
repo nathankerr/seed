@@ -2,16 +2,15 @@ package executor
 
 import (
 	"code.google.com/p/go.net/websocket"
-	// "encoding/json"
+	"encoding/json"
 	"html/template"
 	"io"
 	"net/http"
-	"fmt"
 )
 
 type monitorMessage struct {
-	operation string
-	data      interface{}
+	Block string
+	Data  interface{}
 }
 
 var registerSocket = make(chan socket)
@@ -73,7 +72,11 @@ func startMonitor(address string, channel chan monitorMessage) {
 		select {
 		case message := <-channel:
 			monitorinfo("_monitor", message)
-			data := []byte(fmt.Sprintf("MESSAGE %s %v", message.operation, message.data))
+			// data := []byte(fmt.Sprintf("MESSAGE %s %v", message.operation, message.data))
+			data, err := json.Marshal(message)
+			if err != nil {
+				panic(err)
+			}
 			toRemove := sendToAllSockets(data, sockets)
 			sockets = removeSockets(toRemove, sockets)
 		case socket := <-registerSocket:
@@ -107,7 +110,7 @@ var rootTemplate = template.Must(template.New("root").Parse(`<!DOCTYPE html>
 <meta charset="utf-8" />
 <script>
 
-var websocket, focus, blocks
+var websocket, focus, blocks, knownBlockNames
 
 function showMessage(m) {
 	var p = document.createElement("p")
@@ -129,7 +132,39 @@ function showMessage(m) {
 }
 
 function onMessage(e) {
-	showMessage(e.data)
+	var message = JSON.parse(e.data)
+	
+	knownBlockNames[message.Block] = true
+	setNewBlockNames()
+
+	var block = document.getElementById(message.Block)
+	if (block != null) {
+		block.children[1].innerHTML = message.Data
+	}
+
+	// showMessage(message)
+}
+
+function setNewBlockNames() {
+	var newBlockName = document.getElementById("newBlockName")
+	var names = Object.keys(knownBlockNames)
+	if (newBlockName.children.length != names.length) {
+		for (var i = newBlockName.children.length; i > 0; i--) {
+			var block = newBlockName.children[0]
+			newBlockName.removeChild(block)
+		}
+
+		for (i=0; i < names.length; i++) {
+			var name = names[i]
+
+			var option = document.createElement("option")
+			option.value = name
+			option.innerHTML = name
+
+			newBlockName.appendChild(option)
+		}
+
+	}
 }
 
 function onClose() {
@@ -225,6 +260,9 @@ function focusBlock(block) {
 }
 
 function init() {
+	knownBlockNames = {}
+	knownBlockNames["log"] = true
+
 	websocket = new WebSocket("ws://{{.}}/socket");
 	websocket.onmessage = onMessage;
 	websocket.onclose = onClose;
@@ -233,6 +271,10 @@ function init() {
 	var focusWidth = window.innerWidth * 0.618
 	focus.style.width = focusWidth + "px"
 	focus.style.height = window.innerHeight + "px"
+
+	control = document.getElementById("control")
+	control.style.left = focusWidth + "px"
+	control.style.width = window.innerWidth - focusWidth + "px"
 
 	blocks = document.getElementById("blocks")
 	blocks.style.left = focusWidth + "px"
@@ -260,7 +302,7 @@ div {
 }
 
 #blocks {
-	top: 0px;
+	top: 20px;
 }
 
 .block {
@@ -296,21 +338,15 @@ div {
 }
 
 #control {
-	position: relative;
-	float: right;
-	z-index: 1000;
+	top: 0px;
 }
 
 </style>
 </head>
 <body>
 <div id="control">
-	<select id="newBlockName">
-		<option value="log">log</option>
-		<option value="hello">hello</option>
-		<option value="goodbye">goodbye</option>
-	</select>
-	<input type="button" value="Create block" onclick="createBlock(document.getElementById('newBlockName').value)" />
+	<select id="newBlockName"></select>
+	<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
 </div>
 <div id="focus"></div>
 <div id="blocks">
