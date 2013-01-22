@@ -291,6 +291,26 @@ function resizeBlocks() {
 	}
 }
 
+function resizeContainers() {
+	connected.style.left = window.innerWidth - 20 + "px"
+
+	var focusWidth = window.innerWidth * 0.618
+	focus.style.width = focusWidth + "px"
+	focus.style.height = window.innerHeight + "px"
+
+	control.style.left = focusWidth + "px"
+	control.style.width = window.innerWidth - focusWidth + "px"
+
+	blocks.style.left = focusWidth + "px"
+	blocks.style.width = window.innerWidth - focusWidth + "px"
+	blocks.style.height = window.innerHeight + "px"
+}
+
+function resizeAll() {
+	resizeContainers()
+	resizeBlocks()
+}
+
 function closeBlock() {
 	var block = this.parentElement
 	var container = block.parentElement
@@ -323,34 +343,27 @@ function init() {
 	knownBlockNames = {}
 	knownBlockNames["_log"] = true
 
+	// fill in the globals for the frequently accessed objs
+	connected = document.getElementById("connected")
+	focus = document.getElementById("focus")
+	control = document.getElementById("control")
+	blocks = document.getElementById("blocks")
+
+	resizeContainers()
+
+	// connect to the monitor server
 	websocket = new WebSocket("ws://{{.}}/socket");
 	websocket.onmessage = onMessage;
 	websocket.onclose = onClose;
-
-	connected = document.getElementById("connected")
 	connected.style.backgroundColor = "green"
-	connected.style.left = window.innerWidth - 20 + "px"
 
-	focus = document.getElementById("focus")
-	var focusWidth = window.innerWidth * 0.618
-	focus.style.width = focusWidth + "px"
-	focus.style.height = window.innerHeight + "px"
-
-	control = document.getElementById("control")
-	control.style.left = focusWidth + "px"
-	control.style.width = window.innerWidth - focusWidth + "px"
-
-	blocks = document.getElementById("blocks")
-	blocks.style.left = focusWidth + "px"
-	blocks.style.width = window.innerWidth - focusWidth + "px"
-	blocks.style.height = window.innerHeight + "px"
-
+	// open _log
 	createBlock("_log")
-
 	showMessage("started")
 }
 
 window.addEventListener("load", init, false);
+window.onresize=resizeAll
 </script>
 
 <style>
