@@ -160,7 +160,7 @@ var rootTemplate = template.Must(template.New("root").Parse(`<!DOCTYPE html>
 <meta charset="utf-8" />
 <script>
 
-var websocket, focus, blocks, knownBlockNames
+var websocket, focus, blocks, knownBlockNames, connected
 
 function showMessage(m) {
 	var p = document.createElement("p")
@@ -191,8 +191,6 @@ function onMessage(e) {
 	if (block != null) {
 		block.children[1].innerHTML = message.Data
 	}
-
-	// showMessage(message)
 }
 
 function setNewBlockNames() {
@@ -219,6 +217,7 @@ function setNewBlockNames() {
 
 function onClose() {
 	showMessage("Connection Closed")
+	connected.style.backgroundColor = "red"
 }
 
 function newBlock(title) {
@@ -328,6 +327,10 @@ function init() {
 	websocket.onmessage = onMessage;
 	websocket.onclose = onClose;
 
+	connected = document.getElementById("connected")
+	connected.style.backgroundColor = "green"
+	connected.style.left = window.innerWidth - 20 + "px"
+
 	focus = document.getElementById("focus")
 	var focusWidth = window.innerWidth * 0.618
 	focus.style.width = focusWidth + "px"
@@ -351,8 +354,11 @@ window.addEventListener("load", init, false);
 </script>
 
 <style>
+body {
+	overflow: hidden;
+}
 div {
-	overflow: auto;
+	overflow: hidden;
 	position: absolute;
 	z-index: 0;
 }
@@ -395,11 +401,18 @@ div {
 	left: 0px;
 	top: 20px;
 	width: 100%;
-	overflow: scroll;
+	overflow: auto;
 }
 
 #control {
 	top: 0px;
+}
+
+#connected {
+	top: 0px;
+	width: 20px;
+	height: 20px;
+	background-color: red;
 }
 
 table {
@@ -418,6 +431,7 @@ td {
 	<select id="newBlockName"></select>
 	<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
 </div>
+<div id="connected" class="connected-red">&nbsp;</div>
 <div id="focus"></div>
 <div id="blocks">
 </div>
