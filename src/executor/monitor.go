@@ -107,14 +107,25 @@ var rootTemplate = template.Must(template.New("root").Parse(`<!DOCTYPE html>
 <meta charset="utf-8" />
 <script>
 
-var output, websocket, blockArea
+var websocket, focus, blocks
 
 function showMessage(m) {
 	var p = document.createElement("p")
 	p.innerHTML = m
-	output.appendChild(p)
+
+	var logBlock = document.getElementById("log")
+	if (logBlock == null) {
+		return
+	}
+
+	var log = logBlock.children[1]
+	if (log == null) {
+		return
+	}
+
+	log.appendChild(p)
 	// keep the output in view
-	output.scrollTop = output.scrollHeight
+	log.scrollTop = log.scrollHeight
 }
 
 function onMessage(e) {
@@ -128,59 +139,109 @@ function onClose() {
 function newBlock(title) {
 	var block = document.createElement("div")
 	block.className = "block"
+	block.id = title
 
 	var blockTitle = document.createElement("div")
 	blockTitle.className = "blockTitle"
 	blockTitle.innerHTML = title
+	blockTitle.onclick = focusBlock
 	block.appendChild(blockTitle)
 
 	var blockContent = document.createElement("div")
 	blockContent.className = "blockContent"
 	block.appendChild(blockContent)
 
+	var blockClose = document.createElement("div")
+	blockClose.className = "blockClose"
+	blockClose.innerHTML = "[x]"
+	blockClose.onclick = closeBlock
+	block.appendChild(blockClose)
+
 	return block
 }
 
-function openBlock() {
+function createBlock(blockTitle) {
 	showMessage("creating block")
-	output.style.height = (window.innerHeight / 3) + "px"
 
-	var top = (window.innerHeight / 3)
-	blockArea.style.top = top + "px"
-	blockArea.style.left = "0px"
-	blockArea.style.width = window.innerWidth + "px"
-	blockArea.style.height = window.innerHeight - top + "px"
-
-	var blockTitle = document.getElementById("newBlockName").value
+	// var blockTitle = document.getElementById("newBlockName").value
 	var block = newBlock(blockTitle)
-	blockArea.appendChild(block)
+	var content = block.children[1]
 
-	var numberOfBlocks = blockArea.children.length
-	var blockWidth = window.innerWidth / numberOfBlocks - 2
-	var blockHeight = window.innerHeight - top - 1
+	if (focus.children.length == 0) {
+		// first block
+		focus.appendChild(block)
+	} else {
+		blocks.appendChild(block)
+	}
+	resizeBlocks()
 
-	for (i = 0; i < blockArea.children.length; i++) {
-		blockArea.children[i].style.width = blockWidth - 2 +  "px"
-		blockArea.children[i].style.height = blockHeight + "px"
-		blockArea.children[i].style.left = ((blockWidth + 1) * i) + "px"
+	content.style.height = Number(block.style.height.match("[0-9]+")[0]) - 40 + "px"
+}
+
+function resizeBlocks() {
+	// focused
+	var focused = focus.children[0]
+	if (focused != null) {
+		focused.style.height = focus.style.height;
+		focused.style.top = "0px"
 	}
 
+	// blocks
+	var numberOfBlocks = blocks.children.length
+	var blockHeight = window.innerHeight / numberOfBlocks
+
+	for (i = 0; i < blocks.children.length; i++) {
+		blocks.children[i].style.height = blockHeight + "px"
+		blocks.children[i].style.top = ((blockHeight + 1) * i) + "px"
+	}
+}
+
+function closeBlock() {
+	var block = this.parentElement
+	var container = block.parentElement
+	
+	container.removeChild(block)
+
+	resizeBlocks()
+}
+
+function focusBlock(block) {
+	var block = this.parentElement
+	var container = block.parentElement
+
+	if (container.id == "focus") {
+		return
+	}
+
+	var focused = focus.children[0]
+	if (focused != null) {
+		focus.removeChild(focused)
+		blocks.appendChild(focused)
+	}
+
+	focus.appendChild(block)
+
+	resizeBlocks()
 }
 
 function init() {
-	output = document.getElementById("output")
-	blockArea = document.getElementById("blockArea")
-
 	websocket = new WebSocket("ws://{{.}}/socket");
 	websocket.onmessage = onMessage;
 	websocket.onclose = onClose;
 
-	output.style.width = window.innerWidth + "px"
-	output.style.height = window.innerHeight + "px"
-	output.style.top = "0px"
-	output.style.left = "0px"
+	focus = document.getElementById("focus")
+	var focusWidth = window.innerWidth * 0.618
+	focus.style.width = focusWidth + "px"
+	focus.style.height = window.innerHeight + "px"
 
-	showMessage("Started")
+	blocks = document.getElementById("blocks")
+	blocks.style.left = focusWidth + "px"
+	blocks.style.width = window.innerWidth - focusWidth + "px"
+	blocks.style.height = window.innerHeight + "px"
+
+	createBlock("log")
+
+	showMessage("started")
 }
 
 window.addEventListener("load", init, false);
@@ -193,52 +254,67 @@ div {
 	z-index: 0;
 }
 
-.block {
+#focus {
 	top: 0px;
-	position: absolute;
-	padding: 1px;
-	border: solid 1px;
+	left: 0px;
+}
+
+#blocks {
+	top: 0px;
+}
+
+.block {
+	left: 0px;
+	overflow: hidden;
+	width: 100%;
 }
 
 .blockTitle {
 	background-color: black;
 	color: white;
 	text-align: center;
-	float: left;
-	position: relative
-	z-index: 1000;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 20px;
+}
+
+.blockClose {
+	left: 0px;
+	z-index: 1;
+	width: 30px;
+	height: 20px;
+	background-color: black;
+	color: white;
 }
 
 .blockContent {
-	padding: 0;
-	margin: 0;
-	position: absolute;
-	left: 0;
-	top: 0;
+	left: 0px;
+	top: 20px;
 	width: 100%;
-	height: 100%;
-	z-index: 0;
 	overflow: scroll;
 }
-
 
 #control {
 	position: relative;
 	float: right;
 	z-index: 1000;
 }
+
 </style>
 </head>
 <body>
 <div id="control">
 	<select id="newBlockName">
+		<option value="log">log</option>
 		<option value="hello">hello</option>
 		<option value="goodbye">goodbye</option>
 	</select>
-	<input type="button" value="Create block" onclick="openBlock()" />
+	<input type="button" value="Create block" onclick="createBlock(document.getElementById('newBlockName').value)" />
 </div>
-<div id="output"></div>
-<div id="blockArea"></div>
+<div id="focus"></div>
+<div id="blocks">
+</div>
 </body>
 </html>
 `))
