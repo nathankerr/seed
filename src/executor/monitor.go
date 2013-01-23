@@ -69,7 +69,7 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 func sendStartupData(s *service.Service, socket socket) {
 	message := monitorMessage{
 		Block: "_service",
-		Data:  fmt.Sprintf("<code><pre>%s</pre></code>", s.String()),
+		Data:  fmt.Sprintf("<code>%s</code>", s.String()[1:]), // skip the beginning newline in the string
 	}
 
 	data, err := json.Marshal(message)
@@ -279,8 +279,6 @@ function createBlock(blockTitle) {
 	}
 	resizeBlocks()
 
-	content.style.height = Number(block.style.height.match("[0-9]+")[0]) - 40 + "px"
-
 	// add data if we have it
 	var data = knownBlockNames[blockTitle]
 	if (data != null) {
@@ -295,26 +293,39 @@ function resizeBlocks() {
 		focused.style.height = focus.style.height;
 		focused.style.top = "0px"
 	}
+	resizeContent(focused)
+
 
 	// blocks
 	var numberOfBlocks = blocks.children.length
 	var blockHeight = window.innerHeight / numberOfBlocks
 
 	for (i = 0; i < blocks.children.length; i++) {
-		blocks.children[i].style.height = blockHeight + "px"
-		blocks.children[i].style.top = ((blockHeight + 1) * i) + "px"
+		var block = blocks.children[i]
+		block.style.height = blockHeight + "px"
+		block.style.top = ((blockHeight + 1) * i) + "px"
+
+		// set height of the content of the block
+		resizeContent(block)
 	}
 }
 
+function resizeContent(block) {
+	var content = block.children[1]
+		content.style.height = Number(block.style.height.match("[0-9]+")[0]) - 20 + "px"
+}
+
 function resizeContainers() {
-	connected.style.left = window.innerWidth - 20 + "px"
-
 	var focusWidth = window.innerWidth * 0.618
+	var focusHeight = window.innerHeight * 0.618
 	focus.style.width = focusWidth + "px"
-	focus.style.height = window.innerHeight + "px"
+	focus.style.height = focusHeight + "px"
 
-	control.style.left = focusWidth + "px"
-	control.style.width = window.innerWidth - focusWidth + "px"
+	connected.style.top = focusHeight + "px"
+
+	control.style.top = focusHeight + "px"
+	control.style.width = focusWidth + "px"
+	control.style.height = window.innerHeight - focusHeight + "px"
 
 	blocks.style.left = focusWidth + "px"
 	blocks.style.width = window.innerWidth - focusWidth + "px"
@@ -397,7 +408,7 @@ div {
 }
 
 #blocks {
-	top: 20px;
+	top: 0px;
 }
 
 .block {
@@ -433,11 +444,11 @@ div {
 }
 
 #control {
-	top: 0px;
+	left: 0px;
 }
 
 #connected {
-	top: 0px;
+	left: 0px;
 	width: 20px;
 	height: 20px;
 	background-color: red;
@@ -452,12 +463,19 @@ td {
 	text-align: center;
 }
 
+code {
+	white-space: pre;
+}
+
 </style>
 </head>
 <body>
-<div id="control">
-	<select id="newBlockName"></select>
-	<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
+<div id="control" class="block">
+	<div class="blockTitle">control</div>
+	<div class="blockContent">
+		<select id="newBlockName"></select>
+		<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
+	</div>
 </div>
 <div id="connected" class="connected-red">&nbsp;</div>
 <div id="focus"></div>
