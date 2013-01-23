@@ -66,6 +66,20 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 	return sockets
 }
 
+func sendStartupData(s *service.Service, socket socket) {
+	message := monitorMessage{
+		Block: "_service",
+		Data:  fmt.Sprintf("<code><pre>%s</pre></code>", s.String()),
+	}
+
+	data, err := json.Marshal(message)
+	if err != nil {
+		panic(err)
+	}
+
+	socket.Write(data)
+}
+
 func startMonitor(address string, channel chan monitorMessage, s *service.Service) {
 	monitorAddress = address
 	go monitorServer(address)
@@ -84,6 +98,7 @@ func startMonitor(address string, channel chan monitorMessage, s *service.Servic
 			sockets = removeSockets(toRemove, sockets)
 		case socket := <-registerSocket:
 			sockets = append(sockets, socket)
+			sendStartupData(s, socket)
 		}
 	}
 }
