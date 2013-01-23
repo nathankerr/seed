@@ -67,17 +67,32 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 }
 
 func sendStartupData(s *service.Service, socket socket) {
-	message := monitorMessage{
+	messages := []monitorMessage{}
+
+	// _service block content
+	messages = append(messages, monitorMessage{
 		Block: "_service",
 		Data:  fmt.Sprintf("<code>%s</code>", s.String()[1:]), // skip the beginning newline in the string
-	}
+	})
 
-	data, err := json.Marshal(message)
-	if err != nil {
-		panic(err)
+	// list of collections for input control
+	collections := ""
+	for name, _ := range s.Collections {
+		collections += fmt.Sprintf("<option value=\"%s\">%s</option>", name, name)
 	}
+	messages = append(messages, monitorMessage{
+		Block: "_collections",
+		Data:  collections,
+	})
 
-	socket.Write(data)
+	for _, message := range messages {
+		data, err := json.Marshal(message)
+		if err != nil {
+			panic(err)
+		}
+
+		socket.Write(data)
+	}
 }
 
 func startMonitor(address string, channel chan monitorMessage, s *service.Service) {
@@ -192,6 +207,7 @@ function showMessage(m) {
 	}
 
 	log.appendChild(p)
+
 	// keep the output in view
 	log.scrollTop = log.scrollHeight
 }
@@ -202,9 +218,13 @@ function onMessage(e) {
 	knownBlockNames[message.Block] = message.Data
 	setNewBlockNames()
 
-	var block = document.getElementById(message.Block)
-	if (block != null) {
-		block.children[1].innerHTML = message.Data
+	if (message.Block == "_collections") {
+		document.getElementById("sendToCollection").innerHTML = message.Data
+	} else {
+		var block = document.getElementById(message.Block)
+		if (block != null) {
+			block.children[1].innerHTML = message.Data
+		}
 	}
 }
 
@@ -226,7 +246,6 @@ function setNewBlockNames() {
 
 			newBlockName.appendChild(option)
 		}
-
 	}
 }
 
@@ -294,7 +313,6 @@ function resizeBlocks() {
 		focused.style.top = "0px"
 	}
 	resizeContent(focused)
-
 
 	// blocks
 	var numberOfBlocks = blocks.children.length
@@ -367,7 +385,7 @@ function focusBlock(block) {
 
 function init() {
 	knownBlockNames = {}
-	knownBlockNames["_log"] = true
+	knownBlockNames["_log"] = ""
 
 	// fill in the globals for the frequently accessed objs
 	connected = document.getElementById("connected")
@@ -475,6 +493,21 @@ code {
 	<div class="blockContent">
 		<select id="newBlockName"></select>
 		<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
+
+		<div style="position: relative;">
+			<textarea id="toSend" style="position: relative; float:left; height: 36px;"></textarea>
+			<div style="position: relative; float: left;">
+				<select id="sendToCollection"></select>
+				<br/>
+				<input type="button" value="Insert" />
+			</div>
+		</div>
+
+		<span id="timestep_status">Running</span>
+		<input type="button" value="Immediate"/>
+		<input type="button" value="Deferred"/>
+		<input type="button" value="Run"/>
+		<input type="button" value="Stop"/>
 	</div>
 </div>
 <div id="connected" class="connected-red">&nbsp;</div>
