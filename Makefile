@@ -18,7 +18,7 @@ none:
 
 .PHONY: run
 run: install
-	seed -t "bloom dot json service go" -transformations "network" -execute -monitor=":8000" -sleep=1s kvs.seed
+	seed -t "bloom dot json service go" -transformations "network" -execute -monitor="127.0.0.1:8000" -sleep=2s kvs.seed
 
 .PHONY: install
 install:
