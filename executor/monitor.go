@@ -4,10 +4,10 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
+	"github.com/nathankerr/seed/service"
 	"html/template"
 	"io"
 	"net/http"
-	"service"
 	"strconv"
 )
 

@@ -3,7 +3,7 @@ package executor
 import (
 	"errors"
 	"fmt"
-	"service"
+	"github.com/nathankerr/seed/service"
 )
 
 type ruleHandler struct {

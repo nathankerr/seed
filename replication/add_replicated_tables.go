@@ -2,7 +2,7 @@ package replication
 
 import (
 	"fmt"
-	"service"
+	"github.com/nathankerr/seed/service"
 )
 
 func Add_replicated_tables(name string, orig *service.Service, services map[string]*service.Service) map[string]*service.Service {

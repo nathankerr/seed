@@ -10,7 +10,7 @@ TO TEST:
 
 import (
 	"encoding/json"
-	"service"
+	"github.com/nathankerr/seed/service"
 	"testing"
 )
 

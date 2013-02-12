@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/msgpack/msgpack-go"
+	"github.com/nathankerr/seed/service"
 	"net"
 	"reflect"
-	"service"
 )
 
 type bud struct {

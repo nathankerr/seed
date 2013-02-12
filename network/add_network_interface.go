@@ -2,11 +2,8 @@ package network
 
 import (
 	"fmt"
+	"github.com/nathankerr/seed/service"
 	"strings"
-)
-
-import (
-	"service"
 )
 
 func Add_network_interface(sname string, seed *service.Service, services map[string]*service.Service) map[string]*service.Service {

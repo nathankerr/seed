@@ -2,7 +2,7 @@ package executor
 
 import (
 	"fmt"
-	"service"
+	"github.com/nathankerr/seed/service"
 	"strings"
 	"time"
 )

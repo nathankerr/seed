@@ -2,21 +2,17 @@ package main
 
 // standard packages
 import (
-	"executor"
 	"flag"
 	"fmt"
+	"github.com/nathankerr/seed/executor"
+	net_transform "github.com/nathankerr/seed/network"
+	"github.com/nathankerr/seed/replication"
+	"github.com/nathankerr/seed/service"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-)
-
-// others
-import (
-	net_transform "network"
-	"replication"
-	"service"
 )
 
 // flow:
