@@ -6,8 +6,25 @@ import (
 
 func ToGo(seed *Seed, name string) ([]byte, error) {
 	str := fmt.Sprintf("package main\n")
-	str = fmt.Sprintf("%s\nimport (\n\t\"github.com/nathankerr/seed/executor\"\n\tservice \"github.com/nathankerr/seed\"\n)\n", str)
+	str = fmt.Sprintf(`%s
+import (
+	"github.com/nathankerr/seed/executor"
+	service "github.com/nathankerr/seed"
+	"time"
+	"flag"
+	"log"
+)`, str)
 	str = fmt.Sprintf("%s\nfunc main() {", str)
+
+	// command line options
+	str = fmt.Sprintf(`%s
+	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
+	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
+	var address = flag.String("address", "127.0.0.1:3000", "address the bud communicator uses")
+	var monitor = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
+
+	flag.Parse()
+`, str)
 
 	// open service
 	str = fmt.Sprintf("%s\n\tseed := &service.Seed{", str)
@@ -33,7 +50,26 @@ func ToGo(seed *Seed, name string) ([]byte, error) {
 	str = fmt.Sprintf("%s\n\t}", str)
 
 	// execute
-	str = fmt.Sprintf("%s\n\n\texecutor.Execute(seed)", str)
+	str = fmt.Sprintf(`%s
+	var err error
+	var sleepDuration time.Duration
+	if *sleep != "" {
+		sleepDuration, err = time.ParseDuration(*sleep)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	var timeoutDuration time.Duration
+	if *timeout != "" {
+		timeoutDuration, err = time.ParseDuration(*timeout)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitor)
+`, str)
 
 	// close main
 	str = fmt.Sprintf("%s\n}\n", str)
@@ -88,14 +124,14 @@ func (r *Rule) toGo(indent string) string {
 	str = fmt.Sprintf("%s%sOperation: %#v,\n", str, indent, r.Operation)
 
 	// Projection
-	str = fmt.Sprintf("%s%sProjection: []QualifiedColumn{\n", str, indent)
+	str = fmt.Sprintf("%s%sProjection: []service.QualifiedColumn{\n", str, indent)
 	for _, qc := range r.Projection {
 		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, qc.toGo(indent+"\t\t"))
 	}
 	str = fmt.Sprintf("%s%s},\n", str, indent)
 
 	// Predicate
-	str = fmt.Sprintf("%s%sPredicate: []Constraint{", str, indent)
+	str = fmt.Sprintf("%s%sPredicate: []service.Constraint{", str, indent)
 	for _, c := range r.Predicate {
 		str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, c.toGo(indent+"\t\t"))
 	}
@@ -116,7 +152,7 @@ func (r *Rule) toGo(indent string) string {
 }
 
 func (s *Source) toGo(indent string) string {
-	str := fmt.Sprintf("&service.Source{\n")
+	str := fmt.Sprintf("service.Source{\n")
 
 	// Name
 	str = fmt.Sprintf("%s%sName:   %#v,\n", str, indent, s.Name)
