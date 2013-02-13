@@ -10,7 +10,7 @@ func ToGo(seed *Seed, name string) ([]byte, error) {
 	str = fmt.Sprintf("%s\nfunc main() {", str)
 
 	// open service
-	str = fmt.Sprintf("%s\n\tseed := &service.Service{", str)
+	str = fmt.Sprintf("%s\n\tseed := &service.Seed{", str)
 
 	// source
 	str = fmt.Sprintf("%s\n\t\tSource: %v,", str, seed.Source.toGo("\t\t\t"))

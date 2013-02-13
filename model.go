@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func ToModel(seed *Service, name string) ([]byte, error) {
+func ToModel(seed *Seed, name string) ([]byte, error) {
 	info()
 	var model string
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Add_network_interface(sname string, seed *service.Service, services map[string]*service.Service) map[string]*service.Service {
+func Add_network_interface(sname string, seed *service.Seed, services map[string]*service.Seed) map[string]*service.Seed {
 	groups := getGroups(sname, seed)
 
 	for _, group := range groups {
@@ -34,7 +34,7 @@ type group struct {
 	collections map[string]service.CollectionType
 }
 
-func getGroups(sname string, seed *service.Service) map[string]*group {
+func getGroups(sname string, seed *service.Seed) map[string]*group {
 	groups := make(map[string]*group)
 	collectionToGroupMap := make(map[string]string)
 
@@ -113,15 +113,15 @@ func count(i int) string {
 }
 
 // adds a network interface by adding and handling explicit correlation data
-func add_network_interface_helper(buds map[string]*service.Service, group *group,
-	seed *service.Service, sname string) map[string]*service.Service {
+func add_network_interface_helper(buds map[string]*service.Seed, group *group,
+	seed *service.Seed, sname string) map[string]*service.Seed {
 	// info()
 
 	sname = strings.Title(sname) + "Server"
 
 	bud, ok := buds[sname]
 	if !ok {
-		bud = &service.Service{Collections: make(map[string]*service.Collection), Source: seed.Source}
+		bud = &service.Seed{Collections: make(map[string]*service.Collection), Source: seed.Source}
 	}
 
 	// name the output address columns

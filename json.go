@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-func ToJson(seed *Service, name string) ([]byte, error) {
+func ToJson(seed *Seed, name string) ([]byte, error) {
 	info()
 	return json.MarshalIndent(seed, "", "\t")
 }

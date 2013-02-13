@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-func ToBloom(seed *Service, name string) ([]byte, error) {
+func ToBloom(seed *Seed, name string) ([]byte, error) {
 	return []byte(seed.toRuby(name)), nil
 }
 
-func (s *Service) toRuby(name string) string {
+func (s *Seed) toRuby(name string) string {
 	info()
 
 	name = strings.Title(name)
@@ -40,7 +40,7 @@ func (s *Service) toRuby(name string) string {
 	return str
 }
 
-func (r *Rule) Ruby(service *Service) (string, map[string]*Collection) {
+func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 	var selecter string
 
 	additional_collections := make(map[string]*Collection)

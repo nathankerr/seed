@@ -3,7 +3,7 @@ package seed
 type parsefn func(p *parser) parsefn
 
 type parser struct {
-	s        *Service
+	s        *Seed
 	items    chan item
 	i        item // the last item
 	backedup bool // indicates i should be used instead of getting a new item
@@ -25,9 +25,9 @@ func (p *parser) backup() {
 	p.backedup = true
 }
 
-func Parse(name, input string) *Service {
+func Parse(name, input string) *Seed {
 	p := &parser{}
-	p.s = &Service{Collections: make(map[string]*Collection)}
+	p.s = &Seed{Collections: make(map[string]*Collection)}
 	p.s.Source = Source{Name: name, Line: 1, Column: 1}
 
 	l := newLexer(name, input)

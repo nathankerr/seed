@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func ToDot(seed *Service, name string) ([]byte, error) {
+func ToDot(seed *Seed, name string) ([]byte, error) {
 	info()
 
 	dot := fmt.Sprintf("digraph %s {", name)

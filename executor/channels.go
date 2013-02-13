@@ -11,7 +11,7 @@ type channels struct {
 	rules        []chan messageContainer
 }
 
-func makeChannels(s *service.Service) channels {
+func makeChannels(s *service.Seed) channels {
 	var channels channels
 
 	channels.control = make(chan messageContainer)

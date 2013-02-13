@@ -17,7 +17,7 @@ func (s Source) String() string {
 	return fmt.Sprint(s.Name, ":", s.Line)
 }
 
-func (s *Service) String() string {
+func (s *Seed) String() string {
 	str := "\nCollections:"
 	for cname, collection := range s.Collections {
 		str = fmt.Sprintf("%s\n\t%s", str, collection.String(cname))

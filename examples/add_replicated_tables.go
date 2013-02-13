@@ -5,13 +5,13 @@ import (
 	service "github.com/nathankerr/seed"
 )
 
-func Add_replicated_tables(name string, orig *service.Service, services map[string]*service.Service) map[string]*service.Service {
+func Add_replicated_tables(name string, orig *service.Seed, services map[string]*service.Seed) map[string]*service.Seed {
 	// info()
 
 	// find an existing service to modify or create a new one
 	seed, ok := services[name]
 	if !ok {
-		seed = &service.Service{Collections: make(map[string]*service.Collection), Source: orig.Source}
+		seed = &service.Seed{Collections: make(map[string]*service.Collection), Source: orig.Source}
 	}
 
 	// add helper tables, rules

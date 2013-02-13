@@ -43,7 +43,7 @@ func (ts *tupleSet) message() messageContainer {
 	return message
 }
 
-func collectionHandler(collectionName string, s *service.Service, channels channels) {
+func collectionHandler(collectionName string, s *service.Seed, channels channels) {
 	controlinfo(collectionName, "started")
 	input := channels.collections[collectionName]
 	c := s.Collections[collectionName]
@@ -105,7 +105,7 @@ func collectionHandler(collectionName string, s *service.Service, channels chann
 	}
 }
 
-func ruleChannels(deferred bool, collectionName string, s *service.Service, channels channels) []chan<- messageContainer {
+func ruleChannels(deferred bool, collectionName string, s *service.Seed, channels channels) []chan<- messageContainer {
 	ruleChannels := []chan<- messageContainer{}
 	for ruleNum, rule := range s.Rules {
 		if (deferred && rule.Operation == "<=") || (!deferred && rule.Operation != "<=") {

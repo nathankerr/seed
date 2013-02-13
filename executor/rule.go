@@ -8,11 +8,11 @@ import (
 
 type ruleHandler struct {
 	number   int
-	s        *service.Service
+	s        *service.Seed
 	channels channels
 }
 
-func handleRule(ruleNumber int, s *service.Service, channels channels) {
+func handleRule(ruleNumber int, s *service.Seed, channels channels) {
 	controlinfo(ruleNumber, "started")
 	handler := ruleHandler{
 		number:   ruleNumber,

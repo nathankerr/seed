@@ -1,6 +1,6 @@
 package seed
 
-type Service struct {
+type Seed struct {
 	Collections map[string]*Collection // string is same as collection.name
 	Rules       []*Rule
 	Source      Source

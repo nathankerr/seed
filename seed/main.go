@@ -45,7 +45,7 @@ func main() {
 	}
 
 	info("Load Seeds")
-	seeds := make(map[string]*service.Service)
+	seeds := make(map[string]*service.Seed)
 
 	for _, filename := range flag.Args() {
 		filename = filepath.Clean(filename)
@@ -61,7 +61,7 @@ func main() {
 			fatal(err)
 		}
 
-		var seed *service.Service
+		var seed *service.Seed
 		switch *from_format {
 		case "seed":
 			seed = service.Parse(filename, string(seedSource))
@@ -79,9 +79,9 @@ func main() {
 
 	info("Transform Seeds")
 	for _, transformation := range strings.Fields(*transformations) {
-		transformed := make(map[string]*service.Service)
+		transformed := make(map[string]*service.Seed)
 		for sname, seed := range seeds {
-			var transform func(name string, seed *service.Service, seeds map[string]*service.Service) map[string]*service.Service
+			var transform func(name string, seed *service.Seed, seeds map[string]*service.Seed) map[string]*service.Seed
 			switch transformation {
 			case "network":
 				transform = examples.Add_network_interface
@@ -106,7 +106,7 @@ func main() {
 	for name, seed := range seeds {
 		for _, format := range strings.Fields(*to_format) {
 			var extension string
-			var writer func(seed *service.Service, name string) ([]byte, error)
+			var writer func(seed *service.Seed, name string) ([]byte, error)
 			switch format {
 			case "bloom":
 				extension = "rb"

@@ -40,7 +40,7 @@ func (mc *messageContainer) String() string {
 // A concurrent service executor
 // Collection and rule handlers work as concurrent processes
 // managed by the control loop in this function.
-func Execute(s *service.Service, timeoutDuration time.Duration, sleepDuration time.Duration, address string, monitorAddress string) {
+func Execute(s *service.Seed, timeoutDuration time.Duration, sleepDuration time.Duration, address string, monitorAddress string) {
 	// launch the handlers
 	channels := makeChannels(s)
 	for collectionName, _ := range s.Collections {

@@ -12,7 +12,7 @@ import (
 type bud struct {
 	address  string
 	listener net.PacketConn
-	s        *service.Service
+	s        *service.Seed
 	channels channels
 }
 
@@ -193,7 +193,7 @@ func (bud *bud) send(message messageContainer) {
 	}
 }
 
-func budCommunicator(s *service.Service, channels channels, address string) {
+func budCommunicator(s *service.Seed, channels channels, address string) {
 	bud := bud{
 		address:  address,
 		s:        s,

@@ -66,7 +66,7 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 	return sockets
 }
 
-func sendStartupData(s *service.Service, socket socket) {
+func sendStartupData(s *service.Seed, socket socket) {
 	messages := []monitorMessage{}
 
 	// _service block content
@@ -95,7 +95,7 @@ func sendStartupData(s *service.Service, socket socket) {
 	}
 }
 
-func startMonitor(address string, channel chan monitorMessage, s *service.Service) {
+func startMonitor(address string, channel chan monitorMessage, s *service.Seed) {
 	monitorAddress = address
 	go monitorServer(address)
 
@@ -133,7 +133,7 @@ func socketHandler(ws *websocket.Conn) {
 	<-done
 }
 
-func renderHTML(message monitorMessage, s *service.Service) string {
+func renderHTML(message monitorMessage, s *service.Seed) string {
 	collection, ok := s.Collections[message.Block]
 	if !ok {
 		number, err := strconv.ParseInt(message.Block, 0, 0)

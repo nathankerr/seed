@@ -20,7 +20,7 @@ func error_messagef(format string, args ...interface{}) error {
 	return errors.New(message)
 }
 
-func (s *Service) Validate() error {
+func (s *Seed) Validate() error {
 	for _, collection := range s.Collections {
 		// Type should be known
 		switch collection.Type {
@@ -75,7 +75,7 @@ func (s *Service) Validate() error {
 	return nil
 }
 
-func (s *Service) validateQualifiedColumn(qc QualifiedColumn, rule *Rule) error {
+func (s *Seed) validateQualifiedColumn(qc QualifiedColumn, rule *Rule) error {
 	// collection should exist
 	collection, ok := s.Collections[qc.Collection]
 	if !ok {
