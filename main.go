@@ -4,9 +4,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/nathankerr/seed/examples"
 	"github.com/nathankerr/seed/executor"
-	net_transform "github.com/nathankerr/seed/network"
-	"github.com/nathankerr/seed/replication"
 	"github.com/nathankerr/seed/service"
 	"io/ioutil"
 	"os"
@@ -25,7 +24,7 @@ func main() {
 	var from_format = flag.String("f", "seed",
 		"format to load (seed)")
 	var to_format = flag.String("t", "go",
-		"formats to write separated by spaces (bloom, dot, go, json, service")
+		"formats to write separated by spaces (bloom, dot, go, json, service)")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
 	var execute = flag.Bool("execute", false, "execute the service")
@@ -85,9 +84,9 @@ func main() {
 			var transform func(name string, seed *service.Service, seeds map[string]*service.Service) map[string]*service.Service
 			switch transformation {
 			case "network":
-				transform = net_transform.Add_network_interface
+				transform = examples.Add_network_interface
 			case "replicate":
-				transform = replication.Add_replicated_tables
+				transform = examples.Add_replicated_tables
 			default:
 				fatal(transformation, "not supported.\n")
 			}
