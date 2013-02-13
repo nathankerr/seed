@@ -105,10 +105,6 @@ func (r *Rule) toGo(indent string) string {
 		str = fmt.Sprintf("%s},\n", str)
 	}
 
-	// Block
-	//TODO
-	str = fmt.Sprintf("%s%sBlock:     %#v,\n", str, indent, r.Block)
-
 	// Source
 	str = fmt.Sprintf("%s%sSource: %v,\n", str, indent, r.Source.toGo(indent+"\t"))
 

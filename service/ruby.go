@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 )
 
@@ -77,46 +76,6 @@ func (r *Rule) Ruby(service *Service) (string, map[string]*Collection) {
 			strings.Join(predicates, ", "),
 			strings.Join(names, ", "),
 			strings.Join(output, ", "))
-	}
-
-	// at this point, str contains the translation of the join and projection
-	// ([]: =>) specifier. If there is a block, this needs to be put into a
-	// scratch and then the scratch needs the block to be applied to it
-	if len(r.Block) > 0 {
-		scratch_name := r.Source.Name[:len(r.Source.Name)-
-			len(filepath.Ext(r.Source.Name))]
-		scratch_name = fmt.Sprintf("%s%d_scratch",
-			scratch_name, r.Source.Line)
-		scratch_collection := &Collection{
-			Type: CollectionScratch,
-			// Key: service.Collections[r.Supplies].Key,
-			// Data: service.Collections[r.Supplies].Data,
-			Source: r.Source,
-		}
-		// for _, column := range service.Collections[r.Supplies].Key {
-		// 	scratch_collection.Key = append(scratch_collection.Key,
-		// 		strings.Replace(column, "@", "", -1))
-		// }
-		for _, column := range r.Projection {
-			scratch_collection.Key = append(scratch_collection.Key,
-				column.Column)
-		}
-		additional_collections[scratch_name] = scratch_collection
-		scratch := fmt.Sprintf("%s <= %s #%s",
-			scratch_name, selecter, r.Source)
-		indented_block := strings.Replace(r.Block, "\n", "\n    ", -1)
-		indented_block = strings.Replace(indented_block, "\t", "  ", -1)
-		if r.Block[0] == 'm' {
-			// map block
-			return fmt.Sprintf("%s\n    %s %s %s do %s",
-					scratch, r.Supplies, r.Operation, scratch_name, indented_block[4:]),
-				additional_collections
-		} else {
-			// reduce block
-			return fmt.Sprintf("%s\n    %s %s %s.reduce({}) do %s", scratch,
-					r.Supplies, r.Operation, scratch_name, indented_block[7:]),
-				additional_collections
-		}
 	}
 
 	return fmt.Sprintf("%s %s %s",

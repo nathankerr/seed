@@ -28,7 +28,6 @@ type Rule struct {
 	Operation  string
 	Projection []QualifiedColumn
 	Predicate  []Constraint
-	Block      string
 	Source     Source
 }
 
