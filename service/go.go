@@ -6,7 +6,7 @@ import (
 
 func ToGo(seed *Service, name string) ([]byte, error) {
 	str := fmt.Sprintf("package main\n")
-	str = fmt.Sprintf("%s\nimport (\n\t\"executor\"\n\t\"service\"\n)\n", str)
+	str = fmt.Sprintf("%s\nimport (\n\t\"github.com/nathankerr/seed/executor\"\n\t\"github.com/nathankerr/seed/service\"\n)\n", str)
 	str = fmt.Sprintf("%s\nfunc main() {", str)
 
 	// open service
