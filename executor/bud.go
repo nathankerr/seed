@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/msgpack/msgpack-go"
-	"github.com/nathankerr/seed/service"
+	service "github.com/nathankerr/seed"
 	"net"
 	"reflect"
 )

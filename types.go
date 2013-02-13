@@ -1,4 +1,4 @@
-package service
+package seed
 
 type Service struct {
 	Collections map[string]*Collection // string is same as collection.name

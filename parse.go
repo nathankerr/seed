@@ -1,4 +1,4 @@
-package service
+package seed
 
 type parsefn func(p *parser) parsefn
 

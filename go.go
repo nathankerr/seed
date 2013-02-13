@@ -1,12 +1,12 @@
-package service
+package seed
 
 import (
 	"fmt"
 )
 
-func ToGo(seed *Service, name string) ([]byte, error) {
+func ToGo(seed *Seed, name string) ([]byte, error) {
 	str := fmt.Sprintf("package main\n")
-	str = fmt.Sprintf("%s\nimport (\n\t\"github.com/nathankerr/seed/executor\"\n\t\"github.com/nathankerr/seed/service\"\n)\n", str)
+	str = fmt.Sprintf("%s\nimport (\n\t\"github.com/nathankerr/seed/executor\"\n\tservice \"github.com/nathankerr/seed\"\n)\n", str)
 	str = fmt.Sprintf("%s\nfunc main() {", str)
 
 	// open service

@@ -4,9 +4,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	service "github.com/nathankerr/seed"
 	"github.com/nathankerr/seed/examples"
 	"github.com/nathankerr/seed/executor"
-	"github.com/nathankerr/seed/service"
 	"io/ioutil"
 	"os"
 	"path/filepath"

@@ -1,4 +1,4 @@
-package service
+package seed
 
 import (
 	"encoding/json"

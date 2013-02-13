@@ -1,4 +1,4 @@
-package service
+package seed
 
 func (r *Rule) Collections() []string {
 	collectionsmap := make(map[string]bool) // map only used for uniqueness

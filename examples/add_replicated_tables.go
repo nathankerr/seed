@@ -2,7 +2,7 @@ package examples
 
 import (
 	"fmt"
-	"github.com/nathankerr/seed/service"
+	service "github.com/nathankerr/seed"
 )
 
 func Add_replicated_tables(name string, orig *service.Service, services map[string]*service.Service) map[string]*service.Service {

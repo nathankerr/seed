@@ -1,7 +1,7 @@
 // lexer for seed language
 // based on http://golang.org/src/pkg/text/template/parse/lex.go
 
-package service
+package seed
 
 import (
 	"fmt"

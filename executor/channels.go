@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"github.com/nathankerr/seed/service"
+	service "github.com/nathankerr/seed"
 )
 
 type channels struct {

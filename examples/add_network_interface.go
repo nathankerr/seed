@@ -2,7 +2,7 @@ package examples
 
 import (
 	"fmt"
-	"github.com/nathankerr/seed/service"
+	service "github.com/nathankerr/seed"
 	"strings"
 )
 

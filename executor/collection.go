@@ -2,7 +2,7 @@ package executor
 
 import (
 	"encoding/json"
-	"github.com/nathankerr/seed/service"
+	service "github.com/nathankerr/seed"
 )
 
 type tupleSet struct {

@@ -4,7 +4,7 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
-	"github.com/nathankerr/seed/service"
+	service "github.com/nathankerr/seed"
 	"html/template"
 	"io"
 	"net/http"
