@@ -7,6 +7,7 @@ type parser struct {
 	items    chan item
 	i        item // the last item
 	backedup bool // indicates i should be used instead of getting a new item
+	subset bool // limit to the subset
 }
 
 func (p *parser) next() item {
@@ -25,12 +26,12 @@ func (p *parser) backup() {
 	p.backedup = true
 }
 
-func Parse(name, input string) *Seed {
-	p := &parser{}
+func Parse(name, input string, subset bool) *Seed {
+	p := &parser{subset: subset}
 	p.s = &Seed{Collections: make(map[string]*Collection)}
 	p.s.Source = Source{Name: name, Line: 1, Column: 1}
 
-	l := newLexer(name, input)
+	l := newLexer(name, input, subset)
 	go l.run()
 
 	p.items = l.items
@@ -53,6 +54,18 @@ func parseSeed(p *parser) parsefn {
 	case itemOutput:
 		return parseCollection
 	case itemTable:
+		return parseCollection
+	case itemChannel:
+		if p.subset {
+			fatal("channels only available when not in the subset")
+			return nil
+		}
+		return parseCollection
+	case itemScratch:
+		if p.subset {
+			fatal("scratch collections only available when not in the subset")
+			return nil
+		}
 		return parseCollection
 	case itemIdentifier:
 		return parseRule
@@ -77,6 +90,10 @@ func parseCollection(p *parser) parsefn {
 		collectionType = CollectionOutput
 	case itemTable:
 		collectionType = CollectionTable
+	case itemChannel:
+		collectionType = CollectionChannel
+	case itemScratch:
+		collectionType = CollectionScratch
 	default:
 		fatal("expected input, output, table, or scratch; got ", p.i)
 	}

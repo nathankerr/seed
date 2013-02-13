@@ -40,7 +40,7 @@ func (s *Seed) Validate() error {
 
 		// operation must be known
 		switch rule.Operation {
-		case "<+", "<-", "<+-", "<~":
+		case "<+", "<-", "<+-", "<~", "<=":
 			// known operations
 		default:
 			return rule_error_messagef(rule, "Unknown operation: %s", rule.Operation)

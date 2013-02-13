@@ -38,7 +38,7 @@ const (
 	itemBeginArray         // [
 	itemEndArray           // ]
 	itemArrayDelimter      // ,
-	itemOperation          // <+, <-, <+-
+	itemOperation          // <+, <-, <+-, (<=, <~ when !subset)
 	itemKeyRelation        // =>
 	itemScopeDelimiter     // .
 	itemPredicateDelimiter // :
@@ -47,12 +47,17 @@ const (
 	itemInput  // input keyword
 	itemOutput // output keyword
 	itemTable  // table keyword
+	// following keywords not available in subset
+	itemChannel // channel keyword
+	itemScratch // scratch keyword
 )
 
 var key = map[string]itemType{
 	"input":  itemInput,
 	"output": itemOutput,
 	"table":  itemTable,
+	"channel": itemChannel,
+	"scratch": itemScratch,
 }
 
 func (l *lexer) atTerminator() bool {
@@ -86,6 +91,8 @@ var itemNames = map[itemType]string{
 	itemInput:  "itemInput",
 	itemOutput: "itemOutput",
 	itemTable:  "itemTable",
+	itemChannel: "itemChannel",
+	itemScratch: "itemScratch",
 }
 
 func (typ itemType) String() string {
@@ -110,14 +117,16 @@ type lexer struct {
 	start int       // start position of this item.
 	width int       // width of last rune read from input.
 	items chan item // channel of scanned items.
+	subset bool		// limit to the subset?
 }
 
 // lex creates a new scanner for the input string.
-func newLexer(name, input string) *lexer {
+func newLexer(name, input string, subset bool) *lexer {
 	l := &lexer{
 		name:  name,
 		input: input,
 		items: make(chan item),
+		subset: subset,
 	}
 	return l
 }
@@ -252,8 +261,8 @@ func lexToken(l *lexer) stateFn {
 		l.emit(itemScopeDelimiter)
 	case r == ':':
 		l.emit(itemPredicateDelimiter)
-	case r == '|':
-		return lexRuby
+	case r == '@' && !l.subset:
+		return lexIdentifier
 	default:
 		fatalf("%s unrecognized character: %#U",
 			l.source(), r)
@@ -295,7 +304,15 @@ Loop:
 
 			typ, ok := key[word]
 			if ok {
-				l.emit(typ)
+				if l.subset {
+					if typ != itemChannel && typ != itemScratch {
+						l.emit(typ)
+					} else {
+						l.emit(itemIdentifier)
+					}
+				} else {
+					l.emit(typ)
+				}
 			} else {
 				l.emit(itemIdentifier)
 			}
@@ -318,6 +335,10 @@ func lexOperation(l *lexer) stateFn {
 		}
 	case r == '-':
 		l.emit(itemOperation) // <-
+	case r == '=' && !l.subset:
+		l.emit(itemOperation) // <= (only available when not in subset)
+	case r == '~' && !l.subset:
+		l.emit(itemOperation) // <~ (only available when not in subset)
 	default:
 		fatalf("%s unexpected operation: '%s'",
 			l.source(), l.input[l.start:l.pos])

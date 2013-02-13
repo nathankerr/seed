@@ -23,6 +23,7 @@ func main() {
 		"directory name to create and output the bud source")
 	var from_format = flag.String("f", "seed",
 		"format to load (seed)")
+	var full = flag.Bool("full", false, "when true, seed input is not limited to the subset")
 	var to_format = flag.String("t", "go",
 		"formats to write separated by spaces (bloom, dot, go, json, service)")
 	var transformations = flag.String("transformations", "network replicate",
@@ -64,7 +65,7 @@ func main() {
 		var seed *service.Seed
 		switch *from_format {
 		case "seed":
-			seed = service.Parse(filename, string(seedSource))
+			seed = service.Parse(filename, string(seedSource), !*full)
 		default:
 			fatal("Loading from", *from_format, "format not supported.\n")
 		}

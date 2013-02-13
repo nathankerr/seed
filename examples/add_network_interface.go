@@ -87,6 +87,8 @@ func (g *group) typ() string {
 			outputs++
 		case service.CollectionTable:
 			tables++
+		case service.CollectionScratch, service.CollectionChannel:
+			// no-op
 		default:
 			// shouldn't get here
 			panic(ctyp)
@@ -153,7 +155,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 				key = append(key, ckey)
 			}
 			collection.Key = key
-		case service.CollectionTable:
+		case service.CollectionTable, service.CollectionScratch, service.CollectionChannel:
 			// no-op
 		default:
 			// should not get here
@@ -204,7 +206,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 				projection = append(projection, o)
 			}
 			rule.Projection = projection
-		case service.CollectionTable:
+		case service.CollectionTable, service.CollectionScratch, service.CollectionChannel:
 			// no-op
 		default:
 			// should not get here
@@ -219,7 +221,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 		switch collection.Type {
 		case service.CollectionInput, service.CollectionOutput:
 			collection.Type = service.CollectionChannel
-		case service.CollectionTable:
+		case service.CollectionTable, service.CollectionScratch, service.CollectionChannel:
 			// no-op
 		default:
 			// shouldn't get here

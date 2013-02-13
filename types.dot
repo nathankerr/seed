@@ -4,9 +4,8 @@ digraph types {
 	page="324,12"
 	node [fontname="Alegreya" fontsize="9"]
 	node [shape="record"]
-	//rankdir="LR"
 
-	Service [label="Service | {<Collections>Collections\nmap[string]*Collection | <Rules>Rules\n[]*Rule} "]
+	Service [label="Seed | {<Collections>Collections\nmap[string]*Collection | <Rules>Rules\n[]*Rule} "]
 	Service:Collections -> Collection
 	Service:Rules -> Rule
 
