@@ -4,6 +4,11 @@ import (
 	"fmt"
 )
 
+func FromSeed(name string, input []byte, subset bool) (*Seed, error) {
+	info()
+	return Parse(name, string(input), subset), nil
+}
+
 func ToSeed(seed *Seed, name string) ([]byte, error) {
 	info()
 	var model string

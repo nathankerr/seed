@@ -4,9 +4,15 @@ import (
 	"fmt"
 	service "github.com/nathankerr/seed"
 	"strings"
+	"errors"
 )
 
-func Add_network_interface(sname string, seed *service.Seed, services map[string]*service.Seed) map[string]*service.Seed {
+func Add_network_interface(sname string, seed *service.Seed, services map[string]*service.Seed) (map[string]*service.Seed, error) {
+	err := seed.InSubset()
+	if err != nil {
+		return nil, errors.New("Adding a network interface requires that the specified seed be in the subset. " + err.Error())
+	}
+
 	groups := getGroups(sname, seed)
 
 	for _, group := range groups {
@@ -26,7 +32,7 @@ func Add_network_interface(sname string, seed *service.Seed, services map[string
 		}
 	}
 
-	return services
+	return services, nil
 }
 
 type group struct {
@@ -87,8 +93,6 @@ func (g *group) typ() string {
 			outputs++
 		case service.CollectionTable:
 			tables++
-		case service.CollectionScratch, service.CollectionChannel:
-			// no-op
 		default:
 			// shouldn't get here
 			panic(ctyp)
@@ -155,7 +159,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 				key = append(key, ckey)
 			}
 			collection.Key = key
-		case service.CollectionTable, service.CollectionScratch, service.CollectionChannel:
+		case service.CollectionTable:
 			// no-op
 		default:
 			// should not get here
@@ -206,7 +210,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 				projection = append(projection, o)
 			}
 			rule.Projection = projection
-		case service.CollectionTable, service.CollectionScratch, service.CollectionChannel:
+		case service.CollectionTable:
 			// no-op
 		default:
 			// should not get here
@@ -221,7 +225,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 		switch collection.Type {
 		case service.CollectionInput, service.CollectionOutput:
 			collection.Type = service.CollectionChannel
-		case service.CollectionTable, service.CollectionScratch, service.CollectionChannel:
+		case service.CollectionTable:
 			// no-op
 		default:
 			// shouldn't get here

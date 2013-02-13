@@ -22,7 +22,7 @@ func main() {
 	var outputdir = *flag.String("o", "build",
 		"directory name to create and output the bud source")
 	var from_format = flag.String("f", "seed",
-		"format to load (seed)")
+		"format to load (seed, json)")
 	var full = flag.Bool("full", false, "when true, seed input is not limited to the subset")
 	var to_format = flag.String("t", "go",
 		"formats to write separated by spaces (bloom, dot, go, json, seed)")
@@ -65,9 +65,14 @@ func main() {
 		var seed *service.Seed
 		switch *from_format {
 		case "seed":
-			seed = service.Parse(filename, string(seedSource), !*full)
+			seed, err = service.FromSeed(filename, seedSource, !*full)
+		case "json":
+			seed, err = service.FromJson(filename, seedSource)
 		default:
 			fatal("Loading from", *from_format, "format not supported.\n")
+		}
+		if err != nil {
+			fatal(err)
 		}
 
 		err = seed.Validate()
@@ -81,8 +86,9 @@ func main() {
 	info("Transform Seeds")
 	for _, transformation := range strings.Fields(*transformations) {
 		transformed := make(map[string]*service.Seed)
+		var err error
 		for sname, seed := range seeds {
-			var transform func(name string, seed *service.Seed, seeds map[string]*service.Seed) map[string]*service.Seed
+			var transform func(name string, seed *service.Seed, seeds map[string]*service.Seed) (map[string]*service.Seed, error)
 			switch transformation {
 			case "network":
 				transform = examples.Add_network_interface
@@ -92,7 +98,10 @@ func main() {
 				fatal(transformation, "not supported.\n")
 			}
 
-			transformed = transform(sname, seed, transformed)
+			transformed, err = transform(sname, seed, transformed)
+			if err != nil {
+				fatal(transformation, "error:", err)
+			}
 		}
 		seeds = transformed
 	}

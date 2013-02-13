@@ -53,9 +53,9 @@ const (
 )
 
 var key = map[string]itemType{
-	"input":  itemInput,
-	"output": itemOutput,
-	"table":  itemTable,
+	"input":   itemInput,
+	"output":  itemOutput,
+	"table":   itemTable,
 	"channel": itemChannel,
 	"scratch": itemScratch,
 }
@@ -88,9 +88,9 @@ var itemNames = map[itemType]string{
 	itemPredicateDelimiter: "itemPredicateDelimiter",
 	itemPipe:               "itemPipe",
 	// keywords
-	itemInput:  "itemInput",
-	itemOutput: "itemOutput",
-	itemTable:  "itemTable",
+	itemInput:   "itemInput",
+	itemOutput:  "itemOutput",
+	itemTable:   "itemTable",
 	itemChannel: "itemChannel",
 	itemScratch: "itemScratch",
 }
@@ -110,22 +110,22 @@ type stateFn func(*lexer) stateFn
 
 // lexer holds the state of the scanner.
 type lexer struct {
-	name  string    // the name of the input; used only for error reports.
-	input string    // the string being scanned.
-	state stateFn   // the next lexing function to enter.
-	pos   int       // current position in the input.
-	start int       // start position of this item.
-	width int       // width of last rune read from input.
-	items chan item // channel of scanned items.
-	subset bool		// limit to the subset?
+	name   string    // the name of the input; used only for error reports.
+	input  string    // the string being scanned.
+	state  stateFn   // the next lexing function to enter.
+	pos    int       // current position in the input.
+	start  int       // start position of this item.
+	width  int       // width of last rune read from input.
+	items  chan item // channel of scanned items.
+	subset bool      // limit to the subset?
 }
 
 // lex creates a new scanner for the input string.
 func newLexer(name, input string, subset bool) *lexer {
 	l := &lexer{
-		name:  name,
-		input: input,
-		items: make(chan item),
+		name:   name,
+		input:  input,
+		items:  make(chan item),
 		subset: subset,
 	}
 	return l

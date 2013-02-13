@@ -7,7 +7,7 @@ type parser struct {
 	items    chan item
 	i        item // the last item
 	backedup bool // indicates i should be used instead of getting a new item
-	subset bool // limit to the subset
+	subset   bool // limit to the subset
 }
 
 func (p *parser) next() item {

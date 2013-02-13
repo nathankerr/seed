@@ -68,8 +68,6 @@ func (s *Seed) Validate() error {
 				return err
 			}
 		}
-
-		//TODO: validate block
 	}
 
 	return nil
@@ -95,4 +93,32 @@ func (s *Seed) validateQualifiedColumn(qc QualifiedColumn, rule *Rule) error {
 	}
 
 	return rule_error_messagef(rule, "%s does not refer to an existing column", qc)
+}
+
+func (s *Seed) InSubset() error {
+	// check collection types
+	for _, collection := range s.Collections {
+		switch collection.Type {
+		case CollectionInput, CollectionOutput, CollectionTable:
+			// in subset
+		case CollectionScratch, CollectionChannel:
+			return collection_error_messagef(collection, "Collection type %s not allowed in subset", collection.Type.String())
+		default:
+			return collection_error_messagef(collection, "Unknown collection type %d", collection.Type)
+		}
+	}
+
+	// check operations
+	for _, rule := range s.Rules {
+		switch rule.Operation {
+		case "<+", "<-", "<+-":
+			// in subset
+		case "<~", "<=":
+			return rule_error_messagef(rule, "%s operation not allowed in subset", rule.Operation)
+		default:
+			return rule_error_messagef(rule, "Unknown operation: %s", rule.Operation)
+		}
+	}
+
+	return nil
 }

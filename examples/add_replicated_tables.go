@@ -5,7 +5,7 @@ import (
 	service "github.com/nathankerr/seed"
 )
 
-func Add_replicated_tables(name string, orig *service.Seed, services map[string]*service.Seed) map[string]*service.Seed {
+func Add_replicated_tables(name string, orig *service.Seed, services map[string]*service.Seed) (map[string]*service.Seed, error) {
 	// info()
 
 	// find an existing service to modify or create a new one
@@ -168,5 +168,5 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 	}
 
 	services[name] = seed
-	return services
+	return services, nil
 }
