@@ -47,18 +47,12 @@ const (
 	itemInput  // input keyword
 	itemOutput // output keyword
 	itemTable  // table keyword
-	itemMap    // start of do block
-	itemReduce // start of reduce block
-	itemEnd    // end of do or reduce block
 )
 
 var key = map[string]itemType{
 	"input":  itemInput,
 	"output": itemOutput,
 	"table":  itemTable,
-	"map":    itemMap,
-	"reduce": itemReduce,
-	"end":    itemEnd,
 }
 
 func (l *lexer) atTerminator() bool {
@@ -92,9 +86,6 @@ var itemNames = map[itemType]string{
 	itemInput:  "itemInput",
 	itemOutput: "itemOutput",
 	itemTable:  "itemTable",
-	itemMap:    "itemMap",
-	itemReduce: "itemReduce",
-	itemEnd:    "itemEnd",
 }
 
 func (typ itemType) String() string {

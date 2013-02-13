@@ -1,9 +1,5 @@
 package service
 
-import (
-	"fmt"
-)
-
 type parsefn func(p *parser) parsefn
 
 type parser struct {
@@ -209,54 +205,6 @@ func parseRule(p *parser) parsefn {
 				p.backup()
 				break
 			}
-		}
-	} else {
-		p.backup()
-	}
-
-	// do or reduce blocks (optional)
-	p.next()
-	if p.i.typ == itemMap || p.i.typ == itemReduce {
-		reduce := false
-		if p.i.typ == itemReduce {
-			reduce = true
-		}
-
-		r.Block = p.i.val
-
-		if p.next().typ != itemPipe {
-			fatal("expected '|', got", p.i)
-		}
-
-		if p.next().typ != itemIdentifier {
-			fatal("expected identifier, got", p.i)
-		}
-		r.Block = fmt.Sprintf("%s |%s", r.Block, p.i.val)
-
-		// reduce has two arguments
-		if reduce {
-			if p.next().typ != itemArrayDelimter {
-				fatal("expected ',', got", p.i)
-			}
-
-			if p.next().typ != itemIdentifier {
-				fatal("expected identifier, got", p.i)
-			}
-
-			r.Block = fmt.Sprintf("%s, %s", r.Block, p.i.val)
-		}
-
-		if p.next().typ != itemPipe {
-			fatal("expected '|', got", p.i)
-		}
-
-		if p.next().typ != itemRuby {
-			fatal("expected ruby, got", p.i)
-		}
-		r.Block = fmt.Sprintf("%s|\n\t%s\nend", r.Block, p.i.val)
-
-		if p.next().typ != itemEnd {
-			fatal("expected 'end', got", p.i)
 		}
 	} else {
 		p.backup()
