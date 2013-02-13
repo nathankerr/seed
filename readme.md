@@ -1,30 +1,9 @@
-Originally a subset of bud with a little sugar. Now diverging to ease analysis.
+Seed is a declarative distributed systems language.
 
-# Seed language
+Its main goals are to be analyzable and transformable such that a service can be specified in a subset of the language and then transformations can be applied to implement various things such as dealing with network interfaces and data replication.
 
-~~~
-input <id> <schema>
-output <id> <schema>
-table <id> <schema>
+# Installation:
 
-<id> <+ <expr>
-<id> <- <expr>
-<id> <+- <expr>
-~~~
+`go install github.com/nathankerr/seed/seed`
 
-# EBNF
 
-~~~
-start := collection | rule
-collection := collection_type id schema
-collection_type := 'input' | 'output' | 'table'
-id := [:letter:] ([:letter:|] | [:number:] | '_')*
-schema := array ('=>' array)?
-array := '[' id (',' id)* ']'
-rule := id operation expr
-operation := '<+' | '<-' | '<+-'
-expr := '[' qualifiedColumn (',' qualifiedColumn)* ']'
-	(':' predicate (',' predicate)* )
-predicate := qualifiedColumn '=>' qualifiedColumn
-qualifiedColumn := id '.' id
-~~~
