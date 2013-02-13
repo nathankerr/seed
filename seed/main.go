@@ -25,7 +25,7 @@ func main() {
 		"format to load (seed)")
 	var full = flag.Bool("full", false, "when true, seed input is not limited to the subset")
 	var to_format = flag.String("t", "go",
-		"formats to write separated by spaces (bloom, dot, go, json, service)")
+		"formats to write separated by spaces (bloom, dot, go, json, seed)")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
 	var execute = flag.Bool("execute", false, "execute the service")
@@ -121,9 +121,9 @@ func main() {
 			case "json":
 				extension = "json"
 				writer = service.ToJson
-			case "service":
-				extension = "service"
-				writer = service.ToModel
+			case "seed":
+				extension = "seed"
+				writer = service.ToSeed
 			default:
 				fatal("Writing to", format, "format not supported.\n")
 			}
