@@ -16,16 +16,15 @@ table <id> <schema>
 
 ~~~
 start := collection | rule
-collection := keyword id schema
-keyword := 'input' | 'output' | 'table'
+collection := collection_type id schema
+collection_type := 'input' | 'output' | 'table'
 id := [:letter:] ([:letter:|] | [:number:] | '_')*
 schema := array ('=>' array)?
 array := '[' id (',' id)* ']'
 rule := id operation expr
 operation := '<+' | '<-' | '<+-'
 expr := '[' qualifiedColumn (',' qualifiedColumn)* ']'
-	(':' predicate (',' predicate)* ) (( 'do' '|' id '|' ruby 'end') | ('reduce' '|' id ',' id '|' ruby 'end')
+	(':' predicate (',' predicate)* )
 predicate := qualifiedColumn '=>' qualifiedColumn
 qualifiedColumn := id '.' id
-ruby := DATA INCLUDING NESTED do end BLOCKS
 ~~~
