@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	service "github.com/nathankerr/seed"
+	"reflect"
 )
 
 type ruleHandler struct {
@@ -166,9 +167,16 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 
 		// generate the result row and add to the set of results
 		result := tuple{}
-		for _, qc := range rule.Projection {
-			columnIndex := indexes[qc.Collection][qc.Column]
-			result = append(result, tuples[qc.Collection][columnIndex])
+		for _, expression := range rule.Projection {
+			switch value := expression.Value.(type) {
+			case service.QualifiedColumn:
+				columnIndex := indexes[value.Collection][value.Column]
+				result = append(result, tuples[value.Collection][columnIndex])
+			case service.FunctionCall:
+				panic("TODO: run function call")
+			default:
+				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+			}
 		}
 		results = append(results, result)
 	}

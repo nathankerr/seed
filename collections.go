@@ -1,5 +1,10 @@
 package seed
 
+import (
+	"fmt"
+	"reflect"
+)
+
 func (r *Rule) Collections() []string {
 	collectionsmap := make(map[string]bool) // map only used for uniqueness
 
@@ -23,8 +28,17 @@ func (r *Rule) Requires() []string {
 	requiresmap := make(map[string]bool) // map only used for uniqueness
 
 	// projection
-	for _, qc := range r.Projection {
-		requiresmap[qc.Collection] = true
+	for _, expression := range r.Projection {
+		switch value := expression.Value.(type) {
+		case QualifiedColumn:
+			requiresmap[value.Collection] = true
+		case FunctionCall:
+			for _, qc := range value.Arguments {
+				requiresmap[qc.Collection] = true
+			}
+		default:
+			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+		}
 	}
 
 	// predicate

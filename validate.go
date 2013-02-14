@@ -3,6 +3,7 @@ package seed
 import (
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 func collection_error_messagef(collection *Collection, format string, args ...interface{}) error {
@@ -47,10 +48,22 @@ func (s *Seed) Validate() error {
 		}
 
 		// the projection should be valid
-		for _, qc := range rule.Projection {
-			err := s.validateQualifiedColumn(qc, rule)
-			if err != nil {
-				return err
+		for _, expression := range rule.Projection {
+			switch value := expression.Value.(type) {
+			case QualifiedColumn:
+				err := s.validateQualifiedColumn(value, rule)
+				if err != nil {
+					return err
+				}
+			case FunctionCall:
+				for _, qc := range value.Arguments {
+					err := s.validateQualifiedColumn(qc, rule)
+					if err != nil {
+						return err
+					}
+				}
+			default:
+				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 			}
 		}
 

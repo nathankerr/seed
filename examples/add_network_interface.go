@@ -200,11 +200,11 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 			// convert to async insert as required by channels
 			rule.Operation = "<~"
 			// add correlation data to projection
-			projection := []service.QualifiedColumn{}
+			projection := []service.Expression{}
 			if len(inputs) > 0 {
-				projection = append(projection, service.QualifiedColumn{
+				projection = append(projection, service.Expression{Value: service.QualifiedColumn{
 					Collection: inputs[0],
-					Column:     rule.Supplies + "_addr"})
+					Column:     rule.Supplies + "_addr"}})
 			}
 			for _, o := range rule.Projection {
 				projection = append(projection, o)

@@ -2,6 +2,7 @@ package seed
 
 import (
 	"fmt"
+	"reflect"
 )
 
 func ToGo(seed *Seed, name string) ([]byte, error) {
@@ -125,8 +126,17 @@ func (r *Rule) toGo(indent string) string {
 
 	// Projection
 	str = fmt.Sprintf("%s%sProjection: []service.QualifiedColumn{\n", str, indent)
-	for _, qc := range r.Projection {
-		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, qc.toGo(indent+"\t\t"))
+	for _, expression := range r.Projection {
+		switch value := expression.Value.(type) {
+		case QualifiedColumn:
+			str = fmt.Sprintf("%s%s\t%v,\n", str, indent, value.toGo(indent+"\t\t"))
+		case FunctionCall:
+			for _, qc := range value.Arguments {
+				str = fmt.Sprintf("%s%s\t%v,\n", str, indent, qc.toGo(indent+"\t\t"))
+			}
+		default:
+			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+		}
 	}
 	str = fmt.Sprintf("%s%s},\n", str, indent)
 

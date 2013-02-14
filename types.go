@@ -26,10 +26,31 @@ const (
 type Rule struct {
 	Supplies   string
 	Operation  string
-	Projection []QualifiedColumn
+	Projection []Expression
 	Predicate  []Constraint
 	Source     Source
 }
+
+// Use something like:
+// switch value := expression.Value.(type) {
+// case QualifiedColumn:
+// case FunctionCall:
+// default:
+// 	panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+// }
+type Expression struct {
+	Value interface{} // QualifiedColumn, FunctionCall
+}
+
+type FunctionCall struct {
+	Name      string      // the function name as a string, instead of as a function
+	Function  interface{} // MapFn, ReduceFn
+	Arguments []QualifiedColumn
+}
+
+type Tuple []interface{}
+type MapFn func(Tuple) Tuple
+type ReduceFn func([]Tuple) Tuple
 
 type QualifiedColumn struct {
 	Collection string

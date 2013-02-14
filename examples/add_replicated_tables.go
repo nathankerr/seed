@@ -71,17 +71,17 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			}
 			for _, column := range table.Key {
 				scratch_to_table.Projection = append(scratch_to_table.Projection,
-					service.QualifiedColumn{
+					service.Expression{Value: service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					})
+					}})
 			}
 			for _, column := range table.Data {
 				scratch_to_table.Projection = append(scratch_to_table.Projection,
-					service.QualifiedColumn{
+					service.Expression{service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					})
+					}})
 			}
 			seed.Rules = append(seed.Rules, scratch_to_table)
 
@@ -89,25 +89,25 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			scratch_to_channel := &service.Rule{
 				Supplies:  channel_name,
 				Operation: "<~",
-				Projection: []service.QualifiedColumn{service.QualifiedColumn{
+				Projection: []service.Expression{service.Expression{Value: service.QualifiedColumn{
 					Collection: replicants_name,
 					Column:     "address",
-				}},
+				}}},
 				Source: table.Source,
 			}
 			for _, column := range table.Key {
 				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
-					service.QualifiedColumn{
+					service.Expression{Value: service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					})
+					}})
 			}
 			for _, column := range table.Data {
 				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
-					service.QualifiedColumn{
+					service.Expression{Value: service.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					})
+					}})
 			}
 			seed.Rules = append(seed.Rules, scratch_to_channel)
 
@@ -129,17 +129,17 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			}
 			for _, column := range table.Key {
 				channel_to_table.Projection = append(channel_to_table.Projection,
-					service.QualifiedColumn{
+					service.Expression{Value: service.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
-					})
+					}})
 			}
 			for _, column := range table.Data {
 				channel_to_table.Projection = append(channel_to_table.Projection,
-					service.QualifiedColumn{
+					service.Expression{Value: service.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
-					})
+					}})
 			}
 			seed.Rules = append(seed.Rules, channel_to_table)
 		}

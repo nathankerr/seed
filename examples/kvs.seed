@@ -8,6 +8,8 @@ kvstate <+- [kvput.key, kvput.value]
 input kvdel [key]
 kvstate <- [kvstate.key, kvstate.value]: kvdel.key => kvstate.key
 
+# select kvstate.key, kvstate.value from kvdel, kvsstate where kvdel.key = kvstate.key
+
 # get
 input kvget [key]
 output kvget_response [key] => [value]

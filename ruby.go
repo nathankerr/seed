@@ -2,6 +2,7 @@ package seed
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -55,14 +56,24 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 	}
 
 	output := []string{}
-	for _, o := range r.Projection {
-		output = append(output,
-			fmt.Sprintf("%s.%s", index[o.Collection], o.Column))
+	for _, expression := range r.Projection {
+		switch value := expression.Value.(type) {
+		case QualifiedColumn:
+			output = append(output,
+				fmt.Sprintf("%s.%s", index[value.Collection], value.Column))
+		case FunctionCall:
+			for _, qc := range value.Arguments {
+				output = append(output,
+					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
+			}
+		default:
+			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+		}
 	}
 
 	if len(collections) == 1 {
 		selecter = fmt.Sprintf("%s do |%s|\n      [%s]\n    end",
-			r.Projection[0].Collection,
+			collections[0],
 			strings.Join(names, ", "),
 			strings.Join(output, ", "))
 	} else {

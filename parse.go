@@ -191,7 +191,7 @@ func parseRule(p *parser) parsefn {
 	// get the array contents
 	for {
 		column := parseQualifiedColumn(p)
-		r.Projection = append(r.Projection, column)
+		r.Projection = append(r.Projection, Expression{Value: column})
 
 		if p.next().typ != itemArrayDelimter {
 			break
