@@ -1,10 +1,10 @@
 package examples
 
 import (
+	"errors"
 	"fmt"
 	service "github.com/nathankerr/seed"
 	"strings"
-	"errors"
 )
 
 func Add_network_interface(sname string, seed *service.Seed, services map[string]*service.Seed) (map[string]*service.Seed, error) {

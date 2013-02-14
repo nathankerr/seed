@@ -31,7 +31,7 @@ func (ct CollectionType) UnmarshalJSON(input []byte) error {
 		panic("not a string")
 	}
 
-	switch string(input[1:len(input)-1]) {
+	switch string(input[1 : len(input)-1]) {
 	case "input":
 		ct = CollectionInput
 	case "output":
