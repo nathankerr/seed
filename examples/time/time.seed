@@ -1,0 +1,4 @@
+input request [timezone]
+output response [timezone]
+
+response <+ [request.timezone]
