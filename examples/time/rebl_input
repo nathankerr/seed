@@ -1,4 +1,4 @@
 channel :request, [:@address, :response_addr, :timezone]
-channel :response, [:@response_addr, :timezone]
+channel :response, [:@response_addr, :timezone, :current_time]
 stdio <~ response.inspected
 request <~ [["127.0.0.1:3000", "127.0.0.1:3001", "America/New_York"],["127.0.0.1:3000", "127.0.0.1:3001", "Europe/Paris"],["127.0.0.1:3000", "127.0.0.1:3001", "Europe/Berlin"]]

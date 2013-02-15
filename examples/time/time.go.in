@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"github.com/nathankerr/seed"
 )
 
-func current_time_in(timezone string) string {
+func current_time_in(input seed.Tuple) seed.Element {
+	timezone := string(input[0].([]uint8))
+
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
 		fmt.Println(err)

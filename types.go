@@ -49,8 +49,9 @@ type FunctionCall struct {
 }
 
 type Tuple []interface{}
-type MapFn func(Tuple) Tuple
-type ReduceFn func([]Tuple) Tuple
+type Element interface{}
+type MapFn func(Tuple) Element
+type ReduceFn func([]Tuple) Element
 
 type QualifiedColumn struct {
 	Collection string

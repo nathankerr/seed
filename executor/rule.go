@@ -173,14 +173,25 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 				columnIndex := indexes[value.Collection][value.Column]
 				result = append(result, tuples[value.Collection][columnIndex])
 			case service.FunctionCall:
-				panic("TODO: run function call")
+				// gather arguments
+				arguments := service.Tuple{}
+				for _, qc := range value.Arguments {
+					columnIndex := indexes[qc.Collection][qc.Column]
+					arguments = append(arguments, tuples[qc.Collection][columnIndex])
+				}
+
+				// run function to get result
+				fn := value.Function.(func(service.Tuple) service.Element)
+				fnresult := fn(arguments)
+
+				// add result to result tuple
+				result = append(result, fnresult)
 			default:
 				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 			}
 		}
 		results = append(results, result)
 	}
-
 	return results
 }
 
