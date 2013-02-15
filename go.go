@@ -228,7 +228,7 @@ func (functionCall FunctionCall) toGo(indent string) string {
 		arguments = append(arguments,
 			fmt.Sprintf("%s", argument.toGo(indent+"\t\t")))
 	}
-	str = fmt.Sprintf("%s\n%s\tArguments: []service.QualifiedColumn{%s},", str, indent, strings.Join(arguments, ",\n"))
+	str = fmt.Sprintf("%s\n%s\tArguments: []service.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n" + indent + "\t"))
 
 	str = fmt.Sprintf("%s\n%s}", str, indent,)
 	return str
