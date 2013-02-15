@@ -6,7 +6,29 @@ This language is experimental! It is not finished yet!
 
 # Installation:
 
-`go get github.com/nathankerr/seed`
-`go install github.com/nathankerr/seed/seed`
+1. Install go: http://golang.org/doc/install
+2. Install Seed
+```
+go get github.com/nathankerr/seed/seed
+```
 
+# Examples
+
+The examples directory contains example transformations and services.
+
+## kvs
+
+The kvs directory contains a Key Value Store service.
+
+## time
+
+The time directory contains a time service which calculates the current time for a given timezone.
+
+## add_network_interface.go
+
+Adds a network interface to a service without one by changing input and output collections to channels and adding and handling the required network addresses through the service.
+
+## add_replicated_tables.go
+
+Changes table collections such that their contents are replicated between several of the same services running in a replicant group.
 
