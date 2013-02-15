@@ -188,13 +188,23 @@ func parseRule(p *parser) parsefn {
 		fatal("expected '[', got", p.i)
 	}
 
-	// get the array contents
+	// get the array contents, can be QualifiedColumns or FunctionCalls
+loop:
 	for {
-		column := parseQualifiedColumn(p)
-		r.Projection = append(r.Projection, Expression{Value: column})
-
-		if p.next().typ != itemArrayDelimter {
-			break
+		switch p.next().typ {
+		case itemIdentifier:
+			column := parseQualifiedColumn(p)
+			r.Projection = append(r.Projection, Expression{Value: column})
+		case itemStartParen:
+			// FunctionCall
+			functionCall := parseFunctionCall(p)
+			r.Projection = append(r.Projection, Expression{Value: functionCall})
+		case itemArrayDelimter:
+			// no-op
+		case itemEndArray:
+			break loop
+		default:
+			fatal("expected identifier, '(', or ']', got", p.i)
 		}
 	}
 
@@ -207,12 +217,14 @@ func parseRule(p *parser) parsefn {
 	if p.next().typ == itemPredicateDelimiter {
 		// get the predicates
 		for {
+			p.next()
 			left := parseQualifiedColumn(p)
 
 			if p.next().typ != itemKeyRelation {
 				fatal("expected '=>', got", p.i)
 			}
 
+			p.next()
 			right := parseQualifiedColumn(p)
 
 			r.Predicate = append(r.Predicate,
@@ -231,10 +243,38 @@ func parseRule(p *parser) parsefn {
 	return parseSeed
 }
 
+func parseFunctionCall(p *parser) FunctionCall {
+	parseinfo()
+
+	functionName := p.next()
+	if functionName.typ != itemIdentifier {
+		fatal("expected identifier, got", functionName)
+	}
+
+	arguments := []QualifiedColumn{}
+loop:
+	for {
+		switch p.next().typ {
+		case itemIdentifier:
+			column := parseQualifiedColumn(p)
+			arguments = append(arguments, column)
+		case itemEndParen:
+			break loop
+		default:
+			fatal("expected identifier, got", p.i)
+		}
+	}
+
+	return FunctionCall{
+		Name: functionName.val,
+		Arguments: arguments,
+	}
+}
+
 func parseQualifiedColumn(p *parser) QualifiedColumn {
 	parseinfo()
 
-	collection := p.next()
+	collection := p.i
 	if collection.typ != itemIdentifier {
 		fatal("expected identifier, got", collection)
 	}

@@ -1,0 +1,17 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"time"
+)
+
+func current_time_in(timezone string) string {
+	location, err := time.LoadLocation(timezone)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	return fmt.Sprintln(time.Now().In(location))
+}

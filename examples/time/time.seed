@@ -1,4 +1,4 @@
 input request [timezone]
 output response [timezone]
 
-response <+ [request.timezone]
+response <+ [request.timezone, (current_time_in request.timezone)]

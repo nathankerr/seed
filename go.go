@@ -3,6 +3,7 @@ package seed
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 func ToGo(seed *Seed, name string) ([]byte, error) {
@@ -207,15 +208,28 @@ func (expression Expression) toGo(indent string) string {
 	str := "service.Expression{ Value:"
 	switch value := expression.Value.(type) {
 	case QualifiedColumn:
-		str = fmt.Sprintf("%s%s\t%v", str, indent, value.toGo(indent+"\t\t"))
+		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
 	case FunctionCall:
-		for _, qc := range value.Arguments {
-			str = fmt.Sprintf("%s%s\t%v", str, indent, qc.toGo(indent+"\t\t"))
-		}
+		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
 	default:
 		panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 	}
 	str += "}"
 
+	return str
+}
+
+func (functionCall FunctionCall) toGo(indent string) string {
+	str := fmt.Sprintf("service.FunctionCall{\n%s\tName: \"%s\",", indent, functionCall.Name)
+	str = fmt.Sprintf("%s\n%s\tFunction: %s,", str, indent, functionCall.Name)
+
+	arguments := []string{}
+	for _, argument := range functionCall.Arguments {
+		arguments = append(arguments,
+			fmt.Sprintf("%s", argument.toGo(indent+"\t\t")))
+	}
+	str = fmt.Sprintf("%s\n%s\tArguments: []service.QualifiedColumn{%s},", str, indent, strings.Join(arguments, ",\n"))
+
+	str = fmt.Sprintf("%s\n%s}", str, indent,)
 	return str
 }

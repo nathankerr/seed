@@ -3,6 +3,7 @@ package seed
 import (
 	"fmt"
 	"strings"
+	"reflect"
 )
 
 func (qc QualifiedColumn) String() string {
@@ -90,9 +91,22 @@ func (ctype CollectionType) String() string {
 
 func (r *Rule) String() string {
 	columns := []string{}
-	for _, qc := range r.Projection {
-		columns = append(columns,
-			fmt.Sprintf("%s", qc))
+	for _, expression := range r.Projection {
+		switch value := expression.Value.(type) {
+		case QualifiedColumn:
+			columns = append(columns,
+				fmt.Sprintf("%s", value))
+		case FunctionCall:
+			arguments := []string{}
+			for _, qc := range value.Arguments {
+				arguments = append(arguments,
+					fmt.Sprintf("%s", qc))
+			}
+			columns = append(columns,
+				fmt.Sprintf("(%s %s)", value.Name, strings.Join(arguments, " ")))
+		default:
+			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+		}
 	}
 	projection := fmt.Sprintf("[%s]",
 		strings.Join(columns, ", "),

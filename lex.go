@@ -43,6 +43,8 @@ const (
 	itemScopeDelimiter     // .
 	itemPredicateDelimiter // :
 	itemPipe               // |
+	itemStartParen			// (
+	itemEndParen			// )
 	// keywords, also need to be in key map
 	itemInput  // input keyword
 	itemOutput // output keyword
@@ -87,6 +89,8 @@ var itemNames = map[itemType]string{
 	itemScopeDelimiter:     "itemScopeDelimiter",
 	itemPredicateDelimiter: "itemPredicateDelimiter",
 	itemPipe:               "itemPipe",
+	itemStartParen:			"itemStartParen",
+	itemEndParen:			"itemEndParen",
 	// keywords
 	itemInput:   "itemInput",
 	itemOutput:  "itemOutput",
@@ -263,6 +267,8 @@ func lexToken(l *lexer) stateFn {
 		l.emit(itemPredicateDelimiter)
 	case r == '@' && !l.subset:
 		return lexIdentifier
+	case r == '(':
+		return lexMapFunction
 	default:
 		fatalf("%s unrecognized character: %#U",
 			l.source(), r)
@@ -356,6 +362,34 @@ func lexKeyRelation(l *lexer) stateFn {
 			l.source(), l.input[l.start:l.pos])
 	}
 	l.emit(itemKeyRelation) // =>
+
+	return lexToken
+}
+
+func lexMapFunction(l *lexer) stateFn {
+	lexinfo()
+	l.emit(itemStartParen)
+
+	// function name
+	lexIdentifier(l)
+
+	// space separated qualified columns ending with )
+	for {
+		switch r := l.next(); {
+		case unicode.IsLetter(r):
+			lexIdentifier(l)
+		case isSpace(r):
+			l.ignore()
+		case r == ')':
+			l.emit(itemEndParen)
+			return lexToken
+		case r == '.':
+			l.emit(itemScopeDelimiter)
+		default:
+			fatalf("%s expected identifier, space, or ')'; got: '%s'",
+				l.source(), l.input[l.start:l.pos])
+		}
+	}
 
 	return lexToken
 }
