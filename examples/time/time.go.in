@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"time"
 	"github.com/nathankerr/seed"
+	"time"
 )
 
 func current_time_in(input seed.Tuple) seed.Element {
@@ -12,9 +10,8 @@ func current_time_in(input seed.Tuple) seed.Element {
 
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err.Error()
 	}
 
-	return fmt.Sprintln(time.Now().In(location))
+	return time.Now().In(location).String()
 }
