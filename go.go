@@ -209,7 +209,7 @@ func (expression Expression) toGo(indent string) string {
 	switch value := expression.Value.(type) {
 	case QualifiedColumn:
 		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
-	case FunctionCall:
+	case MapFunction:
 		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
 	default:
 		panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
@@ -219,8 +219,8 @@ func (expression Expression) toGo(indent string) string {
 	return str
 }
 
-func (functionCall FunctionCall) toGo(indent string) string {
-	str := fmt.Sprintf("service.FunctionCall{\n%s\tName: \"%s\",", indent, functionCall.Name)
+func (functionCall MapFunction) toGo(indent string) string {
+	str := fmt.Sprintf("service.MapFunction{\n%s\tName: \"%s\",", indent, functionCall.Name)
 	str = fmt.Sprintf("%s\n%s\tFunction: %s,", str, indent, functionCall.Name)
 
 	arguments := []string{}
@@ -228,8 +228,8 @@ func (functionCall FunctionCall) toGo(indent string) string {
 		arguments = append(arguments,
 			fmt.Sprintf("%s", argument.toGo(indent+"\t\t")))
 	}
-	str = fmt.Sprintf("%s\n%s\tArguments: []service.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n" + indent + "\t"))
+	str = fmt.Sprintf("%s\n%s\tArguments: []service.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n"+indent+"\t"))
 
-	str = fmt.Sprintf("%s\n%s}", str, indent,)
+	str = fmt.Sprintf("%s\n%s}", str, indent)
 	return str
 }

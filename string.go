@@ -2,8 +2,8 @@ package seed
 
 import (
 	"fmt"
-	"strings"
 	"reflect"
+	"strings"
 )
 
 func (qc QualifiedColumn) String() string {
@@ -96,7 +96,7 @@ func (r *Rule) String() string {
 		case QualifiedColumn:
 			columns = append(columns,
 				fmt.Sprintf("%s", value))
-		case FunctionCall:
+		case MapFunction:
 			arguments := []string{}
 			for _, qc := range value.Arguments {
 				arguments = append(arguments,

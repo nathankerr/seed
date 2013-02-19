@@ -32,7 +32,7 @@ func (r *Rule) Requires() []string {
 		switch value := expression.Value.(type) {
 		case QualifiedColumn:
 			requiresmap[value.Collection] = true
-		case FunctionCall:
+		case MapFunction:
 			for _, qc := range value.Arguments {
 				requiresmap[qc.Collection] = true
 			}

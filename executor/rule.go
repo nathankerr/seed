@@ -172,7 +172,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 			case service.QualifiedColumn:
 				columnIndex := indexes[value.Collection][value.Column]
 				result = append(result, tuples[value.Collection][columnIndex])
-			case service.FunctionCall:
+			case service.MapFunction:
 				// gather arguments
 				arguments := service.Tuple{}
 				for _, qc := range value.Arguments {

@@ -43,8 +43,8 @@ const (
 	itemScopeDelimiter     // .
 	itemPredicateDelimiter // :
 	itemPipe               // |
-	itemStartParen			// (
-	itemEndParen			// )
+	itemStartParen         // (
+	itemEndParen           // )
 	// keywords, also need to be in key map
 	itemInput  // input keyword
 	itemOutput // output keyword
@@ -89,8 +89,8 @@ var itemNames = map[itemType]string{
 	itemScopeDelimiter:     "itemScopeDelimiter",
 	itemPredicateDelimiter: "itemPredicateDelimiter",
 	itemPipe:               "itemPipe",
-	itemStartParen:			"itemStartParen",
-	itemEndParen:			"itemEndParen",
+	itemStartParen:         "itemStartParen",
+	itemEndParen:           "itemEndParen",
 	// keywords
 	itemInput:   "itemInput",
 	itemOutput:  "itemOutput",

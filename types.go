@@ -39,10 +39,10 @@ type Rule struct {
 // 	panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 // }
 type Expression struct {
-	Value interface{} // QualifiedColumn, FunctionCall
+	Value interface{} // QualifiedColumn, MapFunction
 }
 
-type FunctionCall struct {
+type MapFunction struct {
 	Name      string      // the function name as a string, instead of as a function
 	Function  interface{} // MapFn, ReduceFn
 	Arguments []QualifiedColumn

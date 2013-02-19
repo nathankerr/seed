@@ -55,7 +55,7 @@ func (s *Seed) Validate() error {
 				if err != nil {
 					return err
 				}
-			case FunctionCall:
+			case MapFunction:
 				for _, qc := range value.Arguments {
 					err := s.validateQualifiedColumn(qc, rule)
 					if err != nil {

@@ -196,8 +196,8 @@ loop:
 			column := parseQualifiedColumn(p)
 			r.Projection = append(r.Projection, Expression{Value: column})
 		case itemStartParen:
-			// FunctionCall
-			functionCall := parseFunctionCall(p)
+			// MapFunction
+			functionCall := parseMapFunction(p)
 			r.Projection = append(r.Projection, Expression{Value: functionCall})
 		case itemArrayDelimter:
 			// no-op
@@ -243,7 +243,7 @@ loop:
 	return parseSeed
 }
 
-func parseFunctionCall(p *parser) FunctionCall {
+func parseMapFunction(p *parser) MapFunction {
 	parseinfo()
 
 	functionName := p.next()
@@ -265,8 +265,8 @@ loop:
 		}
 	}
 
-	return FunctionCall{
-		Name: functionName.val,
+	return MapFunction{
+		Name:      functionName.val,
 		Arguments: arguments,
 	}
 }

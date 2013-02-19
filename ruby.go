@@ -61,7 +61,7 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 		case QualifiedColumn:
 			output = append(output,
 				fmt.Sprintf("%s.%s", index[value.Collection], value.Column))
-		case FunctionCall:
+		case MapFunction:
 			for _, qc := range value.Arguments {
 				output = append(output,
 					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
