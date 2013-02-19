@@ -36,6 +36,10 @@ func (r *Rule) Requires() []string {
 			for _, qc := range value.Arguments {
 				requiresmap[qc.Collection] = true
 			}
+		case ReduceFunction:
+			for _, qc := range value.Arguments {
+				requiresmap[qc.Collection] = true
+			}
 		default:
 			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 		}

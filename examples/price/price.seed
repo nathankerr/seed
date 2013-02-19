@@ -1,0 +1,4 @@
+input request [item, number_of_item]
+output response [item, total_number_of_item]
+
+response <+ [request.item, {sum request.number_of_item}]

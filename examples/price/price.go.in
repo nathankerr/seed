@@ -1,0 +1,16 @@
+package main
+
+import (
+	"github.com/nathankerr/seed"
+)
+
+// tuples have one element: an int8
+func sum(input []seed.Tuple) seed.Element {
+	var sum int8
+
+	for _, tuple := range input {
+		sum += tuple[0].(int8)
+	}
+
+	return sum
+}

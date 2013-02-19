@@ -104,6 +104,14 @@ func (r *Rule) String() string {
 			}
 			columns = append(columns,
 				fmt.Sprintf("(%s %s)", value.Name, strings.Join(arguments, " ")))
+		case ReduceFunction:
+			arguments := []string{}
+			for _, qc := range value.Arguments {
+				arguments = append(arguments,
+					fmt.Sprintf("%s", qc))
+			}
+			columns = append(columns,
+				fmt.Sprintf("{%s %s}", value.Name, strings.Join(arguments, " ")))
 		default:
 			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 		}

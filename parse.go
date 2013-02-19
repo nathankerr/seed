@@ -199,6 +199,10 @@ loop:
 			// MapFunction
 			functionCall := parseMapFunction(p)
 			r.Projection = append(r.Projection, Expression{Value: functionCall})
+		case itemStartBrace:
+			// ReduceFunction
+			functionCall := parseReduceFunction(p)
+			r.Projection = append(r.Projection, Expression{Value: functionCall})
 		case itemArrayDelimter:
 			// no-op
 		case itemEndArray:
@@ -266,6 +270,34 @@ loop:
 	}
 
 	return MapFunction{
+		Name:      functionName.val,
+		Arguments: arguments,
+	}
+}
+
+func parseReduceFunction(p *parser) ReduceFunction {
+	parseinfo()
+
+	functionName := p.next()
+	if functionName.typ != itemIdentifier {
+		fatal("expected identifier, got", functionName)
+	}
+
+	arguments := []QualifiedColumn{}
+loop:
+	for {
+		switch p.next().typ {
+		case itemIdentifier:
+			column := parseQualifiedColumn(p)
+			arguments = append(arguments, column)
+		case itemEndBrace:
+			break loop
+		default:
+			fatal("expected identifier, got", p.i)
+		}
+	}
+
+	return ReduceFunction{
 		Name:      functionName.val,
 		Arguments: arguments,
 	}

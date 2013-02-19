@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	service "github.com/nathankerr/seed"
@@ -136,7 +137,8 @@ func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []
 	numberOfProducts := numberOfProducts(lengths)
 
 	rule := handler.s.Rules[handler.number]
-	results := []service.Tuple{}
+	results := map[string]service.Tuple{}
+	reductions := map[string]map[int][]service.Tuple{} // json-ified version of row to which the reduction will be used for
 	for productNumber := 0; productNumber < numberOfProducts; productNumber++ {
 		// get the tuples for this product
 		tuples := tuplesFor(productNumber, collections, lengths, data)
@@ -167,11 +169,15 @@ func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []
 
 		// generate the result row and add to the set of results
 		result := service.Tuple{}
-		for _, expression := range rule.Projection {
+		localReductions := map[int]service.Tuple{} // column number: arguments
+		for columnNumber, expression := range rule.Projection {
+			var element interface{}
+
+			// determine the element to add to the result tuple
 			switch value := expression.Value.(type) {
 			case service.QualifiedColumn:
 				columnIndex := indexes[value.Collection][value.Column]
-				result = append(result, tuples[value.Collection][columnIndex])
+				element = tuples[value.Collection][columnIndex]
 			case service.MapFunction:
 				// gather arguments
 				arguments := service.Tuple{}
@@ -181,18 +187,52 @@ func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []
 				}
 
 				// run function to get result
-				fn := value.Function.(func(service.Tuple) service.Element)
-				fnresult := fn(arguments)
+				element = value.Function(arguments)
+			case service.ReduceFunction:
+				// add a place holder to the result tuple
+				element = nil
 
-				// add result to result tuple
-				result = append(result, fnresult)
+				// gather the arguments for this reduction
+				arguments := service.Tuple{}
+				for _, qc := range value.Arguments {
+					columnIndex := indexes[qc.Collection][qc.Column]
+					arguments = append(arguments, tuples[qc.Collection][columnIndex])
+				}
+				localReductions[columnNumber] = arguments
 			default:
 				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 			}
+
+			result = append(result, element)
 		}
-		results = append(results, result)
+
+		setidBytes, err := json.Marshal(result)
+		if err != nil {
+			panic(err)
+		}
+		setid := string(setidBytes)
+
+		// add the result to the set of results
+		results[setid] = result
+
+		// add local reductions to list of all reductions (by group)
+		for columnNumber, reductionTuple := range localReductions {
+			if _, ok := reductions[setid]; !ok {
+				reductions[setid] = map[int][]service.Tuple{}
+			}
+			reductions[setid][columnNumber] = append(reductions[setid][columnNumber], reductionTuple)
+		}
 	}
-	return results
+
+	// run reductions and add results to the appropriate places before returning the results
+	resultsSlice := make([]service.Tuple, 0, len(results))
+	for setid, result := range results {
+		for columnNumber, reductionTuples := range reductions[setid] {
+			result[columnNumber] = rule.Projection[columnNumber].Value.(service.ReduceFunction).Function(reductionTuples)
+		}
+		resultsSlice = append(resultsSlice, result)
+	}
+	return resultsSlice
 }
 
 func (handler *ruleHandler) validateData(data map[string][]service.Tuple) error {

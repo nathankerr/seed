@@ -1,0 +1,4 @@
+channel :request, [:@address, :response_addr, :item, :number_of_item] #price.seed:1
+channel :response, [:@response_addr, :item, :total_number_of_item] #price.seed:2
+stdio <~ response.inspected
+request <~ [["127.0.0.1:3000", "127.0.0.1:3001", "apple", 1],["127.0.0.1:3000", "127.0.0.1:3001", "apple", 2],["127.0.0.1:3000", "127.0.0.1:3001", "orange", 5]]

@@ -43,8 +43,14 @@ type Expression struct {
 }
 
 type MapFunction struct {
-	Name      string      // the function name as a string, instead of as a function
-	Function  interface{} // MapFn, ReduceFn
+	Name      string // the function name as a string, instead of as a function
+	Function  MapFn
+	Arguments []QualifiedColumn
+}
+
+type ReduceFunction struct {
+	Name      string
+	Function  ReduceFn
 	Arguments []QualifiedColumn
 }
 

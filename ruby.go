@@ -66,6 +66,11 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 				output = append(output,
 					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
 			}
+		case ReduceFunction:
+			for _, qc := range value.Arguments {
+				output = append(output,
+					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
+			}
 		default:
 			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 		}

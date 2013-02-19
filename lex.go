@@ -45,6 +45,8 @@ const (
 	itemPipe               // |
 	itemStartParen         // (
 	itemEndParen           // )
+	itemStartBrace         // {
+	itemEndBrace           // }
 	// keywords, also need to be in key map
 	itemInput  // input keyword
 	itemOutput // output keyword
@@ -70,7 +72,7 @@ func (l *lexer) atTerminator() bool {
 		return true
 	}
 	switch r {
-	case eof, ',', '[', ']', '#', '.', '(', ')', ':', '|', '<':
+	case eof, ',', '[', ']', '#', '.', '(', ')', ':', '|', '<', '{', '}':
 		// # is a special case for comments, which are not passed to the parser
 		return true
 	}
@@ -91,6 +93,8 @@ var itemNames = map[itemType]string{
 	itemPipe:               "itemPipe",
 	itemStartParen:         "itemStartParen",
 	itemEndParen:           "itemEndParen",
+	itemStartBrace:         "itemStartBrace",
+	itemEndBrace:           "itemEndBrace",
 	// keywords
 	itemInput:   "itemInput",
 	itemOutput:  "itemOutput",
@@ -269,6 +273,8 @@ func lexToken(l *lexer) stateFn {
 		return lexIdentifier
 	case r == '(':
 		return lexMapFunction
+	case r == '{':
+		return lexReduceFunction
 	default:
 		fatalf("%s unrecognized character: %#U",
 			l.source(), r)
@@ -382,6 +388,34 @@ func lexMapFunction(l *lexer) stateFn {
 			l.ignore()
 		case r == ')':
 			l.emit(itemEndParen)
+			return lexToken
+		case r == '.':
+			l.emit(itemScopeDelimiter)
+		default:
+			fatalf("%s expected identifier, space, or ')'; got: '%s'",
+				l.source(), l.input[l.start:l.pos])
+		}
+	}
+
+	return lexToken
+}
+
+func lexReduceFunction(l *lexer) stateFn {
+	lexinfo()
+	l.emit(itemStartBrace)
+
+	// function name
+	lexIdentifier(l)
+
+	// space separated qualified columns ending with )
+	for {
+		switch r := l.next(); {
+		case unicode.IsLetter(r):
+			lexIdentifier(l)
+		case isSpace(r):
+			l.ignore()
+		case r == '}':
+			l.emit(itemEndBrace)
 			return lexToken
 		case r == '.':
 			l.emit(itemScopeDelimiter)

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+seed -t="go" -transformations="network" price.seed && 
+cp price.go.in build/price.go &&
+go run build/*.go -sleep=1s -monitor=127.0.0.1:8000

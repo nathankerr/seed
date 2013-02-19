@@ -62,6 +62,13 @@ func (s *Seed) Validate() error {
 						return err
 					}
 				}
+			case ReduceFunction:
+				for _, qc := range value.Arguments {
+					err := s.validateQualifiedColumn(qc, rule)
+					if err != nil {
+						return err
+					}
+				}
 			default:
 				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 			}
