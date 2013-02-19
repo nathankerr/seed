@@ -7,26 +7,25 @@ import (
 	"time"
 )
 
-type tuple []interface{}
 type messageContainer struct {
 	operation  string // "immediate", "deferred", "data", "done"
 	collection string
-	data       []tuple
+	data       []service.Tuple
 }
 
-func (tuple *tuple) String() string {
-	columns := []string{}
-	for _, column := range *tuple {
-		switch typed := column.(type) {
-		case []byte:
-			columns = append(columns, string(typed))
-		default:
-			columns = append(columns, fmt.Sprintf("%#v", column))
-		}
-	}
+// func (tuple *tuple) String() string {
+// 	columns := []string{}
+// 	for _, column := range *tuple {
+// 		switch typed := column.(type) {
+// 		case []byte:
+// 			columns = append(columns, string(typed))
+// 		default:
+// 			columns = append(columns, fmt.Sprintf("%#v", column))
+// 		}
+// 	}
 
-	return fmt.Sprintf("[%s]", strings.Join(columns, ", "))
-}
+// 	return fmt.Sprintf("[%s]", strings.Join(columns, ", "))
+// }
 
 func (mc *messageContainer) String() string {
 	tuples := []string{}

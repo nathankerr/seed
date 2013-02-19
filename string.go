@@ -132,3 +132,17 @@ func (r *Rule) String() string {
 		predicate,
 	)
 }
+
+func (tuple *Tuple) String() string {
+	columns := []string{}
+	for _, column := range *tuple {
+		switch typed := column.(type) {
+		case []byte:
+			columns = append(columns, string(typed))
+		default:
+			columns = append(columns, fmt.Sprintf("%#v", column))
+		}
+	}
+
+	return fmt.Sprintf("[%s]", strings.Join(columns, ", "))
+}

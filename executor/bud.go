@@ -65,7 +65,7 @@ func (bud *bud) networkReader() {
 	}
 }
 
-func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []tuple) {
+func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []service.Tuple) {
 	// msgpack format from bud:
 	// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
 	// COLUMNS depends on the column types
@@ -83,14 +83,14 @@ func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []tuple) {
 	case []uint8:
 		// some other message??
 		info("budInputReader", "[]uint8: ", string(msgTyped))
-		return "", []tuple{}
+		return "", []service.Tuple{}
 	default:
 		panic(fmt.Sprintf("%v\n", msgReflected))
 	}
 
 	collectionName = string(msg[0].([]byte))
 
-	tuples = []tuple{}
+	tuples = []service.Tuple{}
 	switch r := msg[1].(type) {
 	case []interface{}:
 	SingleInterfaceLoop:
@@ -116,7 +116,7 @@ func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []tuple) {
 	return collectionName, tuples
 }
 
-func (bud *bud) marshal(collectionName string, tuple tuple) []byte {
+func (bud *bud) marshal(collectionName string, tuple service.Tuple) []byte {
 	// create the payload
 	outputMessage := bytes.NewBuffer([]byte{})
 

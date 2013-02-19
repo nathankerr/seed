@@ -6,7 +6,7 @@ import (
 )
 
 type tupleSet struct {
-	tuples          map[string]tuple
+	tuples          map[string]service.Tuple
 	keyEnds         int
 	numberOfColumns int
 	collectionName  string
@@ -16,7 +16,7 @@ type tupleSet struct {
 // the key columns are a subset of the columns starting at the beginning
 // encoding the key columns in json gives a way to uniquely encode the columns
 // a map is then used (with the encoded key) to store the tuples
-func (ts *tupleSet) add(tuple tuple) {
+func (ts *tupleSet) add(tuple service.Tuple) {
 	if len(tuple) != ts.numberOfColumns {
 		fatal(ts.collectionName, "expected", ts.numberOfColumns, "columns for", tuple)
 	}
@@ -33,7 +33,7 @@ func (ts *tupleSet) message() messageContainer {
 	message := messageContainer{
 		operation:  "data",
 		collection: ts.collectionName,
-		data:       []tuple{},
+		data:       []service.Tuple{},
 	}
 
 	for _, tuple := range ts.tuples {
@@ -57,7 +57,7 @@ func collectionHandler(collectionName string, s *service.Seed, channels channels
 	controlinfo(collectionName, "sends to", immediates, deferreds)
 
 	data := tupleSet{
-		tuples:          map[string]tuple{},
+		tuples:          map[string]service.Tuple{},
 		keyEnds:         len(c.Key),
 		numberOfColumns: len(c.Key) + len(c.Data),
 		collectionName:  collectionName,
@@ -83,7 +83,7 @@ func collectionHandler(collectionName string, s *service.Seed, channels channels
 			switch c.Type {
 			case service.CollectionInput, service.CollectionOutput, service.CollectionScratch, service.CollectionChannel:
 				// temporary collections are emptied
-				data.tuples = map[string]tuple{}
+				data.tuples = map[string]service.Tuple{}
 			case service.CollectionTable:
 				// persistent collections
 				// no-op

@@ -80,8 +80,8 @@ func (handler *ruleHandler) run(dataMessages []messageContainer) messageContaine
 	return outputMessage
 }
 
-func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map[string][]tuple {
-	data := map[string][]tuple{}
+func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map[string][]service.Tuple {
+	data := map[string][]service.Tuple{}
 
 	// process cached data
 	for _, message := range dataMessages {
@@ -111,13 +111,13 @@ func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map
 	return data
 }
 
-func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
+func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []service.Tuple {
 	// validate data and handle errors
 	err := handler.validateData(data)
 	if err != nil {
 		switch err.Error() {
 		case "empty tuple set":
-			return []tuple{}
+			return []service.Tuple{}
 		default:
 			fatal(handler.number, err)
 		}
@@ -136,7 +136,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 	numberOfProducts := numberOfProducts(lengths)
 
 	rule := handler.s.Rules[handler.number]
-	results := []tuple{}
+	results := []service.Tuple{}
 	for productNumber := 0; productNumber < numberOfProducts; productNumber++ {
 		// get the tuples for this product
 		tuples := tuplesFor(productNumber, collections, lengths, data)
@@ -166,7 +166,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 		}
 
 		// generate the result row and add to the set of results
-		result := tuple{}
+		result := service.Tuple{}
 		for _, expression := range rule.Projection {
 			switch value := expression.Value.(type) {
 			case service.QualifiedColumn:
@@ -195,7 +195,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]tuple) []tuple {
 	return results
 }
 
-func (handler *ruleHandler) validateData(data map[string][]tuple) error {
+func (handler *ruleHandler) validateData(data map[string][]service.Tuple) error {
 	for collectionName, tuples := range data {
 		collection := handler.s.Collections[collectionName]
 
@@ -226,9 +226,9 @@ func numberOfProducts(lengths []int) int {
 	return products
 }
 
-func tuplesFor(productNumber int, collections []string, lengths []int, data map[string][]tuple) map[string]tuple {
+func tuplesFor(productNumber int, collections []string, lengths []int, data map[string][]service.Tuple) map[string]service.Tuple {
 	tupleIndexes := indexesFor(productNumber, lengths)
-	tuples := map[string]tuple{}
+	tuples := map[string]service.Tuple{}
 	for nameIndex, tupleIndex := range tupleIndexes {
 		collectionName := collections[nameIndex]
 		tuples[collectionName] = data[collectionName][tupleIndex]

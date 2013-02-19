@@ -161,7 +161,7 @@ func renderHTML(message monitorMessage, s *service.Seed) string {
 	}
 	table += "</tr>"
 
-	rows := message.Data.([]tuple)
+	rows := message.Data.([]service.Tuple)
 	for _, row := range rows {
 		table += "<tr>"
 		for _, column := range row {
