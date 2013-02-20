@@ -62,10 +62,14 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 			output = append(output,
 				fmt.Sprintf("%s.%s", index[value.Collection], value.Column))
 		case MapFunction:
+			arguments := []string{}
 			for _, qc := range value.Arguments {
-				output = append(output,
+				arguments = append(arguments,
 					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
 			}
+
+			output = append(output,
+				fmt.Sprintf("%s(%s)", value.Name, strings.Join(arguments, ", ")))
 		case ReduceFunction:
 			for _, qc := range value.Arguments {
 				output = append(output,
