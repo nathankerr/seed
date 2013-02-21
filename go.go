@@ -25,7 +25,7 @@ import (
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	var address = flag.String("address", "127.0.0.1:3000", "address the bud communicator uses")
-	var monitor = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
+	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
 
 	flag.Parse()
 `, str)
@@ -72,8 +72,11 @@ import (
 		}
 	}
 
-	channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitor)
-	go monitor.StartMonitor(*monitor, channels.Monitor, seed)
+	println("Starting " + seed.Source.Name + " on " + *address)
+	println("Starting monitor" + " on " + "http://" + *monitorAddress)
+
+	channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitorAddress)
+	go monitor.StartMonitor(*monitorAddress, channels.Monitor, seed)
 	bud.BudCommunicator(seed, channels, *address)
 `, str)
 
