@@ -7,6 +7,8 @@ import (
 	service "github.com/nathankerr/seed"
 	"github.com/nathankerr/seed/examples"
 	"github.com/nathankerr/seed/executor"
+	"github.com/nathankerr/seed/executor/bud"
+	"github.com/nathankerr/seed/executor/monitor"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,7 +34,7 @@ func main() {
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	var address = flag.String("address", "127.0.0.1:3000", "address the bud communicator uses")
-	var monitor = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
+	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
@@ -181,7 +183,10 @@ func main() {
 				}
 			}
 
-			executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitor)
+			channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitorAddress)
+			go monitor.StartMonitor(*monitorAddress, channels.Monitor, seed)
+			bud.BudCommunicator(seed, channels, *address)
+			info("After StartMonitor")
 			break
 		}
 	}

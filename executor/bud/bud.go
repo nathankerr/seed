@@ -1,10 +1,11 @@
-package executor
+package bud
 
 import (
 	"bytes"
 	"fmt"
 	"github.com/msgpack/msgpack-go"
 	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed/executor"
 	"net"
 	"reflect"
 )
@@ -13,7 +14,7 @@ type bud struct {
 	address  string
 	listener net.PacketConn
 	s        *service.Seed
-	channels channels
+	channels executor.Channels
 }
 
 func (bud *bud) listen() {
@@ -56,11 +57,11 @@ func (bud *bud) networkReader() {
 		}
 
 		// send to correct collection
-		channel := bud.channels.collections[collectionName]
-		channel <- messageContainer{
-			operation:  "<~",
-			collection: collectionName,
-			data:       tuples,
+		channel := bud.channels.Collections[collectionName]
+		channel <- executor.MessageContainer{
+			Operation:  "<~",
+			Collection: collectionName,
+			Data:       tuples,
 		}
 	}
 }
@@ -148,10 +149,10 @@ func (bud *bud) marshal(collectionName string, tuple service.Tuple) []byte {
 	return outputMessage.Bytes()
 }
 
-func (bud *bud) send(message messageContainer) {
+func (bud *bud) send(message executor.MessageContainer) {
 	flowinfo("budCommunicator", "sending", message.String())
 	// make sure the collection is known
-	collection, ok := bud.s.Collections[message.collection]
+	collection, ok := bud.s.Collections[message.Collection]
 	if !ok {
 		panic(fmt.Sprintf("unknown collection from %v", message))
 	}
@@ -165,10 +166,10 @@ func (bud *bud) send(message messageContainer) {
 		}
 	}
 	if addressColumn == -1 {
-		panic("no address column for collection " + message.collection)
+		panic("no address column for collection " + message.Collection)
 	}
 
-	for _, tuple := range message.data {
+	for _, tuple := range message.Data {
 		// get the address to send to
 		address, err := net.ResolveUDPAddr("udp", string(tuple[addressColumn].([]uint8)))
 		if err != nil {
@@ -181,7 +182,7 @@ func (bud *bud) send(message messageContainer) {
 		}
 
 		// marshal the tuple
-		marshalled := bud.marshal(message.collection, tuple)
+		marshalled := bud.marshal(message.Collection, tuple)
 
 		// send the tuple
 		_, err = bud.listener.WriteTo(marshalled, address)
@@ -193,7 +194,7 @@ func (bud *bud) send(message messageContainer) {
 	}
 }
 
-func budCommunicator(s *service.Seed, channels channels, address string) {
+func BudCommunicator(s *service.Seed, channels executor.Channels, address string) {
 	bud := bud{
 		address:  address,
 		s:        s,
@@ -207,12 +208,12 @@ func budCommunicator(s *service.Seed, channels channels, address string) {
 
 	controlinfo("budCommunicator", "started")
 	for {
-		message := <-channels.distribution
+		message := <-channels.Distribution
 		controlinfo("budCommunicator", "received", message)
 
-		switch message.operation {
+		switch message.Operation {
 		case "immediate", "deferred":
-			channels.control <- messageContainer{operation: "done", collection: "budCommunicator"}
+			channels.Control <- executor.MessageContainer{Operation: "done", Collection: "budCommunicator"}
 			controlinfo("budCommunicator", "finished with", message)
 		case "data":
 			flowinfo("budCommunicator", "received", message)

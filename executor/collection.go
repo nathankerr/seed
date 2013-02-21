@@ -29,29 +29,29 @@ func (ts *tupleSet) add(tuple service.Tuple) {
 	ts.tuples[string(key)] = tuple
 }
 
-func (ts *tupleSet) message() messageContainer {
-	message := messageContainer{
-		operation:  "data",
-		collection: ts.collectionName,
-		data:       []service.Tuple{},
+func (ts *tupleSet) message() MessageContainer {
+	message := MessageContainer{
+		Operation:  "data",
+		Collection: ts.collectionName,
+		Data:       []service.Tuple{},
 	}
 
 	for _, tuple := range ts.tuples {
-		message.data = append(message.data, tuple)
+		message.Data = append(message.Data, tuple)
 	}
 
 	return message
 }
 
-func collectionHandler(collectionName string, s *service.Seed, channels channels) {
+func collectionHandler(collectionName string, s *service.Seed, channels Channels) {
 	controlinfo(collectionName, "started")
-	input := channels.collections[collectionName]
+	input := channels.Collections[collectionName]
 	c := s.Collections[collectionName]
 
 	immediates := ruleChannels(false, collectionName, s, channels)
 	deferreds := ruleChannels(true, collectionName, s, channels)
 	if c.Type == service.CollectionChannel {
-		deferreds = append(deferreds, channels.distribution)
+		deferreds = append(deferreds, channels.Distribution)
 	}
 
 	controlinfo(collectionName, "sends to", immediates, deferreds)
@@ -67,13 +67,13 @@ func collectionHandler(collectionName string, s *service.Seed, channels channels
 		message := <-input
 		controlinfo(collectionName, "received", message)
 
-		switch message.operation {
+		switch message.Operation {
 		case "immediate":
 			// info(collectionName, "immediate")
 			dataMessage := data.message()
 			sendToAll(dataMessage, immediates)
-			dataMessage.operation = "done"
-			channels.control <- dataMessage
+			dataMessage.Operation = "done"
+			channels.Control <- dataMessage
 			controlinfo(collectionName, "finished with", message)
 		case "deferred":
 			// info(collectionName, "deferred")
@@ -90,12 +90,12 @@ func collectionHandler(collectionName string, s *service.Seed, channels channels
 			default:
 				fatal(collectionName, "unhandled collection type", c.Type)
 			}
-			dataMessage.operation = "done"
-			channels.control <- dataMessage
+			dataMessage.Operation = "done"
+			channels.Control <- dataMessage
 			controlinfo(collectionName, "finished with", message)
 		case "data", "<~":
 			flowinfo(collectionName, "received", message.String())
-			for _, tuple := range message.data {
+			for _, tuple := range message.Data {
 				data.add(tuple)
 			}
 		default:
@@ -105,15 +105,15 @@ func collectionHandler(collectionName string, s *service.Seed, channels channels
 	}
 }
 
-func ruleChannels(deferred bool, collectionName string, s *service.Seed, channels channels) []chan<- messageContainer {
-	ruleChannels := []chan<- messageContainer{}
+func ruleChannels(deferred bool, collectionName string, s *service.Seed, channels Channels) []chan<- MessageContainer {
+	ruleChannels := []chan<- MessageContainer{}
 	for ruleNum, rule := range s.Rules {
 		if (deferred && rule.Operation == "<=") || (!deferred && rule.Operation != "<=") {
 			continue
 		}
 		for _, collection := range rule.Requires() {
 			if collection == collectionName {
-				ruleChannels = append(ruleChannels, channels.rules[ruleNum])
+				ruleChannels = append(ruleChannels, channels.Rules[ruleNum])
 				break
 			}
 		}

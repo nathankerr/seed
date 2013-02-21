@@ -4,30 +4,33 @@ import (
 	service "github.com/nathankerr/seed"
 )
 
-type channels struct {
-	control      chan messageContainer
-	distribution chan messageContainer
-	collections  map[string]chan messageContainer
-	rules        []chan messageContainer
+type Channels struct {
+	Control      chan MessageContainer
+	Distribution chan MessageContainer
+	Collections  map[string]chan MessageContainer
+	Rules        []chan MessageContainer
+	Monitor      chan MonitorMessage
 }
 
-func makeChannels(s *service.Seed) channels {
-	var channels channels
+func makeChannels(s *service.Seed) Channels {
+	var channels Channels
 
-	channels.control = make(chan messageContainer)
-	channels.distribution = make(chan messageContainer)
+	channels.Control = make(chan MessageContainer)
+	channels.Distribution = make(chan MessageContainer)
 
-	channels.collections = make(map[string]chan messageContainer)
+	channels.Collections = make(map[string]chan MessageContainer)
 	for collectionName, _ := range s.Collections {
-		channels.collections[collectionName] =
-			make(chan messageContainer)
+		channels.Collections[collectionName] =
+			make(chan MessageContainer)
 	}
 
-	channels.rules = []chan messageContainer{}
+	channels.Rules = []chan MessageContainer{}
 	for _, _ = range s.Rules {
-		channels.rules = append(channels.rules,
-			make(chan messageContainer))
+		channels.Rules = append(channels.Rules,
+			make(chan MessageContainer))
 	}
+
+	channels.Monitor = make(chan MonitorMessage)
 
 	return channels
 }

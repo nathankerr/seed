@@ -11,10 +11,10 @@ import (
 type ruleHandler struct {
 	number   int
 	s        *service.Seed
-	channels channels
+	channels Channels
 }
 
-func handleRule(ruleNumber int, s *service.Seed, channels channels) {
+func handleRule(ruleNumber int, s *service.Seed, channels Channels) {
 	controlinfo(ruleNumber, "started")
 	handler := ruleHandler{
 		number:   ruleNumber,
@@ -22,34 +22,34 @@ func handleRule(ruleNumber int, s *service.Seed, channels channels) {
 		channels: channels,
 	}
 
-	input := channels.rules[ruleNumber]
+	input := channels.Rules[ruleNumber]
 	rule := s.Rules[ruleNumber]
-	dataMessages := []messageContainer{}
+	dataMessages := []MessageContainer{}
 
 	for {
 		message := <-input
 		controlinfo(ruleNumber, "received", message)
 
-		switch message.operation {
+		switch message.Operation {
 		case "immediate":
-			var results messageContainer
+			var results MessageContainer
 			if rule.Operation == "<=" {
 				results = handler.run(dataMessages)
 			}
-			dataMessages = []messageContainer{}
-			results.operation = "done"
-			results.collection = fmt.Sprint(handler.number)
-			channels.control <- results
+			dataMessages = []MessageContainer{}
+			results.Operation = "done"
+			results.Collection = fmt.Sprint(handler.number)
+			channels.Control <- results
 			controlinfo(ruleNumber, "finished with", message)
 		case "deferred":
-			var results messageContainer
+			var results MessageContainer
 			if rule.Operation != "<=" {
 				results = handler.run(dataMessages)
 			}
-			dataMessages = []messageContainer{}
-			results.operation = "done"
-			results.collection = fmt.Sprint(handler.number)
-			channels.control <- results
+			dataMessages = []MessageContainer{}
+			results.Operation = "done"
+			results.Collection = fmt.Sprint(handler.number)
+			channels.Control <- results
 			controlinfo(ruleNumber, "finished with", message)
 		case "data":
 			// cache data received before an immediate or deferred message initiates execution
@@ -61,7 +61,7 @@ func handleRule(ruleNumber int, s *service.Seed, channels channels) {
 	}
 }
 
-func (handler *ruleHandler) run(dataMessages []messageContainer) messageContainer {
+func (handler *ruleHandler) run(dataMessages []MessageContainer) MessageContainer {
 	// get the data needed to calculate the results
 	data := handler.getRequiredData(dataMessages)
 
@@ -70,36 +70,36 @@ func (handler *ruleHandler) run(dataMessages []messageContainer) messageContaine
 
 	// send results
 	outputName := handler.s.Rules[handler.number].Supplies
-	outputMessage := messageContainer{
-		operation:  "data",
-		collection: outputName,
-		data:       results,
+	outputMessage := MessageContainer{
+		Operation:  "data",
+		Collection: outputName,
+		Data:       results,
 	}
-	handler.channels.collections[outputName] <- outputMessage
+	handler.channels.Collections[outputName] <- outputMessage
 	flowinfo(handler.number, "sent", outputMessage.String(), "to", outputName)
 
 	return outputMessage
 }
 
-func (handler *ruleHandler) getRequiredData(dataMessages []messageContainer) map[string][]service.Tuple {
+func (handler *ruleHandler) getRequiredData(dataMessages []MessageContainer) map[string][]service.Tuple {
 	data := map[string][]service.Tuple{}
 
 	// process cached data
 	for _, message := range dataMessages {
-		data[message.collection] = message.data
+		data[message.Collection] = message.Data
 	}
 
 	// receive other needed data
 	required := len(handler.s.Rules[handler.number].Requires())
-	input := handler.channels.rules[handler.number]
+	input := handler.channels.Rules[handler.number]
 	for stillNeeded := required - len(dataMessages); stillNeeded > 0; stillNeeded-- {
 		message := <-input
 		controlinfo(handler.number, "received", message)
 
-		switch message.operation {
+		switch message.Operation {
 		case "data":
 			flowinfo(handler.number, "received", message.String())
-			data[message.collection] = message.data
+			data[message.Collection] = message.Data
 		default:
 			fatal(handler.number, "unhandled message", message)
 		}

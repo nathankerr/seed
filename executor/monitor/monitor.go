@@ -1,20 +1,16 @@
-package executor
+package monitor
 
 import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
 	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed/executor"
 	"html/template"
 	"io"
 	"net/http"
 	"strconv"
 )
-
-type monitorMessage struct {
-	Block string
-	Data  interface{}
-}
 
 var registerSocket = make(chan socket)
 
@@ -67,10 +63,10 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 }
 
 func sendStartupData(s *service.Seed, socket socket) {
-	messages := []monitorMessage{}
+	messages := []executor.MonitorMessage{}
 
 	// _service block content
-	messages = append(messages, monitorMessage{
+	messages = append(messages, executor.MonitorMessage{
 		Block: "_service",
 		Data:  fmt.Sprintf("<code>%s</code>", s.String()[1:]), // skip the beginning newline in the string
 	})
@@ -80,7 +76,7 @@ func sendStartupData(s *service.Seed, socket socket) {
 	for name, _ := range s.Collections {
 		collections += fmt.Sprintf("<option value=\"%s\">%s</option>", name, name)
 	}
-	messages = append(messages, monitorMessage{
+	messages = append(messages, executor.MonitorMessage{
 		Block: "_collections",
 		Data:  collections,
 	})
@@ -95,7 +91,7 @@ func sendStartupData(s *service.Seed, socket socket) {
 	}
 }
 
-func startMonitor(address string, channel chan monitorMessage, s *service.Seed) {
+func StartMonitor(address string, channel chan executor.MonitorMessage, s *service.Seed) {
 	monitorAddress = address
 	go monitorServer(address)
 
@@ -133,7 +129,7 @@ func socketHandler(ws *websocket.Conn) {
 	<-done
 }
 
-func renderHTML(message monitorMessage, s *service.Seed) string {
+func renderHTML(message executor.MonitorMessage, s *service.Seed) string {
 	collection, ok := s.Collections[message.Block]
 	if !ok {
 		number, err := strconv.ParseInt(message.Block, 0, 0)
