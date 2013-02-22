@@ -3,10 +3,21 @@ package main
 import (
 	"github.com/nathankerr/seed"
 	"time"
+	"reflect"
+	"fmt"
 )
 
 func current_time_in(input seed.Tuple) seed.Element {
-	timezone := string(input[0].([]uint8))
+	var timezone string
+
+	switch typed := input[0].(type) {
+	case []uint8:
+		timezone = string(typed)
+	case string:
+		timezone = typed
+	default:
+		panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(input[0]).String()))
+	}
 
 	location, err := time.LoadLocation(timezone)
 	if err != nil {

@@ -116,7 +116,7 @@ func StartMonitor(address string, channel chan executor.MonitorMessage, s *servi
 
 func monitorServer(address string) {
 	http.HandleFunc("/", rootHandler)
-	http.Handle("/socket", websocket.Handler(socketHandler))
+	http.Handle("/wsmonitor", websocket.Handler(socketHandler))
 	err := http.ListenAndServe(address, nil)
 	if err != nil {
 		fatal("_monitor", err)
@@ -138,7 +138,7 @@ func renderHTML(message executor.MonitorMessage, s *service.Seed) string {
 			collection = s.Collections[rule.Supplies]
 		} else {
 			switch message.Block {
-			case "_time", "budCommunicator":
+			case "_time", "budCommunicator", "wsjsonCommunicator":
 				return fmt.Sprint(message.Data)
 			default:
 				panic("unhandled block: " + message.Block)
@@ -392,7 +392,7 @@ function init() {
 	resizeContainers()
 
 	// connect to the monitor server
-	websocket = new WebSocket("ws://{{.}}/socket");
+	websocket = new WebSocket("ws://{{.}}/wsmonitor");
 	websocket.onmessage = onMessage;
 	websocket.onclose = onClose;
 	connected.style.backgroundColor = "green"

@@ -1,4 +1,4 @@
-package monitor
+package wsjson
 
 // control output verbosity by toggling lexinfo, parseinfo, and info on and off
 // by enabling/disabling the return statements.
@@ -11,38 +11,14 @@ import (
 	"runtime"
 )
 
-// centralized monitoring info
-func monitorinfo(id interface{}, args ...interface{}) {
+func info(args ...interface{}) {
 	return
-	printlog(id, args...)
+	printlog("wsjson", args...)
 }
 
-func networkerror(id interface{}, args ...interface{}) {
+func log(args ...interface{}) {
 	// return
-	printlog(id, args...)
-}
-
-// data sent and received between go routines
-func flowinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
-}
-
-func info(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
-}
-
-// timing information from executor
-func timeinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
-}
-
-// control communication information
-func controlinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
+	printlog("wsjson", args...)
 }
 
 func fatal(id interface{}, args ...interface{}) {

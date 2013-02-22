@@ -48,3 +48,19 @@ func (ct CollectionType) UnmarshalJSON(input []byte) error {
 
 	return nil
 }
+
+// func (t Tuple) UnmarshalJSON(input []byte) error {
+// 	info(string(input))
+// 	var data []interface{}
+
+// 	err := json.Unmarshal(input, &data)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	for _, item := range data {
+// 		t = append(t, item)
+// 	}
+
+// 	return nil
+// }

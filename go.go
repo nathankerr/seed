@@ -11,7 +11,8 @@ func ToGo(seed *Seed, name string) ([]byte, error) {
 	str = fmt.Sprintf(`%s
 import (
 	"github.com/nathankerr/seed/executor"
-	"github.com/nathankerr/seed/executor/bud"
+	//"github.com/nathankerr/seed/executor/bud"
+	"github.com/nathankerr/seed/executor/wsjson"
 	"github.com/nathankerr/seed/executor/monitor"
 	service "github.com/nathankerr/seed"
 	"time"
@@ -77,7 +78,8 @@ import (
 
 	channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitorAddress)
 	go monitor.StartMonitor(*monitorAddress, channels.Monitor, seed)
-	bud.BudCommunicator(seed, channels, *address)
+	//bud.BudCommunicator(seed, channels, *address)
+	wsjson.Communicator(seed, channels, *address)
 `, str)
 
 	// close main
