@@ -56,7 +56,7 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 				if len(message.Data) == 0 {
 					continue
 				}
-				log("data", message)
+				info("data", message)
 
 				// send the message to the correct socket (by address)
 				// find the address column
