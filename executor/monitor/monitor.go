@@ -392,7 +392,7 @@ function init() {
 	resizeContainers()
 
 	// connect to the monitor server
-	websocket = new WebSocket("ws://{{.}}/wsmonitor");
+	websocket = new WebSocket("ws://" + window.location.host + "/wsmonitor");
 	websocket.onmessage = onMessage;
 	websocket.onclose = onClose;
 	connected.style.backgroundColor = "green"

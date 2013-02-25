@@ -33,7 +33,7 @@ func main() {
 	var execute = flag.Bool("execute", false, "execute the service")
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
-	var address = flag.String("address", "127.0.0.1:3000", "address the bud communicator uses")
+	var address = flag.String("address", ":3000", "address the bud communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])

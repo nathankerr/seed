@@ -47,7 +47,7 @@
 		loader = document.getElementById("loader")
 
 		// connect to the monitor server
-		websocket = new WebSocket("ws://127.0.0.1:8000/wsjson");
+		websocket = new WebSocket("ws://" + window.location.hostname + ":3000/wsjson");
 		websocket.onmessage = onMessage;
 		websocket.onclose = onClose;
 		
@@ -77,7 +77,7 @@
 		<input type="submit" value="Get Current Time In" onclick="send()"/><img src="images/ajax-loader.gif" id="loader"/>
 	</form>
 </div>
-<div id="log" style="overflow: scroll">
+<div id="log">
 </div>
 
 <script>

@@ -25,7 +25,7 @@ import (
 	str = fmt.Sprintf(`%s
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
-	var address = flag.String("address", "127.0.0.1:3000", "address the bud communicator uses")
+	var address = flag.String("address", ":3000", "address the bud communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
 
 	flag.Parse()
@@ -74,7 +74,7 @@ import (
 	}
 
 	println("Starting " + seed.Source.Name + " on " + *address)
-	println("Starting monitor" + " on " + "http://" + *monitorAddress)
+	println("Starting monitor" + " on " + *monitorAddress)
 
 	channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitorAddress)
 	go monitor.StartMonitor(*monitorAddress, channels.Monitor, seed)
