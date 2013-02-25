@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- when running from file, add option --allow-file-access-from-files -->
+<!-- when running from file, add option --allow-file-access-from-files (for chrome) -->
 <html>
 <head>
 <title>Time Service Client</title>
@@ -8,9 +8,7 @@
 <script src="jquery-1.9.1.js"></script>
 <script src="jquery-ui.js"></script>
 <script>
-	var websocket, address, log, connected, error, loader
-
-	
+	var websocket, address, log, connected, loader
 
 	function onMessage(e) {
 		message = JSON.parse(e.data)
@@ -19,7 +17,6 @@
 			var p = document.createElement("p")
 			p.innerHTML = message.Data[i][1] + " " + message.Data[i][2]
 			
-			// log.appendChild(p)
 			log.insertBefore(p, log.childNodes[0])
 		}
 
@@ -28,10 +25,6 @@
 
 	function onClose() {
 		connected.style.backgroundColor = "red"
-	}
-
-	function onError(e) {
-		error = e
 	}
 
 	function send() {
@@ -57,7 +50,6 @@
 		websocket = new WebSocket("ws://127.0.0.1:8000/wsjson");
 		websocket.onmessage = onMessage;
 		websocket.onclose = onClose;
-		websocket.onerror = onError;
 		
 		// set uniq id (address)
 		websocket.onopen = function() {
