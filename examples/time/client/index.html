@@ -8,7 +8,7 @@
 <script src="jquery-1.9.1.js"></script>
 <script src="jquery-ui.js"></script>
 <script>
-	var websocket, address, log, connected, loader
+	var websocket, address, log, connected, loader, server
 
 	function onMessage(e) {
 		message = JSON.parse(e.data)
@@ -33,7 +33,7 @@
 			websocket.send(JSON.stringify({
 				Operation: "<~",
 				Collection: "request",
-				Data: [["127.0.0.1:3000", address, timezone.value]]
+				Data: [[server, address, timezone.value]]
 			}))
 		} catch (e) {
 			alert(e)
@@ -47,7 +47,8 @@
 		loader = document.getElementById("loader")
 
 		// connect to the monitor server
-		websocket = new WebSocket("ws://" + window.location.hostname + ":3000/wsjson");
+		server = "ws://" + window.location.hostname + ":3000/wsjson"
+		websocket = new WebSocket(server);
 		websocket.onmessage = onMessage;
 		websocket.onclose = onClose;
 		

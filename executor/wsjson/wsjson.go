@@ -106,7 +106,8 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 					socket, ok := sockets[tupleAddress]
 					if !ok {
 						// skip addresses without sockets
-						log("socket for address \""+tupleAddress+"\" not found", socket)
+						// this also drops tuples sent to the local address
+						info("socket for address \""+tupleAddress+"\" not found", socket)
 						continue
 					}
 

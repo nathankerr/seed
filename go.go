@@ -11,7 +11,7 @@ func ToGo(seed *Seed, name string) ([]byte, error) {
 	str = fmt.Sprintf(`%s
 import (
 	"github.com/nathankerr/seed/executor"
-	//"github.com/nathankerr/seed/executor/bud"
+	"github.com/nathankerr/seed/executor/bud"
 	"github.com/nathankerr/seed/executor/wsjson"
 	"github.com/nathankerr/seed/executor/monitor"
 	service "github.com/nathankerr/seed"
@@ -25,8 +25,10 @@ import (
 	str = fmt.Sprintf(`%s
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
-	var address = flag.String("address", ":3000", "address the bud communicator uses")
+	var communicator = flag.String("communicator", "bud", "which communicator to use (bud wsjson")
+	var address = flag.String("address", ":3000", "address the communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
+
 
 	flag.Parse()
 `, str)
@@ -78,8 +80,15 @@ import (
 
 	channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitorAddress)
 	go monitor.StartMonitor(*monitorAddress, channels.Monitor, seed)
-	//bud.BudCommunicator(seed, channels, *address)
-	wsjson.Communicator(seed, channels, *address)
+
+	switch *communicator {
+	case "bud":
+		bud.BudCommunicator(seed, channels, *address)
+	case "wsjson":
+		wsjson.Communicator(seed, channels, *address)
+	default:
+		log.Fatalln("Unknown communicator:", *communicator)
+	}
 `, str)
 
 	// close main
