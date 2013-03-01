@@ -15,6 +15,7 @@ type bud struct {
 	listener net.PacketConn
 	s        *service.Seed
 	channels executor.Channels
+	addresses map[string]bool
 }
 
 func (bud *bud) listen() {
@@ -54,6 +55,22 @@ func (bud *bud) networkReader() {
 				networkerror("budInputReader", "expected lenght of", expectedLength, "for", tuple, "for collection", collectionName)
 				continue
 			}
+		}
+
+		// add address to list of known addresses to handle :port_num style addressing
+		// find the address column
+		addressColumn := -1
+		for index, name := range collection.Key {
+			if name[0] == '@' {
+				addressColumn = index
+				break
+			}
+		}
+		if addressColumn == -1 {
+			panic("no address column for collection " + collectionName)
+		}
+		for _, tuple := range tuples {
+			bud.addresses[string(tuple[addressColumn].([]uint8))] = true
 		}
 
 		// send to correct collection
@@ -177,7 +194,7 @@ func (bud *bud) send(message executor.MessageContainer) {
 		}
 
 		// don't send to self
-		if address.String() == bud.address {
+		if bud.addresses[address.String()] {
 			continue
 		}
 
@@ -199,6 +216,7 @@ func BudCommunicator(s *service.Seed, channels executor.Channels, address string
 		address:  address,
 		s:        s,
 		channels: channels,
+		addresses: make(map[string]bool),
 	}
 
 	bud.listen()
