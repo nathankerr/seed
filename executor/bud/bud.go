@@ -11,10 +11,10 @@ import (
 )
 
 type bud struct {
-	address  string
-	listener net.PacketConn
-	s        *service.Seed
-	channels executor.Channels
+	address   string
+	listener  net.PacketConn
+	s         *service.Seed
+	channels  executor.Channels
 	addresses map[string]bool
 }
 
@@ -213,9 +213,9 @@ func (bud *bud) send(message executor.MessageContainer) {
 
 func BudCommunicator(s *service.Seed, channels executor.Channels, address string) {
 	bud := bud{
-		address:  address,
-		s:        s,
-		channels: channels,
+		address:   address,
+		s:         s,
+		channels:  channels,
 		addresses: make(map[string]bool),
 	}
 
