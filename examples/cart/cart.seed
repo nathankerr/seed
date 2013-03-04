@@ -1,0 +1,11 @@
+# on action
+# seq is used to break the set
+input action [cart, seq] => [item, num]
+table log [cart, seq] => [item, num]
+log <+ [action.cart, action.seq, action.item, action.num]
+
+# on checkout
+input checkout [cart]
+output response [cart] => [items]
+
+response <+ [checkout.cart, {accumulate_items log.item log.num}]: checkout.cart => log.cart

@@ -1,0 +1,9 @@
+channel :action, [:@address, :cart, :seq, :item, :num]
+channel :checkout, [:@address, :response_addr, :cart]
+channel :response, [:@response_addr, :cart] => [:items]
+
+stdio <~ response.inspected
+
+action <~ [["127.0.0.1:3000", 123, 1, "apple", 1],["127.0.0.1:3000", 123, 2, "apple", 2],["127.0.0.1:3000", 123, 3, "orange", 5],["127.0.0.1:3000", 456, 4, "apple", 1]]
+
+checkout <~ [["127.0.0.1:3000", "127.0.0.1:3001", 123],["127.0.0.1:3000", "127.0.0.1:3001", 456]]

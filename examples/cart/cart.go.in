@@ -1,0 +1,27 @@
+package main
+
+import (
+	"github.com/nathankerr/seed"
+)
+
+func accumulate_items(input []seed.Tuple) seed.Element {
+	items := map[string]int8{}
+	for _, value := range input {
+		item := string(value[0].([]uint8))
+		count := value[1].(int8)
+
+		items[item] += count
+	}
+
+	output := [][]interface{}{}
+	for item, count := range items {
+		if count > 0 {
+			output = append(output, []interface{}{
+				item,
+				count,
+			})
+		}
+	}
+
+	return output
+}

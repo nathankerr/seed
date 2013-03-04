@@ -1,0 +1,5 @@
+#!/bin/sh
+
+seed -t="go bloom" -transformations="network" cart.seed && 
+cp cart.go.in build/cart.go &&
+go run build/*.go -sleep=1s -monitor=:8000
