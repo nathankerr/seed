@@ -1,0 +1,9 @@
+package main
+
+import (
+	"github.com/nathankerr/seed"
+)
+
+func gather(input []seed.Tuple) seed.Element {
+	return input
+}

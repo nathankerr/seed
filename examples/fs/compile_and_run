@@ -1,0 +1,5 @@
+#!/bin/sh
+
+seed -t="go" -transformations="network" fs.seed && 
+cp fs.go.in build/fs.go &&
+go run build/*.go -sleep=1s -monitor=:8000

@@ -1,0 +1,11 @@
+# path contains name for both files and paths
+table files [path, name] => [is_dir, data]
+
+# ls
+input ls [path]
+output ls_ret [path, names]
+ls_ret <+ [ls.path, {gather names.name}]: files.path => ls.path
+
+# mkdir
+input mkdir [path, name]
+files <+ [mkdir.path, mkdir.name, (true), (null)]: 
