@@ -3,20 +3,20 @@ package examples
 import (
 	"errors"
 	"fmt"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"strings"
 )
 
-func Add_network_interface(orig *service.Seed) (*service.Seed, error) {
+func Add_network_interface(orig *seed.Seed) (*seed.Seed, error) {
 	err := orig.InSubset()
 	if err != nil {
-		return nil, errors.New("Adding a network interface requires that the specified service be in the subset. " + err.Error())
+		return nil, errors.New("Adding a network interface requires that the specified seed be in the subset. " + err.Error())
 	}
 
 	groups := getGroups(orig.Name, orig)
 
-	networked := &service.Seed{
-		Collections: make(map[string]*service.Collection),
+	networked := &seed.Seed{
+		Collections: make(map[string]*seed.Collection),
 		Source:      orig.Source,
 		Name:        strings.Title(orig.Name) + "Server",
 	}
@@ -44,19 +44,19 @@ func Add_network_interface(orig *service.Seed) (*service.Seed, error) {
 
 type group struct {
 	rules       []int
-	collections map[string]service.CollectionType
+	collections map[string]seed.CollectionType
 }
 
-func getGroups(sname string, seed *service.Seed) map[string]*group {
+func getGroups(sname string, service *seed.Seed) map[string]*group {
 	groups := make(map[string]*group)
 	collectionToGroupMap := make(map[string]string)
 
-	for num, rule := range seed.Rules {
+	for num, rule := range service.Rules {
 		// find or create the group, ref with groupName
 		groupName := ""
 		for _, collection := range rule.Collections() {
 			// tables are not included in the group
-			if seed.Collections[collection].Type == service.CollectionTable {
+			if service.Collections[collection].Type == seed.CollectionTable {
 				continue
 			}
 
@@ -68,7 +68,7 @@ func getGroups(sname string, seed *service.Seed) map[string]*group {
 		}
 		if groupName == "" {
 			groupName = fmt.Sprintf("%s%d", sname, rule.Source.Line)
-			collections := make(map[string]service.CollectionType)
+			collections := make(map[string]seed.CollectionType)
 			groups[groupName] = &group{collections: collections}
 		}
 
@@ -78,11 +78,11 @@ func getGroups(sname string, seed *service.Seed) map[string]*group {
 		// add the relevant collections
 		collectionToGroupMap[rule.Supplies] = groupName
 		groups[groupName].collections[rule.Supplies] =
-			seed.Collections[rule.Supplies].Type
+			service.Collections[rule.Supplies].Type
 
 		for _, cname := range rule.Collections() {
 			collectionToGroupMap[cname] = groupName
-			groups[groupName].collections[cname] = seed.Collections[cname].Type
+			groups[groupName].collections[cname] = service.Collections[cname].Type
 		}
 	}
 
@@ -94,11 +94,11 @@ func (g *group) typ() string {
 
 	for _, ctyp := range g.collections {
 		switch ctyp {
-		case service.CollectionInput:
+		case seed.CollectionInput:
 			inputs++
-		case service.CollectionOutput:
+		case seed.CollectionOutput:
 			outputs++
-		case service.CollectionTable:
+		case seed.CollectionTable:
 			tables++
 		default:
 			// shouldn't get here
@@ -126,13 +126,13 @@ func count(i int) string {
 }
 
 // adds a network interface by adding and handling explicit correlation data
-func add_interface(orig *service.Seed, group *group, networked *service.Seed) *service.Seed {
+func add_interface(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Seed {
 
 	// name the output address columns
 	output_addrs := []string{}
 	for name, _ := range group.collections {
 		collection := orig.Collections[name]
-		if collection.Type == service.CollectionOutput {
+		if collection.Type == seed.CollectionOutput {
 			output_addrs = append(output_addrs, name+"_addr")
 		}
 	}
@@ -141,7 +141,7 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 	for name, _ := range group.collections {
 		collection := orig.Collections[name]
 		switch collection.Type {
-		case service.CollectionInput:
+		case seed.CollectionInput:
 			// add output_addrs to the beginning of key
 			key := []string{"@address"}
 			for _, output_addr := range output_addrs {
@@ -151,13 +151,13 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 				key = append(key, ckey)
 			}
 			collection.Key = key
-		case service.CollectionOutput:
+		case seed.CollectionOutput:
 			key := []string{"@" + name + "_addr"}
 			for _, ckey := range collection.Key {
 				key = append(key, ckey)
 			}
 			collection.Key = key
-		case service.CollectionTable:
+		case seed.CollectionTable:
 			// no-op
 		default:
 			// should not get here
@@ -172,7 +172,7 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 
 		inputs := []string{}
 		for _, name := range rule.Collections() {
-			if orig.Collections[name].Type == service.CollectionInput {
+			if orig.Collections[name].Type == seed.CollectionInput {
 				inputs = append(inputs, name)
 			}
 		}
@@ -180,11 +180,11 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 		// The correlation data needs to be matched in the predicates
 		for i := 1; i < len(inputs); i++ {
 			for _, output_addr := range output_addrs {
-				rule.Predicate = append(rule.Predicate, service.Constraint{
-					Left: service.QualifiedColumn{
+				rule.Predicate = append(rule.Predicate, seed.Constraint{
+					Left: seed.QualifiedColumn{
 						Collection: inputs[0],
 						Column:     output_addr},
-					Right: service.QualifiedColumn{
+					Right: seed.QualifiedColumn{
 						Collection: inputs[i],
 						Column:     output_addr},
 				})
@@ -192,13 +192,13 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 		}
 
 		switch orig.Collections[rule.Supplies].Type {
-		case service.CollectionOutput:
+		case seed.CollectionOutput:
 			// convert to async insert as required by channels
 			rule.Operation = "<~"
 			// add correlation data to projection
-			projection := []service.Expression{}
+			projection := []seed.Expression{}
 			if len(inputs) > 0 {
-				projection = append(projection, service.Expression{Value: service.QualifiedColumn{
+				projection = append(projection, seed.Expression{Value: seed.QualifiedColumn{
 					Collection: inputs[0],
 					Column:     rule.Supplies + "_addr"}})
 			}
@@ -206,7 +206,7 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 				projection = append(projection, o)
 			}
 			rule.Projection = projection
-		case service.CollectionTable:
+		case seed.CollectionTable:
 			// no-op
 		default:
 			// should not get here
@@ -219,9 +219,9 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 	for cname, _ := range group.collections {
 		collection := orig.Collections[cname]
 		switch collection.Type {
-		case service.CollectionInput, service.CollectionOutput:
-			collection.Type = service.CollectionChannel
-		case service.CollectionTable:
+		case seed.CollectionInput, seed.CollectionOutput:
+			collection.Type = seed.CollectionChannel
+		case seed.CollectionTable:
 			// no-op
 		default:
 			// shouldn't get here
@@ -232,7 +232,7 @@ func add_interface(orig *service.Seed, group *group, networked *service.Seed) *s
 	return networked
 }
 
-func merge(orig *service.Seed, group *group, networked *service.Seed) *service.Seed {
+func merge(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Seed {
 	for _, rulenum := range group.rules {
 		networked.Rules = append(networked.Rules, orig.Rules[rulenum])
 	}
