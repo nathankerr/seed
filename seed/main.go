@@ -53,33 +53,9 @@ func main() {
 	for _, filename := range flag.Args() {
 		filename = filepath.Clean(filename)
 
-		_, name := filepath.Split(filename)
-		name = name[:len(name)-len(filepath.Ext(name))]
+		seed, name := load(filename, *from_format, *full)
 		if _, ok := seeds[name]; ok {
 			fatal("Seed", name, "already exists")
-		}
-
-		seedSource, err := ioutil.ReadFile(filename)
-		if err != nil {
-			fatal(err)
-		}
-
-		var seed *service.Seed
-		switch *from_format {
-		case "seed":
-			seed, err = service.FromSeed(filename, seedSource, !*full)
-		case "json":
-			seed, err = service.FromJson(filename, seedSource)
-		default:
-			fatal("Loading from", *from_format, "format not supported.\n")
-		}
-		if err != nil {
-			fatal(err)
-		}
-
-		err = seed.Validate()
-		if err != nil {
-			fatal(err)
 		}
 
 		seeds[name] = seed
@@ -87,25 +63,7 @@ func main() {
 
 	info("Transform Seeds")
 	for _, transformation := range strings.Fields(*transformations) {
-		transformed := make(map[string]*service.Seed)
-		var err error
-		for sname, seed := range seeds {
-			var transform func(name string, seed *service.Seed, seeds map[string]*service.Seed) (map[string]*service.Seed, error)
-			switch transformation {
-			case "network":
-				transform = examples.Add_network_interface
-			case "replicate":
-				transform = examples.Add_replicated_tables
-			default:
-				fatal(transformation, "not supported.\n")
-			}
-
-			transformed, err = transform(sname, seed, transformed)
-			if err != nil {
-				fatal(transformation, "error:", err)
-			}
-		}
-		seeds = transformed
+		seeds = transform(seeds, transformation)
 	}
 
 	info("Write Seeds")
@@ -116,78 +74,137 @@ func main() {
 	}
 
 	for name, seed := range seeds {
-		for _, format := range strings.Fields(*to_format) {
-			var extension string
-			var writer func(seed *service.Seed, name string) ([]byte, error)
-			switch format {
-			case "bloom":
-				extension = "rb"
-				writer = service.ToBloom
-			case "dot":
-				extension = "dot"
-				writer = service.ToDot
-			case "go":
-				extension = "go"
-				writer = service.ToGo
-			case "json":
-				extension = "json"
-				writer = service.ToJson
-			case "seed":
-				extension = "seed"
-				writer = service.ToSeed
-			case "latex":
-				extension = "latex"
-				writer = service.ToLaTeX
-			default:
-				fatal("Writing to", format, "format not supported.\n")
-			}
-
-			filename := filepath.Join(outputdir,
-				strings.ToLower(name)+"."+extension)
-			out, err := os.Create(filename)
-			if err != nil {
-				fatal(err)
-			}
-
-			marshalled, err := writer(seed, name)
-			if err != nil {
-				fatal("Error while converting to", format, ":", err)
-			}
-			_, err = out.Write(marshalled)
-			if err != nil {
-				fatal(err)
-			}
-
-			out.Close()
-		}
+		write(seed, name, *to_format, outputdir)
 	}
 
 	if *execute {
 		info("Execute")
 		for name, seed := range seeds {
-			info("Starting", name)
-
-			var sleepDuration time.Duration
-			if *sleep != "" {
-				sleepDuration, err = time.ParseDuration(*sleep)
-				if err != nil {
-					fatal(err)
-				}
-			}
-
-			var timeoutDuration time.Duration
-			if *timeout != "" {
-				timeoutDuration, err = time.ParseDuration(*timeout)
-				if err != nil {
-					fatal(err)
-				}
-			}
-
-			channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitorAddress)
-			go monitor.StartMonitor(*monitorAddress, channels.Monitor, seed)
-			bud.BudCommunicator(seed, channels, *address)
-			info("After StartMonitor")
-			break
+			start(seed, name, *sleep, *timeout, *address, *monitorAddress)
 		}
 	}
+}
+
+func load(filename, format string, full bool) (*service.Seed, string) {
+	_, name := filepath.Split(filename)
+	name = name[:len(name)-len(filepath.Ext(name))]
+
+	seedSource, err := ioutil.ReadFile(filename)
+	if err != nil {
+		fatal(err)
+	}
+
+	var seed *service.Seed
+	switch format {
+	case "seed":
+		seed, err = service.FromSeed(filename, seedSource, !full)
+	case "json":
+		seed, err = service.FromJson(filename, seedSource)
+	default:
+		fatal("Loading from", format, "format not supported.\n")
+	}
+	if err != nil {
+		fatal(err)
+	}
+
+	err = seed.Validate()
+	if err != nil {
+		fatal(err)
+	}
+
+	return seed, name
+}
+
+func write(seed *service.Seed, name string, format string, outputdir string) {
+	for _, format := range strings.Fields(format) {
+		var extension string
+		var writer func(seed *service.Seed, name string) ([]byte, error)
+		switch format {
+		case "bloom":
+			extension = "rb"
+			writer = service.ToBloom
+		case "dot":
+			extension = "dot"
+			writer = service.ToDot
+		case "go":
+			extension = "go"
+			writer = service.ToGo
+		case "json":
+			extension = "json"
+			writer = service.ToJson
+		case "seed":
+			extension = "seed"
+			writer = service.ToSeed
+		case "latex":
+			extension = "latex"
+			writer = service.ToLaTeX
+		default:
+			fatal("Writing to", format, "format not supported.\n")
+		}
+
+		filename := filepath.Join(outputdir,
+			strings.ToLower(name)+"."+extension)
+		out, err := os.Create(filename)
+		if err != nil {
+			fatal(err)
+		}
+
+		marshalled, err := writer(seed, name)
+		if err != nil {
+			fatal("Error while converting to", format, ":", err)
+		}
+		_, err = out.Write(marshalled)
+		if err != nil {
+			fatal(err)
+		}
+
+		out.Close()
+	}
+}
+
+func transform(seeds map[string]*service.Seed, transformation string) map[string]*service.Seed {
+	transformed := make(map[string]*service.Seed)
+	var err error
+	for sname, seed := range seeds {
+		var transform func(name string, seed *service.Seed, seeds map[string]*service.Seed) (map[string]*service.Seed, error)
+		switch transformation {
+		case "network":
+			transform = examples.Add_network_interface
+		case "replicate":
+			transform = examples.Add_replicated_tables
+		default:
+			fatal(transformation, "not supported.\n")
+		}
+
+		transformed, err = transform(sname, seed, transformed)
+		if err != nil {
+			fatal(transformation, "error:", err)
+		}
+	}
+	return transformed
+}
+
+func start(seed *service.Seed, name, sleep, timeout, address, monitorAddress string) {
+	info("Starting", name)
+
+	var err error
+	var sleepDuration time.Duration
+	if sleep != "" {
+		sleepDuration, err = time.ParseDuration(sleep)
+		if err != nil {
+			fatal(err)
+		}
+	}
+
+	var timeoutDuration time.Duration
+	if timeout != "" {
+		timeoutDuration, err = time.ParseDuration(timeout)
+		if err != nil {
+			fatal(err)
+		}
+	}
+
+	channels := executor.Execute(seed, timeoutDuration, sleepDuration, address, monitorAddress)
+	go monitor.StartMonitor(monitorAddress, channels.Monitor, seed)
+	bud.BudCommunicator(seed, channels, address)
 }
