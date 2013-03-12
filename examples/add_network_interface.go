@@ -10,28 +10,29 @@ import (
 func Add_network_interface(orig *service.Seed) (*service.Seed, error) {
 	err := orig.InSubset()
 	if err != nil {
-		return nil, errors.New("Adding a network interface requires that the specified orig be in the subset. " + err.Error())
+		return nil, errors.New("Adding a network interface requires that the specified service be in the subset. " + err.Error())
 	}
 
 	groups := getGroups(orig.Name, orig)
 
 	networked := &service.Seed{
 		Collections: make(map[string]*service.Collection),
-		Source: orig.Source,
-		Name: strings.Title(orig.Name) + "Server",
+		Source:      orig.Source,
+		Name:        strings.Title(orig.Name) + "Server",
 	}
 
 	for _, group := range groups {
 		switch group.typ() {
 		case "000", "010", "0n0", "100", "n00": // not possible
-			panic(group.typ())
+			return nil, errors.New(group.typ() + " should not have been possible.")
 		case "011", "01n", "0n1", "0nn": // not input driven (not handled)
-			panic(group.typ())
+			// while these types aren't handled, we will just pass them through
+			networked = merge(orig, group, networked)
 		case "001", "00n", "101", "10n", "n01", "n0n", // passthrough
 			"110", "111", "11n", // single output
 			"1n0", "1n1", "1nn", // multiple output
 			"n10", "n11", "n1n", "nn0", "nn1", "nnn": // multiple input
-			networked = add_network_interface_helper(orig, group, networked)
+			networked = add_interface(orig, group, networked)
 		default:
 			// shouldn't get here
 			panic(group.typ())
@@ -125,7 +126,7 @@ func count(i int) string {
 }
 
 // adds a network interface by adding and handling explicit correlation data
-func add_network_interface_helper(orig *service.Seed, group *group, networked *service.Seed) *service.Seed {
+func add_interface(orig *service.Seed, group *group, networked *service.Seed) *service.Seed {
 
 	// name the output address columns
 	output_addrs := []string{}
@@ -226,6 +227,18 @@ func add_network_interface_helper(orig *service.Seed, group *group, networked *s
 			// shouldn't get here
 			panic(collection.Type)
 		}
+	}
+
+	return networked
+}
+
+func merge(orig *service.Seed, group *group, networked *service.Seed) *service.Seed {
+	for _, rulenum := range group.rules {
+		networked.Rules = append(networked.Rules, orig.Rules[rulenum])
+	}
+
+	for collectionName, _ := range group.collections {
+		networked.Collections[collectionName] = orig.Collections[collectionName]
 	}
 
 	return networked
