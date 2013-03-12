@@ -1,7 +1,7 @@
 package seed
 
 type Seed struct {
-	Name string
+	Name        string
 	Collections map[string]*Collection // string is same as collection.name
 	Rules       []*Rule
 	Source      Source

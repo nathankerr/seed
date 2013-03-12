@@ -104,7 +104,7 @@ func write(seed *service2.Seed, name string, formats string, outputdir string) {
 	if err != nil {
 		fatal(err)
 	}
-	
+
 	for _, format := range strings.Fields(formats) {
 		var extension string
 		var writer func(seed *service2.Seed, name string) ([]byte, error)
@@ -166,7 +166,7 @@ func transform(seed *service2.Seed, transformation string) *service2.Seed {
 	if err != nil {
 		fatal(transformation, "error:", err)
 	}
-	
+
 	return transformed
 }
 
