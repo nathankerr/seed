@@ -5,12 +5,8 @@ import (
 	"github.com/nathankerr/seed"
 )
 
-func Add_replicated_tables(name string, orig *seed.Seed, seeds map[string]*seed.Seed) (map[string]*seed.Seed, error) {
-	// find an existing service to modify or create a new one
-	service, ok := seeds[name]
-	if !ok {
-		service = &seed.Seed{Collections: make(map[string]*seed.Collection), Source: orig.Source}
-	}
+func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
+	service := &seed.Seed{Collections: make(map[string]*seed.Collection), Source: orig.Source, Name: orig.Name}
 
 	// add helper tables, rules
 	for tname, table := range orig.Collections {
@@ -165,6 +161,5 @@ func Add_replicated_tables(name string, orig *seed.Seed, seeds map[string]*seed.
 		service.Rules = append(service.Rules, rule)
 	}
 
-	seeds[name] = service
-	return seeds, nil
+	return service, nil
 }

@@ -7,13 +7,17 @@ import (
 	"strings"
 )
 
-func Add_network_interface(sname string, seed *service.Seed, services map[string]*service.Seed) (map[string]*service.Seed, error) {
+func Add_network_interface(seed *service.Seed) (*service.Seed, error) {
 	err := seed.InSubset()
 	if err != nil {
 		return nil, errors.New("Adding a network interface requires that the specified seed be in the subset. " + err.Error())
 	}
 
-	groups := getGroups(sname, seed)
+	groups := getGroups(seed.Name, seed)
+
+	// TODO: remove
+	services := make(map[string]*service.Seed)
+	services[seed.Name] = seed
 
 	for _, group := range groups {
 		switch group.typ() {
@@ -25,14 +29,19 @@ func Add_network_interface(sname string, seed *service.Seed, services map[string
 			"110", "111", "11n", // single output
 			"1n0", "1n1", "1nn", // multiple output
 			"n10", "n11", "n1n", "nn0", "nn1", "nnn": // multiple input
-			services = add_network_interface_helper(services, group, seed, sname)
+			services = add_network_interface_helper(services, group, seed, seed.Name)
 		default:
 			// shouldn't get here
 			panic(group.typ())
 		}
 	}
 
-	return services, nil
+	// TODO: remove
+	for _, seed := range services {
+		return seed, nil
+	}
+
+	return nil, errors.New("there were no resulting services")
 }
 
 type group struct {

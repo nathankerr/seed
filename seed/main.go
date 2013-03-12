@@ -4,7 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	service "github.com/nathankerr/seed"
+	service2 "github.com/nathankerr/seed"
 	"github.com/nathankerr/seed/examples"
 	"github.com/nathankerr/seed/executor"
 	"github.com/nathankerr/seed/executor/bud"
@@ -30,76 +30,69 @@ func main() {
 		"formats to write separated by spaces (bloom, dot, go, json, seed)")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
-	var execute = flag.Bool("execute", false, "execute the service")
+	var execute = flag.Bool("execute", false, "execute the service2")
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	var address = flag.String("address", ":3000", "address the bud communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
-		fmt.Fprintf(os.Stderr, "[options] [input files]\nOptions:\n")
+		fmt.Fprintf(os.Stderr, "[options] [input filename]\nOptions:\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 
-	if flag.NArg() < 1 {
+	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	info("Load Seeds")
-	seeds := make(map[string]*service.Seed)
+	info("Load")
+	filename := flag.Arg(0)
+	filename = filepath.Clean(filename)
+	seed, name := load(filename, *from_format, *full)
 
-	for _, filename := range flag.Args() {
-		filename = filepath.Clean(filename)
-
-		seed, name := load(filename, *from_format, *full)
-		if _, ok := seeds[name]; ok {
-			fatal("Seed", name, "already exists")
-		}
-
-		seeds[name] = seed
-	}
+	// TODO: remove seeds
+	seeds := make(map[string]*service2.Seed)
+	seeds[name] = seed
 
 	info("Transform Seeds")
 	for _, transformation := range strings.Fields(*transformations) {
 		seeds = transform(seeds, transformation)
 	}
 
-	info("Write Seeds")
+	// TODO: remove
+	seed = seeds[name]
+
+	info("Write Seed")
 	outputdir = filepath.Clean(outputdir)
 	err := os.MkdirAll(outputdir, 0755)
 	if err != nil {
 		fatal(err)
 	}
-
-	for name, seed := range seeds {
-		write(seed, name, *to_format, outputdir)
-	}
+	write(seed, name, *to_format, outputdir)
 
 	if *execute {
 		info("Execute")
-		for name, seed := range seeds {
-			start(seed, name, *sleep, *timeout, *address, *monitorAddress)
-		}
+		start(seed, name, *sleep, *timeout, *address, *monitorAddress)
 	}
 }
 
-func load(filename, format string, full bool) (*service.Seed, string) {
+func load(filename, format string, full bool) (*service2.Seed, string) {
 	_, name := filepath.Split(filename)
 	name = name[:len(name)-len(filepath.Ext(name))]
 
-	seedSource, err := ioutil.ReadFile(filename)
+	source, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fatal(err)
 	}
 
-	var seed *service.Seed
+	var service *service2.Seed
 	switch format {
 	case "seed":
-		seed, err = service.FromSeed(filename, seedSource, !full)
+		service, err = service2.FromSeed(filename, source, !full)
 	case "json":
-		seed, err = service.FromJson(filename, seedSource)
+		service, err = service2.FromJson(filename, source)
 	default:
 		fatal("Loading from", format, "format not supported.\n")
 	}
@@ -107,37 +100,39 @@ func load(filename, format string, full bool) (*service.Seed, string) {
 		fatal(err)
 	}
 
-	err = seed.Validate()
+	service.Name = name
+
+	err = service.Validate()
 	if err != nil {
 		fatal(err)
 	}
 
-	return seed, name
+	return service, name
 }
 
-func write(seed *service.Seed, name string, format string, outputdir string) {
-	for _, format := range strings.Fields(format) {
+func write(seed *service2.Seed, name string, formats string, outputdir string) {
+	for _, format := range strings.Fields(formats) {
 		var extension string
-		var writer func(seed *service.Seed, name string) ([]byte, error)
+		var writer func(seed *service2.Seed, name string) ([]byte, error)
 		switch format {
 		case "bloom":
 			extension = "rb"
-			writer = service.ToBloom
+			writer = service2.ToBloom
 		case "dot":
 			extension = "dot"
-			writer = service.ToDot
+			writer = service2.ToDot
 		case "go":
 			extension = "go"
-			writer = service.ToGo
+			writer = service2.ToGo
 		case "json":
 			extension = "json"
-			writer = service.ToJson
+			writer = service2.ToJson
 		case "seed":
 			extension = "seed"
-			writer = service.ToSeed
+			writer = service2.ToSeed
 		case "latex":
 			extension = "latex"
-			writer = service.ToLaTeX
+			writer = service2.ToLaTeX
 		default:
 			fatal("Writing to", format, "format not supported.\n")
 		}
@@ -162,11 +157,11 @@ func write(seed *service.Seed, name string, format string, outputdir string) {
 	}
 }
 
-func transform(seeds map[string]*service.Seed, transformation string) map[string]*service.Seed {
-	transformed := make(map[string]*service.Seed)
-	var err error
-	for sname, seed := range seeds {
-		var transform func(name string, seed *service.Seed, seeds map[string]*service.Seed) (map[string]*service.Seed, error)
+func transform(seeds map[string]*service2.Seed, transformation string) map[string]*service2.Seed {
+	transformed := make(map[string]*service2.Seed)
+	for _, seed := range seeds {
+		// var transform func(name string, seed *service2.Seed, seeds map[string]*service2.Seed) (map[string]*service2.Seed, error)
+		var transform func(seed *service2.Seed) (*service2.Seed, error)
 		switch transformation {
 		case "network":
 			transform = examples.Add_network_interface
@@ -176,15 +171,16 @@ func transform(seeds map[string]*service.Seed, transformation string) map[string
 			fatal(transformation, "not supported.\n")
 		}
 
-		transformed, err = transform(sname, seed, transformed)
+		transformedSeed, err := transform(seed)
 		if err != nil {
 			fatal(transformation, "error:", err)
 		}
+		transformed[transformedSeed.Name] = transformedSeed
 	}
 	return transformed
 }
 
-func start(seed *service.Seed, name, sleep, timeout, address, monitorAddress string) {
+func start(seed *service2.Seed, name, sleep, timeout, address, monitorAddress string) {
 	info("Starting", name)
 
 	var err error
