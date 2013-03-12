@@ -58,7 +58,7 @@ func main() {
 	}
 
 	info("Write")
-	write(seed, name, *to_format, outputdir)
+	write(seed, seed.Name, *to_format, outputdir)
 
 	if *execute {
 		info("Execute")

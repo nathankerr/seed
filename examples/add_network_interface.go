@@ -7,17 +7,19 @@ import (
 	"strings"
 )
 
-func Add_network_interface(seed *service.Seed) (*service.Seed, error) {
-	err := seed.InSubset()
+func Add_network_interface(orig *service.Seed) (*service.Seed, error) {
+	err := orig.InSubset()
 	if err != nil {
-		return nil, errors.New("Adding a network interface requires that the specified seed be in the subset. " + err.Error())
+		return nil, errors.New("Adding a network interface requires that the specified orig be in the subset. " + err.Error())
 	}
 
-	groups := getGroups(seed.Name, seed)
+	groups := getGroups(orig.Name, orig)
 
-	// TODO: remove
-	services := make(map[string]*service.Seed)
-	services[seed.Name] = seed
+	networked := &service.Seed{
+		Collections: make(map[string]*service.Collection),
+		Source: orig.Source,
+		Name: strings.Title(orig.Name) + "Server",
+	}
 
 	for _, group := range groups {
 		switch group.typ() {
@@ -29,19 +31,14 @@ func Add_network_interface(seed *service.Seed) (*service.Seed, error) {
 			"110", "111", "11n", // single output
 			"1n0", "1n1", "1nn", // multiple output
 			"n10", "n11", "n1n", "nn0", "nn1", "nnn": // multiple input
-			services = add_network_interface_helper(services, group, seed, seed.Name)
+			networked = add_network_interface_helper(orig, group, networked)
 		default:
 			// shouldn't get here
 			panic(group.typ())
 		}
 	}
 
-	// TODO: remove
-	for _, seed := range services {
-		return seed, nil
-	}
-
-	return nil, errors.New("there were no resulting services")
+	return networked, nil
 }
 
 type group struct {
@@ -128,21 +125,12 @@ func count(i int) string {
 }
 
 // adds a network interface by adding and handling explicit correlation data
-func add_network_interface_helper(buds map[string]*service.Seed, group *group,
-	seed *service.Seed, sname string) map[string]*service.Seed {
-	// info()
-
-	sname = strings.Title(sname) + "Server"
-
-	bud, ok := buds[sname]
-	if !ok {
-		bud = &service.Seed{Collections: make(map[string]*service.Collection), Source: seed.Source}
-	}
+func add_network_interface_helper(orig *service.Seed, group *group, networked *service.Seed) *service.Seed {
 
 	// name the output address columns
 	output_addrs := []string{}
 	for name, _ := range group.collections {
-		collection := seed.Collections[name]
+		collection := orig.Collections[name]
 		if collection.Type == service.CollectionOutput {
 			output_addrs = append(output_addrs, name+"_addr")
 		}
@@ -150,7 +138,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 
 	// Add correlation information to the collections
 	for name, _ := range group.collections {
-		collection := seed.Collections[name]
+		collection := orig.Collections[name]
 		switch collection.Type {
 		case service.CollectionInput:
 			// add output_addrs to the beginning of key
@@ -174,18 +162,16 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 			// should not get here
 			panic(collection.Type)
 		}
-		bud.Collections[name] = collection
-
-		buds[sname] = bud
+		networked.Collections[name] = collection
 	}
 
 	// rewrite the rules to take the correlation data into account
 	for _, rulenum := range group.rules {
-		rule := seed.Rules[rulenum]
+		rule := orig.Rules[rulenum]
 
 		inputs := []string{}
 		for _, name := range rule.Collections() {
-			if seed.Collections[name].Type == service.CollectionInput {
+			if orig.Collections[name].Type == service.CollectionInput {
 				inputs = append(inputs, name)
 			}
 		}
@@ -204,7 +190,7 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 			}
 		}
 
-		switch seed.Collections[rule.Supplies].Type {
+		switch orig.Collections[rule.Supplies].Type {
 		case service.CollectionOutput:
 			// convert to async insert as required by channels
 			rule.Operation = "<~"
@@ -223,14 +209,14 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 			// no-op
 		default:
 			// should not get here
-			panic(seed.Collections[rule.Supplies].Type)
+			panic(orig.Collections[rule.Supplies].Type)
 		}
 
-		bud.Rules = append(bud.Rules, rule)
+		networked.Rules = append(networked.Rules, rule)
 	}
 
 	for cname, _ := range group.collections {
-		collection := seed.Collections[cname]
+		collection := orig.Collections[cname]
 		switch collection.Type {
 		case service.CollectionInput, service.CollectionOutput:
 			collection.Type = service.CollectionChannel
@@ -242,5 +228,5 @@ func add_network_interface_helper(buds map[string]*service.Seed, group *group,
 		}
 	}
 
-	return buds
+	return networked
 }
