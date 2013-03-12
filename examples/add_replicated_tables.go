@@ -2,29 +2,27 @@ package examples
 
 import (
 	"fmt"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 )
 
-func Add_replicated_tables(name string, orig *service.Seed, services map[string]*service.Seed) (map[string]*service.Seed, error) {
-	// info()
-
+func Add_replicated_tables(name string, orig *seed.Seed, seeds map[string]*seed.Seed) (map[string]*seed.Seed, error) {
 	// find an existing service to modify or create a new one
-	seed, ok := services[name]
+	service, ok := seeds[name]
 	if !ok {
-		seed = &service.Seed{Collections: make(map[string]*service.Collection), Source: orig.Source}
+		service = &seed.Seed{Collections: make(map[string]*seed.Collection), Source: orig.Source}
 	}
 
 	// add helper tables, rules
 	for tname, table := range orig.Collections {
-		seed.Collections[tname] = table
-		if table.Type != service.CollectionTable {
+		service.Collections[tname] = table
+		if table.Type != seed.CollectionTable {
 			continue
 		}
 
 		// create the table for replicants of this table
 		replicants_name := fmt.Sprintf("%s_replicants", tname)
-		seed.Collections[replicants_name] = &service.Collection{
-			Type:   service.CollectionTable,
+		service.Collections[replicants_name] = &seed.Collection{
+			Type:   seed.CollectionTable,
 			Key:    []string{"address"},
 			Source: table.Source,
 		}
@@ -33,8 +31,8 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 		for _, operation := range []string{"insert", "delete", "update"} {
 			// scratch used to intercept the table operation
 			scratch_name := fmt.Sprintf("%s_%s", tname, operation)
-			seed.Collections[scratch_name] = &service.Collection{
-				Type:   service.CollectionScratch,
+			service.Collections[scratch_name] = &seed.Collection{
+				Type:   seed.CollectionScratch,
 				Key:    table.Key,
 				Data:   table.Data,
 				Source: table.Source,
@@ -42,8 +40,8 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 
 			// channel used for inter-replicant communication
 			channel_name := fmt.Sprintf("%s_%s_channel", tname, operation)
-			channel := &service.Collection{
-				Type:   service.CollectionChannel,
+			channel := &seed.Collection{
+				Type:   seed.CollectionChannel,
 				Key:    []string{"@address"},
 				Data:   table.Data,
 				Source: table.Source,
@@ -51,10 +49,10 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			for _, column := range table.Key {
 				channel.Key = append(channel.Key, column)
 			}
-			seed.Collections[channel_name] = channel
+			service.Collections[channel_name] = channel
 
 			// rule to forward scratch to table
-			scratch_to_table := &service.Rule{
+			scratch_to_table := &seed.Rule{
 				Supplies: tname,
 				Source:   table.Source,
 			}
@@ -71,25 +69,25 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			}
 			for _, column := range table.Key {
 				scratch_to_table.Projection = append(scratch_to_table.Projection,
-					service.Expression{Value: service.QualifiedColumn{
+					seed.Expression{Value: seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					}})
 			}
 			for _, column := range table.Data {
 				scratch_to_table.Projection = append(scratch_to_table.Projection,
-					service.Expression{service.QualifiedColumn{
+					seed.Expression{seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					}})
 			}
-			seed.Rules = append(seed.Rules, scratch_to_table)
+			service.Rules = append(service.Rules, scratch_to_table)
 
 			// rule to forward scratch to channel
-			scratch_to_channel := &service.Rule{
+			scratch_to_channel := &seed.Rule{
 				Supplies:  channel_name,
 				Operation: "<~",
-				Projection: []service.Expression{service.Expression{Value: service.QualifiedColumn{
+				Projection: []seed.Expression{seed.Expression{Value: seed.QualifiedColumn{
 					Collection: replicants_name,
 					Column:     "address",
 				}}},
@@ -97,22 +95,22 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			}
 			for _, column := range table.Key {
 				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
-					service.Expression{Value: service.QualifiedColumn{
+					seed.Expression{Value: seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					}})
 			}
 			for _, column := range table.Data {
 				scratch_to_channel.Projection = append(scratch_to_channel.Projection,
-					service.Expression{Value: service.QualifiedColumn{
+					seed.Expression{Value: seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					}})
 			}
-			seed.Rules = append(seed.Rules, scratch_to_channel)
+			service.Rules = append(service.Rules, scratch_to_channel)
 
 			// rule to forward channel to table
-			channel_to_table := &service.Rule{
+			channel_to_table := &seed.Rule{
 				Supplies: tname,
 				Source:   table.Source,
 			}
@@ -129,19 +127,19 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			}
 			for _, column := range table.Key {
 				channel_to_table.Projection = append(channel_to_table.Projection,
-					service.Expression{Value: service.QualifiedColumn{
+					seed.Expression{Value: seed.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
 					}})
 			}
 			for _, column := range table.Data {
 				channel_to_table.Projection = append(channel_to_table.Projection,
-					service.Expression{Value: service.QualifiedColumn{
+					seed.Expression{Value: seed.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
 					}})
 			}
-			seed.Rules = append(seed.Rules, channel_to_table)
+			service.Rules = append(service.Rules, channel_to_table)
 		}
 	}
 
@@ -149,7 +147,7 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 	for _, rule := range orig.Rules {
 		// info(rule)
 		// rewrite rules feeding tables
-		if orig.Collections[rule.Supplies].Type == service.CollectionTable {
+		if orig.Collections[rule.Supplies].Type == seed.CollectionTable {
 			switch rule.Operation {
 			case "<+":
 				rule.Supplies += "_insert"
@@ -164,9 +162,9 @@ func Add_replicated_tables(name string, orig *service.Seed, services map[string]
 			rule.Operation = "<="
 		}
 
-		seed.Rules = append(seed.Rules, rule)
+		service.Rules = append(service.Rules, rule)
 	}
 
-	services[name] = seed
-	return services, nil
+	seeds[name] = service
+	return seeds, nil
 }
