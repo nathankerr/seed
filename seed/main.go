@@ -52,24 +52,12 @@ func main() {
 	filename = filepath.Clean(filename)
 	seed, name := load(filename, *from_format, *full)
 
-	// TODO: remove seeds
-	seeds := make(map[string]*service2.Seed)
-	seeds[name] = seed
-
-	info("Transform Seeds")
+	info("Transform")
 	for _, transformation := range strings.Fields(*transformations) {
-		seeds = transform(seeds, transformation)
+		seed = transform(seed, transformation)
 	}
 
-	// TODO: remove
-	seed = seeds[name]
-
-	info("Write Seed")
-	outputdir = filepath.Clean(outputdir)
-	err := os.MkdirAll(outputdir, 0755)
-	if err != nil {
-		fatal(err)
-	}
+	info("Write")
 	write(seed, name, *to_format, outputdir)
 
 	if *execute {
@@ -111,6 +99,12 @@ func load(filename, format string, full bool) (*service2.Seed, string) {
 }
 
 func write(seed *service2.Seed, name string, formats string, outputdir string) {
+	outputdir = filepath.Clean(outputdir)
+	err := os.MkdirAll(outputdir, 0755)
+	if err != nil {
+		fatal(err)
+	}
+	
 	for _, format := range strings.Fields(formats) {
 		var extension string
 		var writer func(seed *service2.Seed, name string) ([]byte, error)
@@ -157,26 +151,22 @@ func write(seed *service2.Seed, name string, formats string, outputdir string) {
 	}
 }
 
-func transform(seeds map[string]*service2.Seed, transformation string) map[string]*service2.Seed {
-	transformed := make(map[string]*service2.Seed)
-	for _, seed := range seeds {
-		// var transform func(name string, seed *service2.Seed, seeds map[string]*service2.Seed) (map[string]*service2.Seed, error)
-		var transform func(seed *service2.Seed) (*service2.Seed, error)
-		switch transformation {
-		case "network":
-			transform = examples.Add_network_interface
-		case "replicate":
-			transform = examples.Add_replicated_tables
-		default:
-			fatal(transformation, "not supported.\n")
-		}
-
-		transformedSeed, err := transform(seed)
-		if err != nil {
-			fatal(transformation, "error:", err)
-		}
-		transformed[transformedSeed.Name] = transformedSeed
+func transform(seed *service2.Seed, transformation string) *service2.Seed {
+	var transform func(seed *service2.Seed) (*service2.Seed, error)
+	switch transformation {
+	case "network":
+		transform = examples.Add_network_interface
+	case "replicate":
+		transform = examples.Add_replicated_tables
+	default:
+		fatal(transformation, "not supported.\n")
 	}
+
+	transformed, err := transform(seed)
+	if err != nil {
+		fatal(transformation, "error:", err)
+	}
+	
 	return transformed
 }
 
