@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func ToGo(seed *Seed, name string) ([]byte, error) {
+func ToGo(service *Seed, name string) ([]byte, error) {
 	str := fmt.Sprintf("package main\n")
 	str = fmt.Sprintf(`%s
 import (
@@ -14,7 +14,7 @@ import (
 	"github.com/nathankerr/seed/executor/bud"
 	"github.com/nathankerr/seed/executor/wsjson"
 	"github.com/nathankerr/seed/executor/monitor"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"time"
 	"flag"
 	"log"
@@ -33,27 +33,27 @@ import (
 	flag.Parse()
 `, str)
 
-	// open service
-	str = fmt.Sprintf("%s\n\tseed := &service.Seed{", str)
+	// open seed
+	str = fmt.Sprintf("%s\n\tservice := &seed.Seed{", str)
 
 	// source
-	str = fmt.Sprintf("%s\n\t\tSource: %v,", str, seed.Source.toGo("\t\t\t"))
+	str = fmt.Sprintf("%s\n\t\tSource: %v,", str, service.Source.toGo("\t\t\t"))
 
 	// collections
-	str = fmt.Sprintf("%s\n\t\tCollections: map[string]*service.Collection{", str)
-	for name, collection := range seed.Collections {
+	str = fmt.Sprintf("%s\n\t\tCollections: map[string]*seed.Collection{", str)
+	for name, collection := range service.Collections {
 		str = fmt.Sprintf("%s\n\t\t\t\"%s\": %v,", str, name, collection.toGo("\t\t\t\t"))
 	}
 	str = fmt.Sprintf("%s\n\t\t},", str)
 
 	// rules
-	str = fmt.Sprintf("%s\n\t\tRules: []*service.Rule{", str)
-	for _, rule := range seed.Rules {
+	str = fmt.Sprintf("%s\n\t\tRules: []*seed.Rule{", str)
+	for _, rule := range service.Rules {
 		str = fmt.Sprintf("%s\n\t\t\t%v,", str, rule.toGo("\t\t\t\t"))
 	}
 	str = fmt.Sprintf("%s\n\t\t},", str)
 
-	// close service
+	// close seed
 	str = fmt.Sprintf("%s\n\t}", str)
 
 	// execute
@@ -75,17 +75,17 @@ import (
 		}
 	}
 
-	println("Starting " + seed.Source.Name + " on " + *address)
+	println("Starting " + service.Source.Name + " on " + *address)
 	println("Starting monitor" + " on " + *monitorAddress)
 
-	channels := executor.Execute(seed, timeoutDuration, sleepDuration, *address, *monitorAddress)
-	go monitor.StartMonitor(*monitorAddress, channels.Monitor, seed)
+	channels := executor.Execute(service, timeoutDuration, sleepDuration, *address, *monitorAddress)
+	go monitor.StartMonitor(*monitorAddress, channels.Monitor, service)
 
 	switch *communicator {
 	case "bud":
-		bud.BudCommunicator(seed, channels, *address)
+		bud.BudCommunicator(service, channels, *address)
 	case "wsjson":
-		wsjson.Communicator(seed, channels, *address)
+		wsjson.Communicator(service, channels, *address)
 	default:
 		log.Fatalln("Unknown communicator:", *communicator)
 	}
@@ -98,7 +98,7 @@ import (
 }
 
 func (c *Collection) toGo(indent string) string {
-	str := fmt.Sprintf("&service.Collection{\n")
+	str := fmt.Sprintf("&seed.Collection{\n")
 
 	// type
 	typestr := ""
@@ -116,7 +116,7 @@ func (c *Collection) toGo(indent string) string {
 	default:
 		panic(fmt.Sprintf("unhandled collection type: %d", c.Type))
 	}
-	str = fmt.Sprintf("%s%sType: service.%s,\n", str, indent, typestr)
+	str = fmt.Sprintf("%s%sType: seed.%s,\n", str, indent, typestr)
 
 	// key
 	str = fmt.Sprintf("%s%sKey:  %#v,\n", str, indent, c.Key)
@@ -135,7 +135,7 @@ func (c *Collection) toGo(indent string) string {
 }
 
 func (r *Rule) toGo(indent string) string {
-	str := fmt.Sprintf("&service.Rule{\n")
+	str := fmt.Sprintf("&seed.Rule{\n")
 
 	// Supplies
 	str = fmt.Sprintf("%s%sSupplies:  %#v,\n", str, indent, r.Supplies)
@@ -144,14 +144,14 @@ func (r *Rule) toGo(indent string) string {
 	str = fmt.Sprintf("%s%sOperation: %#v,\n", str, indent, r.Operation)
 
 	// Projection
-	str = fmt.Sprintf("%s%sProjection: []service.Expression{\n", str, indent)
+	str = fmt.Sprintf("%s%sProjection: []seed.Expression{\n", str, indent)
 	for _, expression := range r.Projection {
 		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, expression.toGo(indent+"\t\t"))
 	}
 	str = fmt.Sprintf("%s%s},\n", str, indent)
 
 	// Predicate
-	str = fmt.Sprintf("%s%sPredicate: []service.Constraint{", str, indent)
+	str = fmt.Sprintf("%s%sPredicate: []seed.Constraint{", str, indent)
 	for _, c := range r.Predicate {
 		str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, c.toGo(indent+"\t\t"))
 	}
@@ -172,7 +172,7 @@ func (r *Rule) toGo(indent string) string {
 }
 
 func (s *Source) toGo(indent string) string {
-	str := fmt.Sprintf("service.Source{\n")
+	str := fmt.Sprintf("seed.Source{\n")
 
 	// Name
 	str = fmt.Sprintf("%s%sName:   %#v,\n", str, indent, s.Name)
@@ -191,7 +191,7 @@ func (s *Source) toGo(indent string) string {
 }
 
 func (qc QualifiedColumn) toGo(indent string) string {
-	str := fmt.Sprintf("service.QualifiedColumn{\n")
+	str := fmt.Sprintf("seed.QualifiedColumn{\n")
 
 	// Collection
 	str = fmt.Sprintf("%s%sCollection: %#v,\n", str, indent, qc.Collection)
@@ -207,7 +207,7 @@ func (qc QualifiedColumn) toGo(indent string) string {
 }
 
 func (c Constraint) toGo(indent string) string {
-	str := fmt.Sprintf("service.Constraint{")
+	str := fmt.Sprintf("seed.Constraint{")
 
 	// Left
 	str = fmt.Sprintf("%s\n%sLeft: %v,\n", str, indent, c.Left.toGo(indent+"\t"))
@@ -223,7 +223,7 @@ func (c Constraint) toGo(indent string) string {
 }
 
 func (expression Expression) toGo(indent string) string {
-	str := "service.Expression{ Value:"
+	str := "seed.Expression{ Value:"
 	switch value := expression.Value.(type) {
 	case QualifiedColumn:
 		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
@@ -240,7 +240,7 @@ func (expression Expression) toGo(indent string) string {
 }
 
 func (functionCall MapFunction) toGo(indent string) string {
-	str := fmt.Sprintf("service.MapFunction{\n%s\tName: \"%s\",", indent, functionCall.Name)
+	str := fmt.Sprintf("seed.MapFunction{\n%s\tName: \"%s\",", indent, functionCall.Name)
 	str = fmt.Sprintf("%s\n%s\tFunction: %s,", str, indent, functionCall.Name)
 
 	arguments := []string{}
@@ -248,14 +248,14 @@ func (functionCall MapFunction) toGo(indent string) string {
 		arguments = append(arguments,
 			fmt.Sprintf("%s", argument.toGo(indent+"\t\t")))
 	}
-	str = fmt.Sprintf("%s\n%s\tArguments: []service.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n"+indent+"\t"))
+	str = fmt.Sprintf("%s\n%s\tArguments: []seed.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n"+indent+"\t"))
 
 	str = fmt.Sprintf("%s\n%s}", str, indent)
 	return str
 }
 
 func (functionCall ReduceFunction) toGo(indent string) string {
-	str := fmt.Sprintf("service.ReduceFunction{\n%s\tName: \"%s\",", indent, functionCall.Name)
+	str := fmt.Sprintf("seed.ReduceFunction{\n%s\tName: \"%s\",", indent, functionCall.Name)
 	str = fmt.Sprintf("%s\n%s\tFunction: %s,", str, indent, functionCall.Name)
 
 	arguments := []string{}
@@ -263,7 +263,7 @@ func (functionCall ReduceFunction) toGo(indent string) string {
 		arguments = append(arguments,
 			fmt.Sprintf("%s", argument.toGo(indent+"\t\t")))
 	}
-	str = fmt.Sprintf("%s\n%s\tArguments: []service.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n"+indent+"\t"))
+	str = fmt.Sprintf("%s\n%s\tArguments: []seed.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n"+indent+"\t"))
 
 	str = fmt.Sprintf("%s\n%s}", str, indent)
 	return str
