@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/msgpack/msgpack-go"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"github.com/nathankerr/seed/executor"
 	"net"
 	"reflect"
@@ -13,7 +13,7 @@ import (
 type bud struct {
 	address   string
 	listener  net.PacketConn
-	s         *service.Seed
+	s         *seed.Seed
 	channels  executor.Channels
 	addresses map[string]bool
 }
@@ -83,7 +83,7 @@ func (bud *bud) networkReader() {
 	}
 }
 
-func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []service.Tuple) {
+func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []seed.Tuple) {
 	// msgpack format from bud:
 	// []interface{}{[]byte, []interface{}{COLUMNS}, []interface{}{}}
 	// COLUMNS depends on the column types
@@ -101,14 +101,14 @@ func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []service.T
 	case []uint8:
 		// some other message??
 		info("budInputReader", "[]uint8: ", string(msgTyped))
-		return "", []service.Tuple{}
+		return "", []seed.Tuple{}
 	default:
 		panic(fmt.Sprintf("%v\n", msgReflected))
 	}
 
 	collectionName = string(msg[0].([]byte))
 
-	tuples = []service.Tuple{}
+	tuples = []seed.Tuple{}
 	switch r := msg[1].(type) {
 	case []interface{}:
 	SingleInterfaceLoop:
@@ -134,7 +134,7 @@ func (bud *bud) unmarshal(buf []byte) (collectionName string, tuples []service.T
 	return collectionName, tuples
 }
 
-func (bud *bud) marshal(collectionName string, tuple service.Tuple) []byte {
+func (bud *bud) marshal(collectionName string, tuple seed.Tuple) []byte {
 	// create the payload
 	outputMessage := bytes.NewBuffer([]byte{})
 
@@ -211,7 +211,7 @@ func (bud *bud) send(message executor.MessageContainer) {
 	}
 }
 
-func BudCommunicator(s *service.Seed, channels executor.Channels, address string) {
+func BudCommunicator(s *seed.Seed, channels executor.Channels, address string) {
 	bud := bud{
 		address:   address,
 		s:         s,

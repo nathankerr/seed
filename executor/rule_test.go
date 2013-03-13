@@ -10,7 +10,7 @@ TO TEST:
 
 import (
 	"encoding/json"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"testing"
 )
 
@@ -21,7 +21,7 @@ func TestIndexes(t *testing.T) {
 	tests = append(tests, []interface{}{
 		ruleHandler{ // hander
 			number: 0,
-			s: service.Parse("two collections",
+			s: seed.Parse("two collections",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
 					"keep <+ [in.key, in.value]"),
@@ -39,7 +39,7 @@ func TestIndexes(t *testing.T) {
 	tests = append(tests, []interface{}{
 		ruleHandler{
 			number: 0,
-			s: service.Parse("one collection",
+			s: seed.Parse("one collection",
 				"table keep [key] => [value]"+
 					"keep <+ [keep.key, keep.value]"),
 		},
@@ -55,7 +55,7 @@ func TestIndexes(t *testing.T) {
 	tests = append(tests, []interface{}{
 		ruleHandler{
 			number: 0,
-			s: service.Parse("three collections",
+			s: seed.Parse("three collections",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
 					"table other [key] => [value]"+
@@ -430,7 +430,7 @@ func TestCalculateResults(t *testing.T) {
 	tests = append(tests, []interface{}{
 		ruleHandler{ // handler
 			number: 0,
-			s: service.Parse("projection test",
+			s: seed.Parse("projection test",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
 					"keep <+ [in.key, in.value]"),
@@ -452,7 +452,7 @@ func TestCalculateResults(t *testing.T) {
 	tests = append(tests, []interface{}{
 		ruleHandler{ // handler
 			number: 0,
-			s: service.Parse("product test",
+			s: seed.Parse("product test",
 				"input a [key]"+
 					"input b [key]"+
 					"table keep [key]"+
@@ -488,7 +488,7 @@ func TestCalculateResults(t *testing.T) {
 	tests = append(tests, []interface{}{
 		ruleHandler{ // handler
 			number: 0,
-			s: service.Parse("filter test",
+			s: seed.Parse("filter test",
 				"input a [key]"+
 					"input b [key]"+
 					"table intersection [both]"+

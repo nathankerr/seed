@@ -2,7 +2,7 @@ package executor
 
 import (
 	"fmt"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"strings"
 	"time"
 )
@@ -10,7 +10,7 @@ import (
 type MessageContainer struct {
 	Operation  string // "immediate", "deferred", "data", "done"
 	Collection string
-	Data       []service.Tuple
+	Data       []seed.Tuple
 }
 
 type MonitorMessage struct {
@@ -27,10 +27,10 @@ func (mc *MessageContainer) String() string {
 		mc.Collection, mc.Operation, strings.Join(tuples, ", "))
 }
 
-// A concurrent service executor
+// A concurrent seed executor
 // Collection and rule handlers work as concurrent processes
 // managed by the control loop in this function.
-func Execute(s *service.Seed, timeoutDuration time.Duration, sleepDuration time.Duration, address string, monitorAddress string) Channels {
+func Execute(s *seed.Seed, timeoutDuration time.Duration, sleepDuration time.Duration, address string, monitorAddress string) Channels {
 	// launch the handlers
 	channels := makeChannels(s)
 	for collectionName, _ := range s.Collections {

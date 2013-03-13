@@ -1,7 +1,7 @@
 package executor
 
 import (
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 )
 
 type Channels struct {
@@ -12,7 +12,7 @@ type Channels struct {
 	Monitor      chan MonitorMessage
 }
 
-func makeChannels(s *service.Seed) Channels {
+func makeChannels(s *seed.Seed) Channels {
 	var channels Channels
 
 	channels.Control = make(chan MessageContainer)

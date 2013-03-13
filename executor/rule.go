@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"reflect"
 )
 
 type ruleHandler struct {
 	number   int
-	s        *service.Seed
+	s        *seed.Seed
 	channels Channels
 }
 
-func handleRule(ruleNumber int, s *service.Seed, channels Channels) {
+func handleRule(ruleNumber int, s *seed.Seed, channels Channels) {
 	controlinfo(ruleNumber, "started")
 	handler := ruleHandler{
 		number:   ruleNumber,
@@ -81,8 +81,8 @@ func (handler *ruleHandler) run(dataMessages []MessageContainer) MessageContaine
 	return outputMessage
 }
 
-func (handler *ruleHandler) getRequiredData(dataMessages []MessageContainer) map[string][]service.Tuple {
-	data := map[string][]service.Tuple{}
+func (handler *ruleHandler) getRequiredData(dataMessages []MessageContainer) map[string][]seed.Tuple {
+	data := map[string][]seed.Tuple{}
 
 	// process cached data
 	for _, message := range dataMessages {
@@ -112,13 +112,13 @@ func (handler *ruleHandler) getRequiredData(dataMessages []MessageContainer) map
 	return data
 }
 
-func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []service.Tuple {
+func (handler *ruleHandler) calculateResults(data map[string][]seed.Tuple) []seed.Tuple {
 	// validate data and handle errors
 	err := handler.validateData(data)
 	if err != nil {
 		switch err.Error() {
 		case "empty tuple set":
-			return []service.Tuple{}
+			return []seed.Tuple{}
 		default:
 			fatal(handler.number, err)
 		}
@@ -137,8 +137,8 @@ func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []
 	numberOfProducts := numberOfProducts(lengths)
 
 	rule := handler.s.Rules[handler.number]
-	results := map[string]service.Tuple{}
-	reductions := map[string]map[int][]service.Tuple{} // json-ified version of row to which the reduction will be used for
+	results := map[string]seed.Tuple{}
+	reductions := map[string]map[int][]seed.Tuple{} // json-ified version of row to which the reduction will be used for
 	for productNumber := 0; productNumber < numberOfProducts; productNumber++ {
 		// get the tuples for this product
 		tuples := tuplesFor(productNumber, collections, lengths, data)
@@ -168,19 +168,19 @@ func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []
 		}
 
 		// generate the result row and add to the set of results
-		result := service.Tuple{}
-		localReductions := map[int]service.Tuple{} // column number: arguments
+		result := seed.Tuple{}
+		localReductions := map[int]seed.Tuple{} // column number: arguments
 		for columnNumber, expression := range rule.Projection {
 			var element interface{}
 
 			// determine the element to add to the result tuple
 			switch value := expression.Value.(type) {
-			case service.QualifiedColumn:
+			case seed.QualifiedColumn:
 				columnIndex := indexes[value.Collection][value.Column]
 				element = tuples[value.Collection][columnIndex]
-			case service.MapFunction:
+			case seed.MapFunction:
 				// gather arguments
-				arguments := service.Tuple{}
+				arguments := seed.Tuple{}
 				for _, qc := range value.Arguments {
 					columnIndex := indexes[qc.Collection][qc.Column]
 					arguments = append(arguments, tuples[qc.Collection][columnIndex])
@@ -188,12 +188,12 @@ func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []
 
 				// run function to get result
 				element = value.Function(arguments)
-			case service.ReduceFunction:
+			case seed.ReduceFunction:
 				// add a place holder to the result tuple
 				element = nil
 
 				// gather the arguments for this reduction
-				arguments := service.Tuple{}
+				arguments := seed.Tuple{}
 				for _, qc := range value.Arguments {
 					columnIndex := indexes[qc.Collection][qc.Column]
 					arguments = append(arguments, tuples[qc.Collection][columnIndex])
@@ -218,24 +218,24 @@ func (handler *ruleHandler) calculateResults(data map[string][]service.Tuple) []
 		// add local reductions to list of all reductions (by group)
 		for columnNumber, reductionTuple := range localReductions {
 			if _, ok := reductions[setid]; !ok {
-				reductions[setid] = map[int][]service.Tuple{}
+				reductions[setid] = map[int][]seed.Tuple{}
 			}
 			reductions[setid][columnNumber] = append(reductions[setid][columnNumber], reductionTuple)
 		}
 	}
 
 	// run reductions and add results to the appropriate places before returning the results
-	resultsSlice := make([]service.Tuple, 0, len(results))
+	resultsSlice := make([]seed.Tuple, 0, len(results))
 	for setid, result := range results {
 		for columnNumber, reductionTuples := range reductions[setid] {
-			result[columnNumber] = rule.Projection[columnNumber].Value.(service.ReduceFunction).Function(reductionTuples)
+			result[columnNumber] = rule.Projection[columnNumber].Value.(seed.ReduceFunction).Function(reductionTuples)
 		}
 		resultsSlice = append(resultsSlice, result)
 	}
 	return resultsSlice
 }
 
-func (handler *ruleHandler) validateData(data map[string][]service.Tuple) error {
+func (handler *ruleHandler) validateData(data map[string][]seed.Tuple) error {
 	for collectionName, tuples := range data {
 		collection := handler.s.Collections[collectionName]
 
@@ -266,9 +266,9 @@ func numberOfProducts(lengths []int) int {
 	return products
 }
 
-func tuplesFor(productNumber int, collections []string, lengths []int, data map[string][]service.Tuple) map[string]service.Tuple {
+func tuplesFor(productNumber int, collections []string, lengths []int, data map[string][]seed.Tuple) map[string]seed.Tuple {
 	tupleIndexes := indexesFor(productNumber, lengths)
-	tuples := map[string]service.Tuple{}
+	tuples := map[string]seed.Tuple{}
 	for nameIndex, tupleIndex := range tupleIndexes {
 		collectionName := collections[nameIndex]
 		tuples[collectionName] = data[collectionName][tupleIndex]

@@ -4,7 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	service2 "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"github.com/nathankerr/seed/examples"
 	"github.com/nathankerr/seed/executor"
 	"github.com/nathankerr/seed/executor/bud"
@@ -30,7 +30,7 @@ func main() {
 		"formats to write separated by spaces (bloom, dot, go, json, seed)")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
-	var execute = flag.Bool("execute", false, "execute the service2")
+	var execute = flag.Bool("execute", false, "execute the seed")
 	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	var address = flag.String("address", ":3000", "address the bud communicator uses")
@@ -50,23 +50,23 @@ func main() {
 	info("Load")
 	filename := flag.Arg(0)
 	filename = filepath.Clean(filename)
-	seed, name := load(filename, *from_format, *full)
+	service, name := load(filename, *from_format, *full)
 
 	info("Transform")
 	for _, transformation := range strings.Fields(*transformations) {
-		seed = transform(seed, transformation)
+		service = transform(service, transformation)
 	}
 
 	info("Write")
-	write(seed, seed.Name, *to_format, outputdir)
+	write(service, service.Name, *to_format, outputdir)
 
 	if *execute {
 		info("Execute")
-		start(seed, name, *sleep, *timeout, *address, *monitorAddress)
+		start(service, name, *sleep, *timeout, *address, *monitorAddress)
 	}
 }
 
-func load(filename, format string, full bool) (*service2.Seed, string) {
+func load(filename, format string, full bool) (*seed.Seed, string) {
 	_, name := filepath.Split(filename)
 	name = name[:len(name)-len(filepath.Ext(name))]
 
@@ -75,12 +75,12 @@ func load(filename, format string, full bool) (*service2.Seed, string) {
 		fatal(err)
 	}
 
-	var service *service2.Seed
-	switch format {
+	var service *seed.Seed
+	switch format {	
 	case "seed":
-		service, err = service2.FromSeed(filename, source, !full)
+		service, err = seed.FromSeed(filename, source, !full)
 	case "json":
-		service, err = service2.FromJson(filename, source)
+		service, err = seed.FromJson(filename, source)
 	default:
 		fatal("Loading from", format, "format not supported.\n")
 	}
@@ -98,7 +98,7 @@ func load(filename, format string, full bool) (*service2.Seed, string) {
 	return service, name
 }
 
-func write(seed *service2.Seed, name string, formats string, outputdir string) {
+func write(service *seed.Seed, name string, formats string, outputdir string) {
 	outputdir = filepath.Clean(outputdir)
 	err := os.MkdirAll(outputdir, 0755)
 	if err != nil {
@@ -107,26 +107,26 @@ func write(seed *service2.Seed, name string, formats string, outputdir string) {
 
 	for _, format := range strings.Fields(formats) {
 		var extension string
-		var writer func(seed *service2.Seed, name string) ([]byte, error)
+		var writer func(service *seed.Seed, name string) ([]byte, error)
 		switch format {
 		case "bloom":
 			extension = "rb"
-			writer = service2.ToBloom
+			writer = seed.ToBloom
 		case "dot":
 			extension = "dot"
-			writer = service2.ToDot
+			writer = seed.ToDot
 		case "go":
 			extension = "go"
-			writer = service2.ToGo
+			writer = seed.ToGo
 		case "json":
 			extension = "json"
-			writer = service2.ToJson
+			writer = seed.ToJson
 		case "seed":
 			extension = "seed"
-			writer = service2.ToSeed
+			writer = seed.ToSeed
 		case "latex":
 			extension = "latex"
-			writer = service2.ToLaTeX
+			writer = seed.ToLaTeX
 		default:
 			fatal("Writing to", format, "format not supported.\n")
 		}
@@ -138,7 +138,7 @@ func write(seed *service2.Seed, name string, formats string, outputdir string) {
 			fatal(err)
 		}
 
-		marshalled, err := writer(seed, name)
+		marshalled, err := writer(service, name)
 		if err != nil {
 			fatal("Error while converting to", format, ":", err)
 		}
@@ -151,8 +151,8 @@ func write(seed *service2.Seed, name string, formats string, outputdir string) {
 	}
 }
 
-func transform(seed *service2.Seed, transformation string) *service2.Seed {
-	var transform func(seed *service2.Seed) (*service2.Seed, error)
+func transform(service *seed.Seed, transformation string) *seed.Seed {
+	var transform func(service *seed.Seed) (*seed.Seed, error)
 	switch transformation {
 	case "network":
 		transform = examples.Add_network_interface
@@ -162,7 +162,7 @@ func transform(seed *service2.Seed, transformation string) *service2.Seed {
 		fatal(transformation, "not supported.\n")
 	}
 
-	transformed, err := transform(seed)
+	transformed, err := transform(service)
 	if err != nil {
 		fatal(transformation, "error:", err)
 	}
@@ -170,7 +170,7 @@ func transform(seed *service2.Seed, transformation string) *service2.Seed {
 	return transformed
 }
 
-func start(seed *service2.Seed, name, sleep, timeout, address, monitorAddress string) {
+func start(service *seed.Seed, name, sleep, timeout, address, monitorAddress string) {
 	info("Starting", name)
 
 	var err error
@@ -190,7 +190,7 @@ func start(seed *service2.Seed, name, sleep, timeout, address, monitorAddress st
 		}
 	}
 
-	channels := executor.Execute(seed, timeoutDuration, sleepDuration, address, monitorAddress)
-	go monitor.StartMonitor(monitorAddress, channels.Monitor, seed)
-	bud.BudCommunicator(seed, channels, address)
+	channels := executor.Execute(service, timeoutDuration, sleepDuration, address, monitorAddress)
+	go monitor.StartMonitor(monitorAddress, channels.Monitor, service)
+	bud.BudCommunicator(service, channels, address)
 }

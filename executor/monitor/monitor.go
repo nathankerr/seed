@@ -4,7 +4,7 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 	"github.com/nathankerr/seed/executor"
 	"html/template"
 	"io"
@@ -62,7 +62,7 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 	return sockets
 }
 
-func sendStartupData(s *service.Seed, socket socket) {
+func sendStartupData(s *seed.Seed, socket socket) {
 	messages := []executor.MonitorMessage{}
 
 	// _service block content
@@ -91,7 +91,7 @@ func sendStartupData(s *service.Seed, socket socket) {
 	}
 }
 
-func StartMonitor(address string, channel chan executor.MonitorMessage, s *service.Seed) {
+func StartMonitor(address string, channel chan executor.MonitorMessage, s *seed.Seed) {
 	monitorAddress = address
 	go monitorServer(address)
 
@@ -129,7 +129,7 @@ func socketHandler(ws *websocket.Conn) {
 	<-done
 }
 
-func renderHTML(message executor.MonitorMessage, s *service.Seed) string {
+func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
 	collection, ok := s.Collections[message.Block]
 	if !ok {
 		number, err := strconv.ParseInt(message.Block, 0, 0)
@@ -157,7 +157,7 @@ func renderHTML(message executor.MonitorMessage, s *service.Seed) string {
 	}
 	table += "</tr>"
 
-	rows := message.Data.([]service.Tuple)
+	rows := message.Data.([]seed.Tuple)
 	for _, row := range rows {
 		table += "<tr>"
 		for _, column := range row {

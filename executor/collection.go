@@ -2,11 +2,11 @@ package executor
 
 import (
 	"encoding/json"
-	service "github.com/nathankerr/seed"
+	"github.com/nathankerr/seed"
 )
 
 type tupleSet struct {
-	tuples          map[string]service.Tuple
+	tuples          map[string]seed.Tuple
 	keyEnds         int
 	numberOfColumns int
 	collectionName  string
@@ -16,7 +16,7 @@ type tupleSet struct {
 // the key columns are a subset of the columns starting at the beginning
 // encoding the key columns in json gives a way to uniquely encode the columns
 // a map is then used (with the encoded key) to store the tuples
-func (ts *tupleSet) add(tuple service.Tuple) {
+func (ts *tupleSet) add(tuple seed.Tuple) {
 	if len(tuple) != ts.numberOfColumns {
 		fatal(ts.collectionName, "expected", ts.numberOfColumns, "columns for", tuple)
 	}
@@ -33,7 +33,7 @@ func (ts *tupleSet) message() MessageContainer {
 	message := MessageContainer{
 		Operation:  "data",
 		Collection: ts.collectionName,
-		Data:       []service.Tuple{},
+		Data:       []seed.Tuple{},
 	}
 
 	for _, tuple := range ts.tuples {
@@ -43,21 +43,21 @@ func (ts *tupleSet) message() MessageContainer {
 	return message
 }
 
-func collectionHandler(collectionName string, s *service.Seed, channels Channels) {
+func collectionHandler(collectionName string, s *seed.Seed, channels Channels) {
 	controlinfo(collectionName, "started")
 	input := channels.Collections[collectionName]
 	c := s.Collections[collectionName]
 
 	immediates := ruleChannels(false, collectionName, s, channels)
 	deferreds := ruleChannels(true, collectionName, s, channels)
-	if c.Type == service.CollectionChannel {
+	if c.Type == seed.CollectionChannel {
 		deferreds = append(deferreds, channels.Distribution)
 	}
 
 	controlinfo(collectionName, "sends to", immediates, deferreds)
 
 	data := tupleSet{
-		tuples:          map[string]service.Tuple{},
+		tuples:          map[string]seed.Tuple{},
 		keyEnds:         len(c.Key),
 		numberOfColumns: len(c.Key) + len(c.Data),
 		collectionName:  collectionName,
@@ -81,10 +81,10 @@ func collectionHandler(collectionName string, s *service.Seed, channels Channels
 			dataMessage := data.message()
 			sendToAll(dataMessage, deferreds)
 			switch c.Type {
-			case service.CollectionInput, service.CollectionOutput, service.CollectionScratch, service.CollectionChannel:
+			case seed.CollectionInput, seed.CollectionOutput, seed.CollectionScratch, seed.CollectionChannel:
 				// temporary collections are emptied
-				data.tuples = map[string]service.Tuple{}
-			case service.CollectionTable:
+				data.tuples = map[string]seed.Tuple{}
+			case seed.CollectionTable:
 				// persistent collections
 				// no-op
 			default:
@@ -105,7 +105,7 @@ func collectionHandler(collectionName string, s *service.Seed, channels Channels
 	}
 }
 
-func ruleChannels(deferred bool, collectionName string, s *service.Seed, channels Channels) []chan<- MessageContainer {
+func ruleChannels(deferred bool, collectionName string, s *seed.Seed, channels Channels) []chan<- MessageContainer {
 	ruleChannels := []chan<- MessageContainer{}
 	for ruleNum, rule := range s.Rules {
 		if (deferred && rule.Operation == "<=") || (!deferred && rule.Operation != "<=") {
