@@ -19,11 +19,7 @@ func (s *Seed) toRuby(name string) string {
 
 	rules := fmt.Sprintf("\n  bloom do\n")
 	for rule_num, rule := range s.Rules {
-		rule_str, additional_collections := rule.Ruby(s)
-		rules = fmt.Sprintf("%s    %s #%s rule %d\n", rules, rule_str, rule.Source, rule_num)
-		for cname, collection := range additional_collections {
-			collections[cname] = collection
-		}
+		rules = fmt.Sprintf("%s    %s #%s rule %d\n", rules, rule.Ruby(s), rule.Source, rule_num)
 	}
 	rules = fmt.Sprintf("%s  end\n", rules)
 
@@ -41,10 +37,8 @@ func (s *Seed) toRuby(name string) string {
 	return str
 }
 
-func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
+func (r *Rule) Ruby(service *Seed) string {
 	var selecter string
-
-	additional_collections := make(map[string]*Collection)
 	collections := r.Requires()
 
 	index := make(map[string]string)
@@ -55,11 +49,11 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 		names = append(names, name)
 	}
 
-	output := []string{}
+	projection := []string{}
 	for _, expression := range r.Projection {
 		switch value := expression.Value.(type) {
 		case QualifiedColumn:
-			output = append(output,
+			projection = append(projection,
 				fmt.Sprintf("%s.%s", index[value.Collection], value.Column))
 		case MapFunction:
 			arguments := []string{}
@@ -68,11 +62,11 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
 			}
 
-			output = append(output,
+			projection = append(projection,
 				fmt.Sprintf("%s(%s)", value.Name, strings.Join(arguments, ", ")))
 		case ReduceFunction:
 			for _, qc := range value.Arguments {
-				output = append(output,
+				projection = append(projection,
 					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
 			}
 		default:
@@ -84,7 +78,7 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 		selecter = fmt.Sprintf("%s do |%s|\n      [%s]\n    end",
 			collections[0],
 			strings.Join(names, ", "),
-			strings.Join(output, ", "))
+			strings.Join(projection, ", "))
 	} else {
 		predicates := []string{}
 		for _, p := range r.Predicate {
@@ -95,14 +89,13 @@ func (r *Rule) Ruby(service *Seed) (string, map[string]*Collection) {
 			strings.Join(collections, " * "),
 			strings.Join(predicates, ", "),
 			strings.Join(names, ", "),
-			strings.Join(output, ", "))
+			strings.Join(projection, ", "))
 	}
 
 	return fmt.Sprintf("%s %s %s",
 			r.Supplies,
 			r.Operation,
-			selecter),
-		additional_collections
+			selecter)
 }
 
 func (c *Collection) Ruby(name string) string {
