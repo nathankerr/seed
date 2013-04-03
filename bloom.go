@@ -7,10 +7,10 @@ import (
 )
 
 func ToBloom(seed *Seed, name string) ([]byte, error) {
-	return []byte(seed.toRuby(name)), nil
+	return []byte(seed.Bloom(name)), nil
 }
 
-func (s *Seed) toRuby(name string) string {
+func (s *Seed) Bloom(name string) string {
 	info()
 
 	name = strings.Title(name)
@@ -19,13 +19,13 @@ func (s *Seed) toRuby(name string) string {
 
 	rules := fmt.Sprintf("\n  bloom do\n")
 	for rule_num, rule := range s.Rules {
-		rules = fmt.Sprintf("%s    %s #%s rule %d\n", rules, rule.Ruby(s), rule.Source, rule_num)
+		rules = fmt.Sprintf("%s    %s #%s rule %d\n", rules, rule.Bloom(), rule.Source, rule_num)
 	}
 	rules = fmt.Sprintf("%s  end\n", rules)
 
 	str = fmt.Sprintf("%s  state do\n", str)
 	for cname, collection := range collections {
-		str = fmt.Sprintf("%s    %s #%s\n", str, collection.Ruby(cname),
+		str = fmt.Sprintf("%s    %s #%s\n", str, collection.Bloom(cname),
 			collection.Source)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
@@ -37,7 +37,7 @@ func (s *Seed) toRuby(name string) string {
 	return str
 }
 
-func (r *Rule) Ruby(service *Seed) string {
+func (r *Rule) Bloom() string {
 	var selecter string
 	collections := r.Requires()
 
@@ -98,7 +98,7 @@ func (r *Rule) Ruby(service *Seed) string {
 			selecter)
 }
 
-func (c *Collection) Ruby(name string) string {
+func (c *Collection) Bloom(name string) string {
 	var declaration string
 
 	switch c.Type {
