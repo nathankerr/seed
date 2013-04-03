@@ -13,28 +13,32 @@ func ToBloom(seed *Seed, name string) ([]byte, error) {
 func (s *Seed) Bloom(name string) string {
 	info()
 
-	name = strings.Title(name)
-	str := fmt.Sprintf("module %s\n", name)
-	collections := s.Collections
+	str := fmt.Sprintf("module %s\n", strings.Title(name))
 
-	rules := fmt.Sprintf("\n  bloom do\n")
-	for rule_num, rule := range s.Rules {
-		rules = fmt.Sprintf("%s    %s #%s rule %d\n", rules, rule.Bloom(), rule.Source, rule_num)
-	}
-	rules = fmt.Sprintf("%s  end\n", rules)
-
+	// collections
 	str = fmt.Sprintf("%s  state do\n", str)
-	for cname, collection := range collections {
-		str = fmt.Sprintf("%s    %s #%s\n", str, collection.Bloom(cname),
-			collection.Source)
+	for cname, collection := range s.Collections {
+		str = fmt.Sprintf("%s    %s #%s\n",
+			str,
+			collection.Bloom(cname),
+			collection.Source,
+		)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
 
-	str += rules
+	// rules
+	str = fmt.Sprintf("%s\n  bloom do\n", str)
+	for ruleNum, rule := range s.Rules {
+		str = fmt.Sprintf("%s    %s #%s rule %d\n",
+			str,
+			rule.Bloom(),
+			rule.Source,
+			ruleNum,
+		)
+	}
+	str = fmt.Sprintf("%s  end\n", str)
 
-	str = fmt.Sprintf("%send\n", str)
-
-	return str
+	return fmt.Sprintf("%send\n", str)
 }
 
 func (r *Rule) Bloom() string {
@@ -53,24 +57,25 @@ func (r *Rule) Bloom() string {
 	for _, expression := range r.Projection {
 		switch value := expression.Value.(type) {
 		case QualifiedColumn:
-			projection = append(projection,
-				fmt.Sprintf("%s.%s", index[value.Collection], value.Column))
+			projection = append(projection, fmt.Sprintf("%s.%s",
+				index[value.Collection], value.Column))
 		case MapFunction:
 			arguments := []string{}
 			for _, qc := range value.Arguments {
-				arguments = append(arguments,
-					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
+				arguments = append(arguments, fmt.Sprintf("%s.%s",
+					index[qc.Collection], qc.Column))
 			}
 
-			projection = append(projection,
-				fmt.Sprintf("%s(%s)", value.Name, strings.Join(arguments, ", ")))
+			projection = append(projection, fmt.Sprintf("%s(%s)",
+				value.Name, strings.Join(arguments, ", ")))
 		case ReduceFunction:
 			for _, qc := range value.Arguments {
-				projection = append(projection,
-					fmt.Sprintf("%s.%s", index[qc.Collection], qc.Column))
+				projection = append(projection, fmt.Sprintf("%s.%s",
+					index[qc.Collection], qc.Column))
 			}
 		default:
-			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+			panic(fmt.Sprintf("unhandled type: %v",
+				reflect.TypeOf(expression.Value).String()))
 		}
 	}
 
@@ -93,9 +98,9 @@ func (r *Rule) Bloom() string {
 	}
 
 	return fmt.Sprintf("%s %s %s",
-			r.Supplies,
-			r.Operation,
-			selecter)
+		r.Supplies,
+		r.Operation,
+		selecter)
 }
 
 func (c *Collection) Bloom(name string) string {
