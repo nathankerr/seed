@@ -21,7 +21,7 @@ import (
 // - add network interface
 // - write bud to ruby
 func main() {
-	var outputdir = *flag.String("o", "build",
+	var outputdir = flag.String("o", "build",
 		"directory name to create and output the bud source")
 	var from_format = flag.String("f", "seed",
 		"format to load (seed, json)")
@@ -58,7 +58,7 @@ func main() {
 	}
 
 	info("Write")
-	write(service, service.Name, *to_format, outputdir)
+	write(service, service.Name, *to_format, *outputdir)
 
 	if *execute {
 		info("Execute")
