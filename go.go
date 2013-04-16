@@ -154,14 +154,12 @@ func (r *Rule) toGo(indent string) string {
 	str = fmt.Sprintf("%s%s},\n", str, indent)
 
 	// Predicate
-	str = fmt.Sprintf("%s%sPredicate: []seed.Constraint{", str, indent)
-	for _, c := range r.Predicate {
-		str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, c.toGo(indent+"\t\t"))
-	}
-	if len(r.Predicate) > 0 {
+	if len(r.Predicate) != 0 {
+		str = fmt.Sprintf("%s%sPredicate: []seed.Constraint{", str, indent)
+		for _, c := range r.Predicate {
+			str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, c.toGo(indent+"\t\t"))
+		}
 		str = fmt.Sprintf("%s%s},\n", str, indent)
-	} else {
-		str = fmt.Sprintf("%s},\n", str)
 	}
 
 	// Source
