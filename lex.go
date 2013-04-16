@@ -396,8 +396,6 @@ func lexMapFunction(l *lexer) stateFn {
 				l.source(), l.input[l.start:l.pos])
 		}
 	}
-
-	return lexToken
 }
 
 func lexReduceFunction(l *lexer) stateFn {
@@ -424,8 +422,6 @@ func lexReduceFunction(l *lexer) stateFn {
 				l.source(), l.input[l.start:l.pos])
 		}
 	}
-
-	return lexToken
 }
 
 // | args | ruby 'end'

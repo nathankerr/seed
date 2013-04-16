@@ -79,7 +79,7 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			for _, column := range table.Data {
 				scratch_to_table.Projection = append(
 					scratch_to_table.Projection,
-					seed.Expression{seed.QualifiedColumn{
+					seed.Expression{Value: seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
 					}},

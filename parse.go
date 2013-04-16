@@ -165,7 +165,6 @@ func parseArray(p *parser) []string {
 		}
 		i = p.next()
 	}
-	return nil
 }
 
 // <id> <op> <expr>
