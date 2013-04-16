@@ -76,7 +76,7 @@ func load(filename, format string, full bool) (*seed.Seed, string) {
 	}
 
 	var service *seed.Seed
-	switch format {	
+	switch format {
 	case "seed":
 		service, err = seed.FromSeed(filename, source, !full)
 	case "json":

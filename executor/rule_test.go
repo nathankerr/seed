@@ -26,7 +26,7 @@ func TestIndexes(t *testing.T) {
 					"table keep [key] => [value]"+
 					"keep <+ [in.key, in.value]",
 				false,
-				),
+			),
 		},
 		map[string]map[string]int{ // expected
 			"in": map[string]int{
