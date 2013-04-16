@@ -24,7 +24,9 @@ func TestIndexes(t *testing.T) {
 			s: seed.Parse("two collections",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
-					"keep <+ [in.key, in.value]"),
+					"keep <+ [in.key, in.value]",
+				false,
+				),
 		},
 		map[string]map[string]int{ // expected
 			"in": map[string]int{
@@ -41,7 +43,8 @@ func TestIndexes(t *testing.T) {
 			number: 0,
 			s: seed.Parse("one collection",
 				"table keep [key] => [value]"+
-					"keep <+ [keep.key, keep.value]"),
+					"keep <+ [keep.key, keep.value]",
+				false),
 		},
 		map[string]map[string]int{
 			"keep": map[string]int{
@@ -59,7 +62,8 @@ func TestIndexes(t *testing.T) {
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
 					"table other [key] => [value]"+
-					"keep <+ [in.key, in.value]"),
+					"keep <+ [in.key, in.value]",
+				false),
 		},
 		map[string]map[string]int{
 			"in": map[string]int{
@@ -284,94 +288,94 @@ func TestTuplesFor(t *testing.T) {
 	tests := [][]interface{}{}
 
 	tests = append(tests, []interface{}{
-		map[string][]tuple{ // data
-			"a": []tuple{
-				tuple{1, 2},
-				tuple{3, 4},
+		map[string][]seed.Tuple{ // data
+			"a": []seed.Tuple{
+				seed.Tuple{1, 2},
+				seed.Tuple{3, 4},
 			},
-			"b": []tuple{
-				tuple{5, 6},
-				tuple{7, 8},
+			"b": []seed.Tuple{
+				seed.Tuple{5, 6},
+				seed.Tuple{7, 8},
 			},
 		},
 		[]string{ // collections
 			"a",
 			"b",
 		},
-		map[int]map[string]tuple{ // expected[productNumber][collection]
-			0: map[string]tuple{
-				"a": tuple{1, 2},
-				"b": tuple{5, 6},
+		map[int]map[string]seed.Tuple{ // expected[productNumber][collection]
+			0: map[string]seed.Tuple{
+				"a": seed.Tuple{1, 2},
+				"b": seed.Tuple{5, 6},
 			},
-			1: map[string]tuple{
-				"a": tuple{3, 4},
-				"b": tuple{5, 6},
+			1: map[string]seed.Tuple{
+				"a": seed.Tuple{3, 4},
+				"b": seed.Tuple{5, 6},
 			},
 		},
 	})
 
 	// same as for product test in TestCalculateResults
 	tests = append(tests, []interface{}{
-		map[string][]tuple{ // data
-			"a": []tuple{
-				tuple{1},
-				tuple{2},
-				tuple{3},
+		map[string][]seed.Tuple{ // data
+			"a": []seed.Tuple{
+				seed.Tuple{1},
+				seed.Tuple{2},
+				seed.Tuple{3},
 			},
-			"b": []tuple{
-				tuple{4},
-				tuple{5},
-				tuple{6},
+			"b": []seed.Tuple{
+				seed.Tuple{4},
+				seed.Tuple{5},
+				seed.Tuple{6},
 			},
 		},
 		[]string{ //collections
 			"a",
 			"b",
 		},
-		map[int]map[string]tuple{ // expected[productNumber][collection]
-			0: map[string]tuple{
-				"a": tuple{1},
-				"b": tuple{4},
+		map[int]map[string]seed.Tuple{ // expected[productNumber][collection]
+			0: map[string]seed.Tuple{
+				"a": seed.Tuple{1},
+				"b": seed.Tuple{4},
 			},
-			1: map[string]tuple{
-				"a": tuple{2},
-				"b": tuple{4},
+			1: map[string]seed.Tuple{
+				"a": seed.Tuple{2},
+				"b": seed.Tuple{4},
 			},
-			2: map[string]tuple{
-				"a": tuple{3},
-				"b": tuple{4},
+			2: map[string]seed.Tuple{
+				"a": seed.Tuple{3},
+				"b": seed.Tuple{4},
 			},
-			3: map[string]tuple{
-				"a": tuple{1},
-				"b": tuple{5},
+			3: map[string]seed.Tuple{
+				"a": seed.Tuple{1},
+				"b": seed.Tuple{5},
 			},
-			4: map[string]tuple{
-				"a": tuple{2},
-				"b": tuple{5},
+			4: map[string]seed.Tuple{
+				"a": seed.Tuple{2},
+				"b": seed.Tuple{5},
 			},
-			5: map[string]tuple{
-				"a": tuple{3},
-				"b": tuple{5},
+			5: map[string]seed.Tuple{
+				"a": seed.Tuple{3},
+				"b": seed.Tuple{5},
 			},
-			6: map[string]tuple{
-				"a": tuple{1},
-				"b": tuple{6},
+			6: map[string]seed.Tuple{
+				"a": seed.Tuple{1},
+				"b": seed.Tuple{6},
 			},
-			7: map[string]tuple{
-				"a": tuple{2},
-				"b": tuple{6},
+			7: map[string]seed.Tuple{
+				"a": seed.Tuple{2},
+				"b": seed.Tuple{6},
 			},
-			8: map[string]tuple{
-				"a": tuple{3},
-				"b": tuple{6},
+			8: map[string]seed.Tuple{
+				"a": seed.Tuple{3},
+				"b": seed.Tuple{6},
 			},
 		},
 	})
 
 	for _, test := range tests {
-		data := test[0].(map[string][]tuple)
+		data := test[0].(map[string][]seed.Tuple)
 		collections := test[1].([]string)
-		expectedProducts := test[2].(map[int]map[string]tuple)
+		expectedProducts := test[2].(map[int]map[string]seed.Tuple)
 
 		lengths := []int{}
 		for _, collection := range collections {
@@ -390,7 +394,7 @@ func TestTuplesFor(t *testing.T) {
 					expectedLength, resultLength, expected, result)
 			}
 
-			// compare tuples
+			// compare seed.Tuples
 			for expectedCollectionName, expectedTuple := range expected {
 				resultTuple, ok := result[expectedCollectionName]
 				if !ok {
@@ -398,15 +402,15 @@ func TestTuplesFor(t *testing.T) {
 						expectedCollectionName)
 				}
 
-				// compare tuple lengths
+				// compare seed.Tuple lengths
 				expectedTupleLength := len(expectedTuple)
 				resultTupleLength := len(resultTuple)
 				if resultTupleLength != expectedTupleLength {
-					t.Errorf("expected tuple length of %v, got %v",
+					t.Errorf("expected seed.Tuple length of %v, got %v",
 						expectedTupleLength, resultTupleLength)
 				}
 
-				// compare tuple contents
+				// compare seed.Tuple contents
 				equal := true
 				for columnIndex, expectedColumn := range expectedTuple {
 					resultColumn := resultTuple[columnIndex]
@@ -433,18 +437,19 @@ func TestCalculateResults(t *testing.T) {
 			s: seed.Parse("projection test",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
-					"keep <+ [in.key, in.value]"),
+					"keep <+ [in.key, in.value]",
+				false),
 			//channels: ,
 		},
-		map[string][]tuple{ // data
-			"in": []tuple{
-				tuple{1, 2, 3},
-				tuple{4, 5, 6},
+		map[string][]seed.Tuple{ // data
+			"in": []seed.Tuple{
+				seed.Tuple{1, 2, 3},
+				seed.Tuple{4, 5, 6},
 			},
 		},
-		[]tuple{ // expected
-			tuple{2, 3},
-			tuple{5, 6},
+		[]seed.Tuple{ // expected
+			seed.Tuple{2, 3},
+			seed.Tuple{5, 6},
 		},
 	})
 
@@ -456,31 +461,32 @@ func TestCalculateResults(t *testing.T) {
 				"input a [key]"+
 					"input b [key]"+
 					"table keep [key]"+
-					"keep <+ [a.key, b.key]"),
+					"keep <+ [a.key, b.key]",
+				false),
 			//channels: ,
 		},
-		map[string][]tuple{ // data
-			"a": []tuple{
-				tuple{1},
-				tuple{2},
-				tuple{3},
+		map[string][]seed.Tuple{ // data
+			"a": []seed.Tuple{
+				seed.Tuple{1},
+				seed.Tuple{2},
+				seed.Tuple{3},
 			},
-			"b": []tuple{
-				tuple{4},
-				tuple{5},
-				tuple{6},
+			"b": []seed.Tuple{
+				seed.Tuple{4},
+				seed.Tuple{5},
+				seed.Tuple{6},
 			},
 		},
-		[]tuple{ // expected
-			tuple{1, 4},
-			tuple{2, 4},
-			tuple{3, 4},
-			tuple{1, 5},
-			tuple{2, 5},
-			tuple{3, 5},
-			tuple{1, 6},
-			tuple{2, 6},
-			tuple{3, 6},
+		[]seed.Tuple{ // expected
+			seed.Tuple{1, 4},
+			seed.Tuple{2, 4},
+			seed.Tuple{3, 4},
+			seed.Tuple{1, 5},
+			seed.Tuple{2, 5},
+			seed.Tuple{3, 5},
+			seed.Tuple{1, 6},
+			seed.Tuple{2, 6},
+			seed.Tuple{3, 6},
 		},
 	})
 
@@ -492,35 +498,36 @@ func TestCalculateResults(t *testing.T) {
 				"input a [key]"+
 					"input b [key]"+
 					"table intersection [both]"+
-					"intersection <+ [a.key]: a.key => b.key"),
+					"intersection <+ [a.key]: a.key => b.key",
+				false),
 			//channels: ,
 		},
-		map[string][]tuple{ // data
-			"a": []tuple{
-				tuple{1},
-				tuple{2},
-				tuple{3},
-				tuple{4},
-				tuple{5},
-				tuple{6},
+		map[string][]seed.Tuple{ // data
+			"a": []seed.Tuple{
+				seed.Tuple{1},
+				seed.Tuple{2},
+				seed.Tuple{3},
+				seed.Tuple{4},
+				seed.Tuple{5},
+				seed.Tuple{6},
 			},
-			"b": []tuple{
-				tuple{4},
-				tuple{5},
-				tuple{6},
+			"b": []seed.Tuple{
+				seed.Tuple{4},
+				seed.Tuple{5},
+				seed.Tuple{6},
 			},
 		},
-		[]tuple{ // expected
-			tuple{4},
-			tuple{5},
-			tuple{6},
+		[]seed.Tuple{ // expected
+			seed.Tuple{4},
+			seed.Tuple{5},
+			seed.Tuple{6},
 		},
 	})
 
 	for _, test := range tests {
 		handler := test[0].(ruleHandler)
-		data := test[1].(map[string][]tuple)
-		expected := test[2].([]tuple)
+		data := test[1].(map[string][]seed.Tuple)
+		expected := test[2].([]seed.Tuple)
 
 		result := handler.calculateResults(data)
 
@@ -532,8 +539,8 @@ func TestCalculateResults(t *testing.T) {
 				expectedLength, resultLength, expected, result)
 		}
 
-		// turn the list of result tuples into a map
-		resultTuples := map[string]tuple{}
+		// turn the list of result seed.Tuples into a map
+		resultTuples := map[string]seed.Tuple{}
 		for _, tuple := range expected {
 			jsonified, err := json.Marshal(tuple)
 			if err != nil {
@@ -543,7 +550,7 @@ func TestCalculateResults(t *testing.T) {
 			resultTuples[string(jsonified)] = tuple
 		}
 
-		// check to see if the expected tuples are in the result
+		// check to see if the expected seed.Tuples are in the result
 		for _, expectedTuple := range expected {
 			jsonifiedExpectedTuple, err := json.Marshal(expectedTuple)
 			if err != nil {
