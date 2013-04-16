@@ -36,6 +36,9 @@ import (
 	// open seed
 	str = fmt.Sprintf("%s\n\tservice := &seed.Seed{", str)
 
+	// Name
+	str = fmt.Sprintf("%s\n\t\tName: %#v,", str, service.Name)
+
 	// source
 	str = fmt.Sprintf("%s\n\t\tSource: %v,", str, service.Source.toGo("\t\t\t"))
 

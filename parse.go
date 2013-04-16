@@ -28,7 +28,10 @@ func (p *parser) backup() {
 
 func Parse(name, input string, subset bool) *Seed {
 	p := &parser{subset: subset}
-	p.s = &Seed{Collections: make(map[string]*Collection)}
+	p.s = &Seed{
+		Name: name,
+		Collections: make(map[string]*Collection),
+	}
 	p.s.Source = Source{Name: name, Line: 1, Column: 1}
 
 	l := newLexer(name, input, subset)
