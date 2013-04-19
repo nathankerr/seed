@@ -286,12 +286,24 @@ func TestTuplesFor(t *testing.T) {
 	tests = append(tests, []interface{}{
 		map[string][]seed.Tuple{ // data
 			"a": []seed.Tuple{
-				seed.Tuple{1, 2},
-				seed.Tuple{3, 4},
+				seed.Tuple{
+					0: 1,
+					1: 2,
+				},
+				seed.Tuple{
+					0: 3,
+					1: 4,
+				},
 			},
 			"b": []seed.Tuple{
-				seed.Tuple{5, 6},
-				seed.Tuple{7, 8},
+				seed.Tuple{
+					0: 5,
+					1: 6,
+				},
+				seed.Tuple{
+					0: 7,
+					1: 8,
+				},
 			},
 		},
 		[]string{ // collections
@@ -300,12 +312,24 @@ func TestTuplesFor(t *testing.T) {
 		},
 		map[int]map[string]seed.Tuple{ // expected[productNumber][collection]
 			0: map[string]seed.Tuple{
-				"a": seed.Tuple{1, 2},
-				"b": seed.Tuple{5, 6},
+				"a": seed.Tuple{
+					0: 1,
+					1: 2,
+				},
+				"b": seed.Tuple{
+					0: 5,
+					1: 6,
+				},
 			},
 			1: map[string]seed.Tuple{
-				"a": seed.Tuple{3, 4},
-				"b": seed.Tuple{5, 6},
+				"a": seed.Tuple{
+					0: 3,
+					1: 4,
+				},
+				"b": seed.Tuple{
+					0: 5,
+					1: 6,
+				},
 			},
 		},
 	})
@@ -314,14 +338,14 @@ func TestTuplesFor(t *testing.T) {
 	tests = append(tests, []interface{}{
 		map[string][]seed.Tuple{ // data
 			"a": []seed.Tuple{
-				seed.Tuple{1},
-				seed.Tuple{2},
-				seed.Tuple{3},
+				seed.Tuple{0: 1},
+				seed.Tuple{0: 2},
+				seed.Tuple{0: 3},
 			},
 			"b": []seed.Tuple{
-				seed.Tuple{4},
-				seed.Tuple{5},
-				seed.Tuple{6},
+				seed.Tuple{0: 4},
+				seed.Tuple{0: 5},
+				seed.Tuple{0: 6},
 			},
 		},
 		[]string{ //collections
@@ -330,40 +354,40 @@ func TestTuplesFor(t *testing.T) {
 		},
 		map[int]map[string]seed.Tuple{ // expected[productNumber][collection]
 			0: map[string]seed.Tuple{
-				"a": seed.Tuple{1},
-				"b": seed.Tuple{4},
+				"a": seed.Tuple{0: 1},
+				"b": seed.Tuple{0: 4},
 			},
 			1: map[string]seed.Tuple{
-				"a": seed.Tuple{2},
-				"b": seed.Tuple{4},
+				"a": seed.Tuple{0: 2},
+				"b": seed.Tuple{0: 4},
 			},
 			2: map[string]seed.Tuple{
-				"a": seed.Tuple{3},
-				"b": seed.Tuple{4},
+				"a": seed.Tuple{0: 3},
+				"b": seed.Tuple{0: 4},
 			},
 			3: map[string]seed.Tuple{
-				"a": seed.Tuple{1},
-				"b": seed.Tuple{5},
+				"a": seed.Tuple{0: 1},
+				"b": seed.Tuple{0: 5},
 			},
 			4: map[string]seed.Tuple{
-				"a": seed.Tuple{2},
-				"b": seed.Tuple{5},
+				"a": seed.Tuple{0: 2},
+				"b": seed.Tuple{0: 5},
 			},
 			5: map[string]seed.Tuple{
-				"a": seed.Tuple{3},
-				"b": seed.Tuple{5},
+				"a": seed.Tuple{0: 3},
+				"b": seed.Tuple{0: 5},
 			},
 			6: map[string]seed.Tuple{
-				"a": seed.Tuple{1},
-				"b": seed.Tuple{6},
+				"a": seed.Tuple{0: 1},
+				"b": seed.Tuple{0: 6},
 			},
 			7: map[string]seed.Tuple{
-				"a": seed.Tuple{2},
-				"b": seed.Tuple{6},
+				"a": seed.Tuple{0: 2},
+				"b": seed.Tuple{0: 6},
 			},
 			8: map[string]seed.Tuple{
-				"a": seed.Tuple{3},
-				"b": seed.Tuple{6},
+				"a": seed.Tuple{0: 3},
+				"b": seed.Tuple{0: 6},
 			},
 		},
 	})
@@ -438,13 +462,27 @@ func TestCalculateResults(t *testing.T) {
 		},
 		map[string][]seed.Tuple{ // data
 			"in": []seed.Tuple{
-				seed.Tuple{1, 2, 3},
-				seed.Tuple{4, 5, 6},
+				seed.Tuple{
+					0: 1,
+					1: 2,
+					2: 3,
+				},
+				seed.Tuple{
+					0: 4,
+					1: 5,
+					2: 6,
+				},
 			},
 		},
 		[]seed.Tuple{ // expected
-			seed.Tuple{2, 3},
-			seed.Tuple{5, 6},
+			seed.Tuple{
+				0: 2,
+				1: 3,
+			},
+			seed.Tuple{
+				0: 5,
+				1: 6,
+			},
 		},
 	})
 
@@ -461,26 +499,53 @@ func TestCalculateResults(t *testing.T) {
 		},
 		map[string][]seed.Tuple{ // data
 			"a": []seed.Tuple{
-				seed.Tuple{1},
-				seed.Tuple{2},
-				seed.Tuple{3},
+				seed.Tuple{0: 1},
+				seed.Tuple{0: 2},
+				seed.Tuple{0: 3},
 			},
 			"b": []seed.Tuple{
-				seed.Tuple{4},
-				seed.Tuple{5},
-				seed.Tuple{6},
+				seed.Tuple{0: 4},
+				seed.Tuple{0: 5},
+				seed.Tuple{0: 6},
 			},
 		},
 		[]seed.Tuple{ // expected
-			seed.Tuple{1, 4},
-			seed.Tuple{2, 4},
-			seed.Tuple{3, 4},
-			seed.Tuple{1, 5},
-			seed.Tuple{2, 5},
-			seed.Tuple{3, 5},
-			seed.Tuple{1, 6},
-			seed.Tuple{2, 6},
-			seed.Tuple{3, 6},
+			seed.Tuple{
+				0: 1,
+				1: 4,
+			},
+			seed.Tuple{
+				0: 2,
+				1: 4,
+			},
+			seed.Tuple{
+				0: 3,
+				1: 4,
+			},
+			seed.Tuple{
+				0: 1,
+				1: 5,
+			},
+			seed.Tuple{
+				0: 2,
+				1: 5,
+			},
+			seed.Tuple{
+				0: 3,
+				1: 5,
+			},
+			seed.Tuple{
+				0: 1,
+				1: 6,
+			},
+			seed.Tuple{
+				0: 2,
+				1: 6,
+			},
+			seed.Tuple{
+				0: 3,
+				1: 6,
+			},
 		},
 	})
 
@@ -497,23 +562,23 @@ func TestCalculateResults(t *testing.T) {
 		},
 		map[string][]seed.Tuple{ // data
 			"a": []seed.Tuple{
-				seed.Tuple{1},
-				seed.Tuple{2},
-				seed.Tuple{3},
-				seed.Tuple{4},
-				seed.Tuple{5},
-				seed.Tuple{6},
+				seed.Tuple{0: 1},
+				seed.Tuple{0: 2},
+				seed.Tuple{0: 3},
+				seed.Tuple{0: 4},
+				seed.Tuple{0: 5},
+				seed.Tuple{0: 6},
 			},
 			"b": []seed.Tuple{
-				seed.Tuple{4},
-				seed.Tuple{5},
-				seed.Tuple{6},
+				seed.Tuple{0: 4},
+				seed.Tuple{0: 5},
+				seed.Tuple{0: 6},
 			},
 		},
 		[]seed.Tuple{ // expected
-			seed.Tuple{4},
-			seed.Tuple{5},
-			seed.Tuple{6},
+			seed.Tuple{0: 4},
+			seed.Tuple{0: 5},
+			seed.Tuple{0: 6},
 		},
 	})
 
