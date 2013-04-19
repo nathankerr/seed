@@ -417,64 +417,6 @@ func lexReduceFunction(l *lexer) stateFn {
 	return lexToken
 }
 
-// | args | ruby 'end'
-func lexRuby(l *lexer) stateFn {
-	lexinfo()
-
-	l.emit(itemPipe)
-
-	// identifiers and arraydelimiters
-Loop:
-	for {
-		switch r := l.next(); {
-		case unicode.IsLetter(r):
-			lexIdentifier(l)
-		case isSpace(r):
-			l.ignore()
-		case r == ',':
-			l.emit(itemArrayDelimter)
-		case r == '|':
-			break Loop
-		default:
-			fatalf("%s expected identifier, ',', or '|'; got: '%s'",
-				l.source(), l.input[l.start:l.pos])
-		}
-	}
-	l.emit(itemPipe)
-
-	// eat the space between the end pipe and the ruby code
-	for isSpace(l.next()) {
-		// no-op
-	}
-	l.backup()
-	l.start = l.pos
-
-	start := l.start
-	endpos := strings.Index(l.input[start:], "end")
-	dopos := strings.Index(l.input[start:], "do")
-	for dopos != -1 && dopos < endpos {
-		endpos = strings.Index(l.input[start:], "end")
-		dopos = strings.Index(l.input[start:], "do")
-	}
-	l.pos = l.start + endpos
-
-	// eat the space between the ruby code and 'end'
-	r, _ := utf8.DecodeRuneInString(l.input[l.pos:])
-	for !isSpace(r) {
-		l.pos--
-		r, _ = utf8.DecodeRuneInString(l.input[l.pos:])
-
-	}
-
-	l.emit(itemRuby)
-
-	for isSpace(l.next()) {
-		l.ignore()
-	}
-
-	return lexIdentifier
-}
-
 // isSpace reports whether r is a space character.
 func isSpace(r rune) bool {
 	lexinfo(r)
