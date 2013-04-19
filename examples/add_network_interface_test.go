@@ -86,7 +86,7 @@ response <+ [request.timezone, (current_time_in request.timezone)]`,
 	}
 
 	for _, test := range tests {
-		input := seed.Parse(test.name, test.input, false)
+		input := seed.Parse(test.name, test.input)
 		// expected := seed.Parse(test.name, test.expected, false)
 		expected := test.expected
 

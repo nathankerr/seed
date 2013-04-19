@@ -24,9 +24,7 @@ func TestIndexes(t *testing.T) {
 			s: seed.Parse("two collections",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
-					"keep <+ [in.key, in.value]",
-				false,
-			),
+					"keep <+ [in.key, in.value]"),
 		},
 		map[string]map[string]int{ // expected
 			"in": map[string]int{
@@ -43,8 +41,7 @@ func TestIndexes(t *testing.T) {
 			number: 0,
 			s: seed.Parse("one collection",
 				"table keep [key] => [value]"+
-					"keep <+ [keep.key, keep.value]",
-				false),
+					"keep <+ [keep.key, keep.value]"),
 		},
 		map[string]map[string]int{
 			"keep": map[string]int{
@@ -62,8 +59,7 @@ func TestIndexes(t *testing.T) {
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
 					"table other [key] => [value]"+
-					"keep <+ [in.key, in.value]",
-				false),
+					"keep <+ [in.key, in.value]"),
 		},
 		map[string]map[string]int{
 			"in": map[string]int{
@@ -437,8 +433,7 @@ func TestCalculateResults(t *testing.T) {
 			s: seed.Parse("projection test",
 				"input in [unimportant, key] => [value]"+
 					"table keep [key] => [value]"+
-					"keep <+ [in.key, in.value]",
-				false),
+					"keep <+ [in.key, in.value]"),
 			//channels: ,
 		},
 		map[string][]seed.Tuple{ // data
@@ -461,8 +456,7 @@ func TestCalculateResults(t *testing.T) {
 				"input a [key]"+
 					"input b [key]"+
 					"table keep [key]"+
-					"keep <+ [a.key, b.key]",
-				false),
+					"keep <+ [a.key, b.key]"),
 			//channels: ,
 		},
 		map[string][]seed.Tuple{ // data
@@ -498,8 +492,7 @@ func TestCalculateResults(t *testing.T) {
 				"input a [key]"+
 					"input b [key]"+
 					"table intersection [both]"+
-					"intersection <+ [a.key]: a.key => b.key",
-				false),
+					"intersection <+ [a.key]: a.key => b.key"),
 			//channels: ,
 		},
 		map[string][]seed.Tuple{ // data
