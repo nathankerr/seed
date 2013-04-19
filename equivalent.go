@@ -1,6 +1,6 @@
 package seed
 
-import(
+import (
 	"fmt"
 	"reflect"
 )

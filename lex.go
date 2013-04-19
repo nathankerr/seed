@@ -48,9 +48,9 @@ const (
 	itemStartBrace         // {
 	itemEndBrace           // }
 	// keywords, also need to be in key map
-	itemInput  // input keyword
-	itemOutput // output keyword
-	itemTable  // table keyword
+	itemInput   // input keyword
+	itemOutput  // output keyword
+	itemTable   // table keyword
 	itemChannel // channel keyword
 	itemScratch // scratch keyword
 )
@@ -117,21 +117,21 @@ type stateFn func(*lexer) stateFn
 
 // lexer holds the state of the scanner.
 type lexer struct {
-	name   string    // the name of the input; used only for error reports.
-	input  string    // the string being scanned.
-	state  stateFn   // the next lexing function to enter.
-	pos    int       // current position in the input.
-	start  int       // start position of this item.
-	width  int       // width of last rune read from input.
-	items  chan item // channel of scanned items.
+	name  string    // the name of the input; used only for error reports.
+	input string    // the string being scanned.
+	state stateFn   // the next lexing function to enter.
+	pos   int       // current position in the input.
+	start int       // start position of this item.
+	width int       // width of last rune read from input.
+	items chan item // channel of scanned items.
 }
 
 // lex creates a new scanner for the input string.
 func newLexer(name, input string) *lexer {
 	l := &lexer{
-		name:   name,
-		input:  input,
-		items:  make(chan item),
+		name:  name,
+		input: input,
+		items: make(chan item),
 	}
 	return l
 }
