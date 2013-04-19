@@ -131,9 +131,6 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 		case "seed":
 			extension = "seed"
 			writer = seed.ToSeed
-		case "latex":
-			extension = "latex"
-			writer = seed.ToLaTeX
 		default:
 			fatal("Writing to", format, "format not supported.\n")
 		}
