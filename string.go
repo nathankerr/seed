@@ -86,6 +86,8 @@ func (ctype CollectionType) String() string {
 		// shouldn't get here
 		panic(ctype)
 	}
+
+	return ""
 }
 
 func (r *Rule) String() string {

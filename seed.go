@@ -4,9 +4,9 @@ import (
 	"fmt"
 )
 
-func FromSeed(name string, input []byte, subset bool) (*Seed, error) {
+func FromSeed(name string, input []byte) (*Seed, error) {
 	info()
-	return Parse(name, string(input), subset), nil
+	return Parse(name, string(input)), nil
 }
 
 func ToSeed(seed *Seed, name string) ([]byte, error) {

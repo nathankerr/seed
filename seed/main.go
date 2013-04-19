@@ -78,7 +78,7 @@ func load(filename, format string, full bool) (*seed.Seed, string) {
 	var service *seed.Seed
 	switch format {
 	case "seed":
-		service, err = seed.FromSeed(filename, source, !full)
+		service, err = seed.FromSeed(filename, source)
 	case "json":
 		service, err = seed.FromJson(filename, source)
 	default:
@@ -93,6 +93,13 @@ func load(filename, format string, full bool) (*seed.Seed, string) {
 	err = service.Validate()
 	if err != nil {
 		fatal(err)
+	}
+
+	if !full {
+		err = service.InSubset()
+		if err != nil {
+			fatal(err)
+		}
 	}
 
 	return service, name

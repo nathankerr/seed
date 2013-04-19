@@ -1,5 +1,5 @@
 #!/bin/sh
 
-seed -t="go seed" -transformations="network" time.seed && 
+seed -t="go seed bloom" -transformations="network" time.seed && 
 cp time.go.in build/time.go &&
 go run build/*.go -sleep=1s -monitor=:8000 -communicator=wsjson

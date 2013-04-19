@@ -38,7 +38,7 @@ const (
 	itemBeginArray         // [
 	itemEndArray           // ]
 	itemArrayDelimter      // ,
-	itemOperation          // <+, <-, <+-, (<=, <~ when !subset)
+	itemOperation          // <+, <-, <+-, <=, <~
 	itemKeyRelation        // =>
 	itemScopeDelimiter     // .
 	itemPredicateDelimiter // :
@@ -51,7 +51,6 @@ const (
 	itemInput  // input keyword
 	itemOutput // output keyword
 	itemTable  // table keyword
-	// following keywords not available in subset
 	itemChannel // channel keyword
 	itemScratch // scratch keyword
 )
@@ -125,16 +124,14 @@ type lexer struct {
 	start  int       // start position of this item.
 	width  int       // width of last rune read from input.
 	items  chan item // channel of scanned items.
-	subset bool      // limit to the subset?
 }
 
 // lex creates a new scanner for the input string.
-func newLexer(name, input string, subset bool) *lexer {
+func newLexer(name, input string) *lexer {
 	l := &lexer{
 		name:   name,
 		input:  input,
 		items:  make(chan item),
-		subset: subset,
 	}
 	return l
 }
@@ -269,7 +266,7 @@ func lexToken(l *lexer) stateFn {
 		l.emit(itemScopeDelimiter)
 	case r == ':':
 		l.emit(itemPredicateDelimiter)
-	case r == '@' && !l.subset:
+	case r == '@':
 		return lexIdentifier
 	case r == '(':
 		return lexMapFunction
@@ -316,15 +313,7 @@ Loop:
 
 			typ, ok := key[word]
 			if ok {
-				if l.subset {
-					if typ != itemChannel && typ != itemScratch {
-						l.emit(typ)
-					} else {
-						l.emit(itemIdentifier)
-					}
-				} else {
-					l.emit(typ)
-				}
+				l.emit(typ)
 			} else {
 				l.emit(itemIdentifier)
 			}
@@ -347,10 +336,10 @@ func lexOperation(l *lexer) stateFn {
 		}
 	case r == '-':
 		l.emit(itemOperation) // <-
-	case r == '=' && !l.subset:
-		l.emit(itemOperation) // <= (only available when not in subset)
-	case r == '~' && !l.subset:
-		l.emit(itemOperation) // <~ (only available when not in subset)
+	case r == '=':
+		l.emit(itemOperation) // <=
+	case r == '~':
+		l.emit(itemOperation) // <~
 	default:
 		fatalf("%s unexpected operation: '%s'",
 			l.source(), l.input[l.start:l.pos])
@@ -396,6 +385,8 @@ func lexMapFunction(l *lexer) stateFn {
 				l.source(), l.input[l.start:l.pos])
 		}
 	}
+
+	return lexToken
 }
 
 func lexReduceFunction(l *lexer) stateFn {
@@ -422,6 +413,8 @@ func lexReduceFunction(l *lexer) stateFn {
 				l.source(), l.input[l.start:l.pos])
 		}
 	}
+
+	return lexToken
 }
 
 // | args | ruby 'end'
