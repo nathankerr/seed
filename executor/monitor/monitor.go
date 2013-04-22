@@ -490,7 +490,7 @@ code {
 		<select id="newBlockName"></select>
 		<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
 
-		<div style="position: relative;">
+		<div style="position: relative; display: none;">
 			<textarea id="toSend" style="position: relative; float:left; height: 36px;"></textarea>
 			<div style="position: relative; float: left;">
 				<select id="sendToCollection"></select>
@@ -499,6 +499,7 @@ code {
 			</div>
 		</div>
 
+		<br/>
 		<span id="timestep_status">Running</span>
 		<input type="button" value="Immediate"/>
 		<input type="button" value="Deferred"/>
