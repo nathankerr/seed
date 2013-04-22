@@ -90,7 +90,6 @@ func sendAndWaitTilFinished(message MessageContainer, toControl []chan<- Message
 	for finished := 0; finished < len(toControl); finished++ {
 		message := <-controlChannel
 		messages = append(messages, message)
-		monitorinfo("MONITOR", message.String())
 		controlinfo("execute", finished, "of", len(toControl))
 	}
 	return messages
