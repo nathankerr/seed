@@ -55,17 +55,43 @@ func Execute(s *seed.Seed, sleepDuration time.Duration, address string, monitor 
 
 func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- MessageContainer, channels Channels) {
 
+	shouldStop := false
+
 	for {
 		if monitor {
 			select {
 			case message := <-channels.Command:
-				channels.Monitor <- MonitorMessage {
-					Block: "_command",
-					Data: message.Data,
+				fmt.Println(message, shouldStop)
+				switch message.Data.(string) {
+				case "run":
+					shouldStop = false
+				case "stop":
+					shouldStop = true
 				}
 			default:
 				// no-op
 			}
+
+			for shouldStop {
+				channels.Monitor <- MonitorMessage {
+					Block: "_command",
+					Data: "stopped",
+				}
+
+				message := <-channels.Command
+				fmt.Println("shouldStop", message)
+				switch message.Data.(string) {
+				case "run":
+					shouldStop = false
+				case "stop":
+					// no-op
+				}
+			}
+
+			channels.Monitor <- MonitorMessage {
+					Block: "_command",
+					Data: "running",
+				}
 		}
 
 		startTime := time.Now()

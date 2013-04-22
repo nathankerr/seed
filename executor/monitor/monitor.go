@@ -165,8 +165,17 @@ func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
 			collection = s.Collections[rule.Supplies]
 		} else {
 			switch message.Block {
-			case "_time", "budCommunicator", "wsjsonCommunicator", "_command":
+			case "_time", "budCommunicator", "wsjsonCommunicator":
 				return fmt.Sprint(message.Data)
+			case "_command":
+				switch message.Data.(string) {
+					case "running":
+						return fmt.Sprint(`Running <input type="button" value="Stop" onclick="sendCommand('stop')"/>`)
+					case "stopped":
+						return fmt.Sprint(`Stopped <input type="button" value="Run" onclick="sendCommand('run')"/>`)
+					default:
+						panic(message.Data)
+				}
 			default:
 				panic("unhandled block: " + message.Block)
 			}
@@ -538,12 +547,10 @@ code {
 			</div>
 		</div>
 
-		<br/>
-		<span id="_command">Running</span>
-		<input type="button" style="display: none;" value="Immediate"/>
-		<input type="button" style="display: none;" value="Deferred"/>
-		<input type="button" value="Run" onclick="sendCommand('run')"/>
-		<input type="button" value="Stop" onclick="sendCommand('stop')"/>
+		<div id="_command" style="position: relative">
+			Running
+			<input type="button" value="Stop" onclick="sendCommand('stop')"/>
+		</div>
 	</div>
 </div>
 <div id="connected" class="connected-red">&nbsp;</div>
