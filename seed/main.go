@@ -31,7 +31,6 @@ func main() {
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
 	var execute = flag.Bool("execute", false, "execute the seed")
-	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	var address = flag.String("address", ":3000", "address the bud communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
@@ -62,7 +61,7 @@ func main() {
 
 	if *execute {
 		info("Execute")
-		start(service, name, *sleep, *timeout, *address, *monitorAddress)
+		start(service, name, *sleep, *address, *monitorAddress)
 	}
 }
 
@@ -174,7 +173,7 @@ func transform(service *seed.Seed, transformation string) *seed.Seed {
 	return transformed
 }
 
-func start(service *seed.Seed, name, sleep, timeout, address, monitorAddress string) {
+func start(service *seed.Seed, name, sleep, address, monitorAddress string) {
 	info("Starting", name)
 
 	var err error
@@ -186,15 +185,16 @@ func start(service *seed.Seed, name, sleep, timeout, address, monitorAddress str
 		}
 	}
 
-	var timeoutDuration time.Duration
-	if timeout != "" {
-		timeoutDuration, err = time.ParseDuration(timeout)
-		if err != nil {
-			fatal(err)
-		}
+	useMonitor := false
+	if monitorAddress != "" {
+		useMonitor = true
 	}
 
-	channels := executor.Execute(service, timeoutDuration, sleepDuration, address, monitorAddress)
-	go monitor.StartMonitor(monitorAddress, channels.Monitor, service)
+	channels := executor.Execute(service, sleepDuration, address, useMonitor)
+
+	if useMonitor {
+		go monitor.StartMonitor(monitorAddress, channels.Monitor, service)
+	}
+
 	bud.BudCommunicator(service, channels, address)
 }

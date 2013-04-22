@@ -30,7 +30,7 @@ func (mc *MessageContainer) String() string {
 // A concurrent seed executor
 // Collection and rule handlers work as concurrent processes
 // managed by the control loop in this function.
-func Execute(s *seed.Seed, timeoutDuration time.Duration, sleepDuration time.Duration, address string, monitorAddress string) Channels {
+func Execute(s *seed.Seed, sleepDuration time.Duration, address string, monitor bool) Channels {
 	// launch the handlers
 	channels := makeChannels(s)
 	for collectionName, _ := range s.Collections {
@@ -49,24 +49,11 @@ func Execute(s *seed.Seed, timeoutDuration time.Duration, sleepDuration time.Dur
 		toControl = append(toControl, ruleChannel)
 	}
 
-	monitor := false
-	if monitorAddress != "" {
-		monitor = true
-	}
-
-	go controlLoop(monitor, sleepDuration, timeoutDuration, toControl, channels)
+	go controlLoop(monitor, sleepDuration, toControl, channels)
 	return channels
 }
 
-func controlLoop(monitor bool, sleepDuration time.Duration, timeoutDuration time.Duration, toControl []chan<- MessageContainer, channels Channels) {
-	// setup and start the timeout
-	// timeout should only happen when timeoutDuration != 0
-	var timeout <-chan time.Time
-	if timeoutDuration != 0 {
-		timeout = time.After(timeoutDuration)
-	}
-
-	// control loop
+func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- MessageContainer, channels Channels) {
 	for {
 		breakBeforeDeferred := false
 		if monitor {
@@ -75,14 +62,6 @@ func controlLoop(monitor bool, sleepDuration time.Duration, timeoutDuration time
 
 		startTime := time.Now()
 		time.Sleep(sleepDuration)
-
-		// check for timeout
-		select {
-		case <-timeout:
-			info("execute", "Timeout")
-			return
-		default:
-		}
 
 		// phase 1: execute immediate rules
 		messages := sendAndWaitTilFinished(
