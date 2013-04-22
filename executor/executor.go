@@ -68,7 +68,6 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 			MessageContainer{Operation: "deferred"},
 			toControl, channels.Control)
 
-		timeinfo("execute", "timestep took", time.Since(startTime))
 		if monitor {
 			for _, message := range messages {
 				channels.Monitor <- MonitorMessage{

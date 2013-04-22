@@ -33,12 +33,6 @@ func info(id interface{}, args ...interface{}) {
 	printlog(id, args...)
 }
 
-// timing information from executor
-func timeinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
-}
-
 // control communication information
 func controlinfo(id interface{}, args ...interface{}) {
 	return
