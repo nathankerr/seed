@@ -23,7 +23,6 @@ import (
 
 	// command line options
 	str = fmt.Sprintf(`%s
-	var timeout = flag.String("timeout", "", "how long to run; if 0, run forever")
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	var communicator = flag.String("communicator", "bud", "which communicator to use (bud wsjson")
 	var address = flag.String("address", ":3000", "address the communicator uses")
@@ -70,19 +69,18 @@ import (
 		}
 	}
 
-	var timeoutDuration time.Duration
-	if *timeout != "" {
-		timeoutDuration, err = time.ParseDuration(*timeout)
-		if err != nil {
-			log.Fatalln(err)
-		}
+	useMonitor := false
+	if *monitorAddress != "" {
+		useMonitor = true
 	}
 
 	println("Starting " + service.Source.Name + " on " + *address)
-	println("Starting monitor" + " on " + *monitorAddress)
+	channels := executor.Execute(service, sleepDuration, *address, useMonitor)
 
-	channels := executor.Execute(service, timeoutDuration, sleepDuration, *address, *monitorAddress)
-	go monitor.StartMonitor(*monitorAddress, channels.Monitor, service)
+	if useMonitor {
+		println("Starting monitor" + " on " + *monitorAddress)
+		go monitor.StartMonitor(*monitorAddress, channels.Monitor, service)
+	}
 
 	switch *communicator {
 	case "bud":
