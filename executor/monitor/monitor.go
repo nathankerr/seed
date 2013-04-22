@@ -13,6 +13,7 @@ import (
 )
 
 var registerSocket = make(chan socket)
+var incomingMessage = make(chan executor.MonitorMessage)
 
 type socket struct {
 	io.ReadWriter
@@ -110,6 +111,8 @@ func StartMonitor(address string, channel chan executor.MonitorMessage, s *seed.
 		case socket := <-registerSocket:
 			sockets = append(sockets, socket)
 			sendStartupData(s, socket)
+		case message := <-incomingMessage:
+			fmt.Println("StartMonitor", message)
 		}
 	}
 }
@@ -126,7 +129,31 @@ func monitorServer(address string) {
 func socketHandler(ws *websocket.Conn) {
 	done := make(chan bool)
 	registerSocket <- socket{ws, done}
+
+	go incomingMessageReader(ws)
+
 	<-done
+}
+
+func incomingMessageReader(ws *websocket.Conn) {
+	for {
+		info("reader")
+		raw := make([]byte, 1024)
+		n, err := ws.Read(raw)
+		if err != nil {
+			info(err)
+			continue
+		}
+		info("received:", string(raw[:n]))
+
+		message := executor.MonitorMessage{}
+		err = json.Unmarshal(raw[:n], &message)
+		if err != nil {
+			info(err)
+		}
+
+		incomingMessage <- message
+	}
 }
 
 func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
@@ -138,7 +165,7 @@ func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
 			collection = s.Collections[rule.Supplies]
 		} else {
 			switch message.Block {
-			case "_time", "budCommunicator", "wsjsonCommunicator":
+			case "_time", "budCommunicator", "wsjsonCommunicator", "_control":
 				return fmt.Sprint(message.Data)
 			default:
 				panic("unhandled block: " + message.Block)
@@ -210,6 +237,10 @@ function showMessage(m) {
 
 function onMessage(e) {
 	var message = JSON.parse(e.data)
+
+	if (message.Block == "_control") {
+		alert(message.Data)
+	}
 	
 	knownBlockNames[message.Block] = message.Data
 	setNewBlockNames()
@@ -402,6 +433,18 @@ function init() {
 	showMessage("started")
 }
 
+function sendCommand(message) {
+	// loader.style.display = "inline"
+	try {
+		websocket.send(JSON.stringify({
+			Block: "_command",
+			Data: message
+		}))
+	} catch (e) {
+		alert(e)
+	}
+}
+
 window.addEventListener("load", init, false);
 window.onresize=resizeAll
 </script>
@@ -501,10 +544,10 @@ code {
 
 		<br/>
 		<span id="timestep_status">Running</span>
-		<input type="button" value="Immediate"/>
-		<input type="button" value="Deferred"/>
-		<input type="button" value="Run"/>
-		<input type="button" value="Stop"/>
+		<input type="button" style="display: none;" value="Immediate"/>
+		<input type="button" style="display: none;" value="Deferred"/>
+		<input type="button" value="Run" onclick="sendCommand('run')"/>
+		<input type="button" value="Stop" onclick="sendCommand('stop')"/>
 	</div>
 </div>
 <div id="connected" class="connected-red">&nbsp;</div>
