@@ -92,14 +92,14 @@ func sendStartupData(s *seed.Seed, socket socket) {
 	}
 }
 
-func StartMonitor(address string, channel chan executor.MonitorMessage, s *seed.Seed) {
+func StartMonitor(address string, channels executor.Channels, s *seed.Seed) {
 	monitorAddress = address
 	go monitorServer(address)
 
 	sockets := []socket{}
 	for {
 		select {
-		case message := <-channel:
+		case message := <-channels.Monitor:
 			monitorinfo("_monitor", message)
 			message.Data = renderHTML(message, s)
 			data, err := json.Marshal(message)
@@ -112,7 +112,7 @@ func StartMonitor(address string, channel chan executor.MonitorMessage, s *seed.
 			sockets = append(sockets, socket)
 			sendStartupData(s, socket)
 		case message := <-incomingMessage:
-			fmt.Println("StartMonitor", message)
+			channels.Command <- message
 		}
 	}
 }
@@ -165,7 +165,7 @@ func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
 			collection = s.Collections[rule.Supplies]
 		} else {
 			switch message.Block {
-			case "_time", "budCommunicator", "wsjsonCommunicator", "_control":
+			case "_time", "budCommunicator", "wsjsonCommunicator", "_command":
 				return fmt.Sprint(message.Data)
 			default:
 				panic("unhandled block: " + message.Block)
@@ -238,16 +238,12 @@ function showMessage(m) {
 function onMessage(e) {
 	var message = JSON.parse(e.data)
 
-	if (message.Block == "_control") {
-		alert(message.Data)
-	}
-	
-	knownBlockNames[message.Block] = message.Data
-	setNewBlockNames()
-
-	if (message.Block == "_collections") {
-		document.getElementById("sendToCollection").innerHTML = message.Data
+	if (message.Block == "_command" || message.Block == "_collections") {
+		document.getElementById(message.Block).innerHTML = message.Data
 	} else {
+		knownBlockNames[message.Block] = message.Data
+		setNewBlockNames()
+	
 		var block = document.getElementById(message.Block)
 		if (block != null) {
 			block.children[1].innerHTML = message.Data
@@ -533,17 +529,17 @@ code {
 		<select id="newBlockName"></select>
 		<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
 
-		<div style="position: relative; display: none;">
+		<div style="position: relative; display: none">
 			<textarea id="toSend" style="position: relative; float:left; height: 36px;"></textarea>
 			<div style="position: relative; float: left;">
-				<select id="sendToCollection"></select>
+				<select id="_collections"></select>
 				<br/>
 				<input type="button" value="Insert" />
 			</div>
 		</div>
 
 		<br/>
-		<span id="timestep_status">Running</span>
+		<span id="_command">Running</span>
 		<input type="button" style="display: none;" value="Immediate"/>
 		<input type="button" style="display: none;" value="Deferred"/>
 		<input type="button" value="Run" onclick="sendCommand('run')"/>

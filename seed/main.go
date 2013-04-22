@@ -193,7 +193,7 @@ func start(service *seed.Seed, name, sleep, address, monitorAddress string) {
 	channels := executor.Execute(service, sleepDuration, address, useMonitor)
 
 	if useMonitor {
-		go monitor.StartMonitor(monitorAddress, channels.Monitor, service)
+		go monitor.StartMonitor(monitorAddress, channels, service)
 	}
 
 	bud.BudCommunicator(service, channels, address)

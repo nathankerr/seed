@@ -23,7 +23,7 @@ func flowinfo(id interface{}, args ...interface{}) {
 }
 
 func info(id interface{}, args ...interface{}) {
-	return
+	// return
 	printlog(id, args...)
 }
 

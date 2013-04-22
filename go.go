@@ -79,7 +79,7 @@ import (
 
 	if useMonitor {
 		println("Starting monitor" + " on " + *monitorAddress)
-		go monitor.StartMonitor(*monitorAddress, channels.Monitor, service)
+		go monitor.StartMonitor(*monitorAddress, channels, service)
 	}
 
 	switch *communicator {
