@@ -55,11 +55,6 @@ func Execute(s *seed.Seed, sleepDuration time.Duration, address string, monitor 
 
 func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- MessageContainer, channels Channels) {
 	for {
-		breakBeforeDeferred := false
-		if monitor {
-			// message = <-monitorChannel
-		}
-
 		startTime := time.Now()
 		time.Sleep(sleepDuration)
 
@@ -67,10 +62,6 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 		messages := sendAndWaitTilFinished(
 			MessageContainer{Operation: "immediate"},
 			toControl, channels.Control)
-
-		if breakBeforeDeferred {
-			// handle monitor control
-		}
 
 		// phase 2: execute deferred rules
 		messages = sendAndWaitTilFinished(
