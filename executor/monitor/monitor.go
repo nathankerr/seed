@@ -63,7 +63,7 @@ func removeSockets(toRemove []int, sockets []socket) []socket {
 	return sockets
 }
 
-func sendStartupData(s *seed.Seed, socket socket) {
+func sendStartupData(s *seed.Seed, socket socket, runningState string) {
 	messages := []executor.MonitorMessage{}
 
 	// _service block content
@@ -82,6 +82,12 @@ func sendStartupData(s *seed.Seed, socket socket) {
 		Data:  collections,
 	})
 
+	// runningState
+	messages = append(messages, executor.MonitorMessage{
+		Block: "_command",
+		Data: runningState,
+	})
+
 	for _, message := range messages {
 		data, err := json.Marshal(message)
 		if err != nil {
@@ -96,12 +102,20 @@ func StartMonitor(address string, channels executor.Channels, s *seed.Seed) {
 	monitorAddress = address
 	go monitorServer(address)
 
+	runningState := "running"
 	sockets := []socket{}
 	for {
 		select {
 		case message := <-channels.Monitor:
 			monitorinfo("_monitor", message)
 			message.Data = renderHTML(message, s)
+
+			// cache the running state so that
+			// it can be sent to new sockets
+			if message.Block == "_command" {
+				runningState = message.Data.(string)
+			}
+
 			data, err := json.Marshal(message)
 			if err != nil {
 				panic(err)
@@ -110,7 +124,7 @@ func StartMonitor(address string, channels executor.Channels, s *seed.Seed) {
 			sockets = removeSockets(toRemove, sockets)
 		case socket := <-registerSocket:
 			sockets = append(sockets, socket)
-			sendStartupData(s, socket)
+			sendStartupData(s, socket, runningState)
 		case message := <-incomingMessage:
 			channels.Command <- message
 		}
