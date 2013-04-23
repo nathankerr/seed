@@ -61,7 +61,6 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 		if monitor {
 			select {
 			case message := <-channels.Command:
-				fmt.Println(message, shouldStop)
 				switch message.Data.(string) {
 				case "run":
 					shouldStop = false
@@ -73,13 +72,13 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 			}
 
 			for shouldStop {
-				channels.Monitor <- MonitorMessage {
+				channels.Monitor <- MonitorMessage{
 					Block: "_command",
-					Data: "stopped",
+					Data:  "stopped",
 				}
 
 				message := <-channels.Command
-				fmt.Println("shouldStop", message)
+
 				switch message.Data.(string) {
 				case "run":
 					shouldStop = false
@@ -88,10 +87,10 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 				}
 			}
 
-			channels.Monitor <- MonitorMessage {
-					Block: "_command",
-					Data: "running",
-				}
+			channels.Monitor <- MonitorMessage{
+				Block: "_command",
+				Data:  "running",
+			}
 		}
 
 		startTime := time.Now()

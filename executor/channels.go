@@ -10,7 +10,7 @@ type Channels struct {
 	Collections  map[string]chan MessageContainer
 	Rules        []chan MessageContainer
 	Monitor      chan MonitorMessage
-	Command chan MonitorMessage
+	Command      chan MonitorMessage
 }
 
 func makeChannels(s *seed.Seed) Channels {

@@ -85,7 +85,7 @@ func sendStartupData(s *seed.Seed, socket socket, runningState string) {
 	// runningState
 	messages = append(messages, executor.MonitorMessage{
 		Block: "_command",
-		Data: runningState,
+		Data:  runningState,
 	})
 
 	for _, message := range messages {
@@ -183,12 +183,12 @@ func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
 				return fmt.Sprint(message.Data)
 			case "_command":
 				switch message.Data.(string) {
-					case "running":
-						return fmt.Sprint(`Running <input type="button" value="Stop" onclick="sendCommand('stop')"/>`)
-					case "stopped":
-						return fmt.Sprint(`Stopped <input type="button" value="Run" onclick="sendCommand('run')"/>`)
-					default:
-						panic(message.Data)
+				case "running":
+					return fmt.Sprint(`Running <input type="button" value="Stop" onclick="sendCommand('stop')"/>`)
+				case "stopped":
+					return fmt.Sprint(`Stopped <input type="button" value="Run" onclick="sendCommand('run')"/>`)
+				default:
+					panic(message.Data)
 				}
 			default:
 				panic("unhandled block: " + message.Block)
