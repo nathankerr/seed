@@ -457,6 +457,7 @@ function init() {
 }
 
 function sendCommand(message) {
+	//console.log(message)
 	// loader.style.display = "inline"
 	try {
 		websocket.send(JSON.stringify({

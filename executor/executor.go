@@ -59,16 +59,22 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 	shouldStep := false
 
 	for {
+		startTime := time.Now()
+		time.Sleep(sleepDuration)
+
 		if monitor {
 			select {
 			case message := <-channels.Command:
 				switch message.Data.(string) {
 				case "run":
 					shouldStop = false
+					shouldStep = false
 				case "stop":
 					shouldStop = true
+					shouldStep = false
 				case "step":
 					shouldStep = true
+					shouldStop = false
 				}
 			default:
 				// no-op
@@ -85,17 +91,21 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 				switch message.Data.(string) {
 				case "run":
 					shouldStop = false
+					shouldStep = false
 				case "stop":
-					// no-op
+					shouldStop = true
+					shouldStep = false
 				case "step":
-					shouldStep = true
 					shouldStop = false
+					shouldStep = true
 				}
 			}
 
-			channels.Monitor <- MonitorMessage{
-				Block: "_command",
-				Data:  "running",
+			if !shouldStep {
+				channels.Monitor <- MonitorMessage{
+					Block: "_command",
+					Data:  "running",
+				}
 			}
 		}
 
@@ -110,16 +120,17 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 
 			switch message.Data.(string) {
 			case "run":
+				shouldStop = false
 				shouldStep = false
 			case "stop":
-				// no-op
+				shouldStop = true
+				shouldStep = false
 			case "step":
+				shouldStop = false
+				shouldStep = true
 				break deferred
 			}
 		}
-
-		startTime := time.Now()
-		time.Sleep(sleepDuration)
 
 		// phase 1: execute immediate rules
 		messages := sendAndWaitTilFinished(
@@ -137,10 +148,14 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 
 			switch message.Data.(string) {
 			case "run":
+				shouldStop = false
 				shouldStep = false
 			case "stop":
-				// no-op
+				shouldStop = true
+				shouldStep = false
 			case "step":
+				shouldStop = false
+				shouldStep = true
 				break immediate
 			}
 		}
