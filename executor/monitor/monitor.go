@@ -242,6 +242,9 @@ var rootTemplate = template.Must(template.New("root").Parse(`<!DOCTYPE html>
 
 var websocket, focus, blocks, knownBlockNames, connected
 
+// for the service connection
+var service, server, address
+
 function showMessage(m) {
 	var p = document.createElement("p")
 	p.innerHTML = m
@@ -262,6 +265,7 @@ function showMessage(m) {
 	log.scrollTop = log.scrollHeight
 }
 
+// for monitor
 function onMessage(e) {
 	var message = JSON.parse(e.data)
 
@@ -276,6 +280,11 @@ function onMessage(e) {
 			block.children[1].innerHTML = message.Data
 		}
 	}
+}
+
+// for client
+function onResponseMessage(e) {
+	showMessage(e.data)
 }
 
 function setNewBlockNames() {
@@ -451,6 +460,25 @@ function init() {
 	websocket.onclose = onClose;
 	connected.style.backgroundColor = "green"
 
+	// connect to the service server
+	server = "ws://" + window.location.host + "/wsjson"
+	service = new WebSocket(server);
+	service.onmessage = onResponseMessage;
+	service.onclose = onClose;
+
+	// set uniq id (address)
+	service.onopen = function() {
+		address = Math.random().toString(36).substr(2)
+		try {
+			service.send(JSON.stringify(address))
+		} catch (e) {
+			alert(e)
+		}
+
+		// connected.style.backgroundColor = "green"
+		// loader.style.display = "none"
+	}
+
 	// open _log
 	createBlock("_log")
 	showMessage("started")
@@ -464,6 +492,40 @@ function sendCommand(message) {
 			Block: "_command",
 			Data: message
 		}))
+	} catch (e) {
+		alert(e)
+	}
+}
+
+// insert into service
+function sendInsert() {
+	// loader.style.display = "inline"
+
+	var data
+	try {
+		data = JSON.parse(document.getElementById("toSend").value)
+	} catch(e) {
+		alert(e)
+	}
+
+	for (var i = 0; i < data.length; i++) {
+		for (var j = 0; j < data[i].length; j++) {
+			if (data[i][j] == "server") {
+				data[i][j] = server
+			} else if (data[i][j] == "address") {
+				data[i][j] = address
+			}
+		}
+	}
+
+	try {
+		var message = JSON.stringify({
+			Operation: "<~",
+			Collection: document.getElementById("_collections").value,
+			Data: data
+		})
+		console.log(message)
+		service.send(message)
 	} catch (e) {
 		alert(e)
 	}
@@ -557,12 +619,12 @@ code {
 		<select id="newBlockName"></select>
 		<input type="button" value="Open" onclick="createBlock(document.getElementById('newBlockName').value)" />
 
-		<div style="position: relative; display: none">
-			<textarea id="toSend" style="position: relative; float:left; height: 36px;"></textarea>
+		<div style="position: relative">
+			<textarea id="toSend" style="position: relative; float:left; height: 36px;">[["server","address"]]</textarea>
 			<div style="position: relative; float: left;">
 				<select id="_collections"></select>
 				<br/>
-				<input type="button" value="Insert" />
+				<input type="button" value="Insert" onclick="sendInsert()"/>
 			</div>
 		</div>
 
