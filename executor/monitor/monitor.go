@@ -184,9 +184,13 @@ func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
 			case "_command":
 				switch message.Data.(string) {
 				case "running":
-					return fmt.Sprint(`Running <input type="button" value="Stop" onclick="sendCommand('stop')"/>`)
+					return fmt.Sprint(`Running <input type="button" value="Stop" onclick="sendCommand('stop')"/><input type="button" value="Step" onclick="sendCommand('step')"/>`)
 				case "stopped":
-					return fmt.Sprint(`Stopped <input type="button" value="Run" onclick="sendCommand('run')"/>`)
+					return fmt.Sprint(`Stopped <input type="button" value="Run" onclick="sendCommand('run')"/><input type="button" value="Step" onclick="sendCommand('step')"/>`)
+				case "deferred":
+					return fmt.Sprint(`Deferred <input type="button" value="Run" onclick="sendCommand('run')"/><input type="button" value="Step" onclick="sendCommand('step')"/>`)
+				case "immediate":
+					return fmt.Sprint(`Immediate <input type="button" value="Run" onclick="sendCommand('run')"/><input type="button" value="Step" onclick="sendCommand('step')"/>`)
 				default:
 					panic(message.Data)
 				}

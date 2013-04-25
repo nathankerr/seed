@@ -56,6 +56,7 @@ func Execute(s *seed.Seed, sleepDuration time.Duration, address string, monitor 
 func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- MessageContainer, channels Channels) {
 
 	shouldStop := false
+	shouldStep := false
 
 	for {
 		if monitor {
@@ -66,6 +67,8 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 					shouldStop = false
 				case "stop":
 					shouldStop = true
+				case "step":
+					shouldStep = true
 				}
 			default:
 				// no-op
@@ -84,12 +87,34 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 					shouldStop = false
 				case "stop":
 					// no-op
+				case "step":
+					shouldStep = true
+					shouldStop = false
 				}
 			}
 
 			channels.Monitor <- MonitorMessage{
 				Block: "_command",
 				Data:  "running",
+			}
+		}
+
+deferred:
+		for shouldStep {
+			channels.Monitor <- MonitorMessage{
+				Block: "_command",
+				Data:  "deferred",
+			}
+
+			message := <-channels.Command
+
+			switch message.Data.(string) {
+			case "run":
+				shouldStep = false
+			case "stop":
+				// no-op
+			case "step":
+				break deferred
 			}
 		}
 
@@ -100,6 +125,26 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 		messages := sendAndWaitTilFinished(
 			MessageContainer{Operation: "immediate"},
 			toControl, channels.Control)
+
+immediate:
+		for shouldStep {
+			channels.Monitor <- MonitorMessage{
+				Block: "_command",
+				Data:  "immediate",
+			}
+
+			message := <-channels.Command
+
+			switch message.Data.(string) {
+			case "run":
+				shouldStep = false
+			case "stop":
+				// no-op
+			case "step":
+				break immediate
+			}
+		}
+
 
 		// phase 2: execute deferred rules
 		messages = sendAndWaitTilFinished(

@@ -2,4 +2,4 @@
 
 seed -t="go seed bloom" -transformations="network" time.seed && 
 cp time.go.in build/time.go &&
-go run build/*.go -sleep=1s -monitor=:8000 -communicator=wsjson
+go run build/*.go -sleep=0.1s -monitor=:8000 -communicator=wsjson
