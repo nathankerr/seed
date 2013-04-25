@@ -99,7 +99,7 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 			}
 		}
 
-deferred:
+	deferred:
 		for shouldStep {
 			channels.Monitor <- MonitorMessage{
 				Block: "_command",
@@ -126,7 +126,7 @@ deferred:
 			MessageContainer{Operation: "immediate"},
 			toControl, channels.Control)
 
-immediate:
+	immediate:
 		for shouldStep {
 			channels.Monitor <- MonitorMessage{
 				Block: "_command",
@@ -144,7 +144,6 @@ immediate:
 				break immediate
 			}
 		}
-
 
 		// phase 2: execute deferred rules
 		messages = sendAndWaitTilFinished(
