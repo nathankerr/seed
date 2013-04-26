@@ -103,12 +103,29 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 						continue
 					}
 
-					socket, ok := sockets[tupleAddress]
+					thisSocket, ok := sockets[tupleAddress]
 					if !ok {
 						// skip addresses without sockets
 						// this also drops tuples sent to the local address
-						info("socket for address \""+tupleAddress+"\" not found", socket)
-						continue
+						log("socket for address \""+tupleAddress+"\" not found", thisSocket)
+
+						ws, err := websocket.Dial(tupleAddress, "", "http://localhost:8000/")
+						if err != nil {
+							log(err)
+						}
+
+						thisSocket = socket{
+							ws,
+							tupleAddress,
+							nil,
+						}
+
+						thisSocket.Write([]byte("\"" + tupleAddress + "\""))
+
+						sockets[tupleAddress] = thisSocket
+
+						go incomingMessageReader(ws)
+						// continue
 					}
 
 					toSend := executor.MessageContainer{
@@ -122,10 +139,10 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 						panic(err)
 					}
 
-					_, err = socket.Write(marshalled)
+					_, err = thisSocket.Write(marshalled)
 					if err != nil {
 						// close the handler
-						socket.done <- true
+						thisSocket.done <- true
 
 						// remove from the list of sockets
 						delete(sockets, tupleAddress)
@@ -164,7 +181,7 @@ func wsHandler(ws *websocket.Conn) {
 	var address string
 	err = json.Unmarshal(raw[:n], &address)
 	if err != nil {
-		log(err)
+		log(err, string(raw[:n]))
 	}
 
 	registerSocket <- socket{ws, address, done}
