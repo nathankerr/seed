@@ -24,7 +24,7 @@ import (
 	// command line options
 	str = fmt.Sprintf(`%s
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
-	var communicator = flag.String("communicator", "bud", "which communicator to use (bud wsjson")
+	var communicator = flag.String("communicator", "wsjson", "which communicator to use (bud wsjson")
 	var address = flag.String("address", ":3000", "address the communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
 

@@ -9,6 +9,7 @@ import (
 	"github.com/nathankerr/seed/executor"
 	"github.com/nathankerr/seed/executor/bud"
 	"github.com/nathankerr/seed/executor/monitor"
+	"github.com/nathankerr/seed/executor/wsjson"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -34,6 +35,7 @@ func main() {
 	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
 	var address = flag.String("address", ":3000", "address the bud communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
+	var communicator = flag.String("communicator", "wsjson", "which communicator to use (bud wsjson")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input filename]\nOptions:\n")
@@ -61,7 +63,7 @@ func main() {
 
 	if *execute {
 		info("Execute")
-		start(service, name, *sleep, *address, *monitorAddress)
+		start(service, name, *sleep, *address, *monitorAddress, *communicator)
 	}
 }
 
@@ -173,7 +175,7 @@ func transform(service *seed.Seed, transformation string) *seed.Seed {
 	return transformed
 }
 
-func start(service *seed.Seed, name, sleep, address, monitorAddress string) {
+func start(service *seed.Seed, name, sleep, address, monitorAddress, communicator string) {
 	info("Starting", name)
 
 	var err error
@@ -196,5 +198,12 @@ func start(service *seed.Seed, name, sleep, address, monitorAddress string) {
 		go monitor.StartMonitor(monitorAddress, channels, service)
 	}
 
-	bud.BudCommunicator(service, channels, address)
+	switch communicator {
+	case "bud":
+		bud.BudCommunicator(service, channels, address)
+	case "wsjson":
+		wsjson.Communicator(service, channels, address)
+	default:
+		fatal("Unknown communicator:", communicator)
+	}
 }
