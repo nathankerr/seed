@@ -192,9 +192,11 @@ func start(service *seed.Seed, name, sleep, address, monitorAddress, communicato
 		useMonitor = true
 	}
 
+	println("Starting " + service.Source.Name + " on " + address)
 	channels := executor.Execute(service, sleepDuration, address, useMonitor)
 
 	if useMonitor {
+		println("Starting monitor" + " on " + monitorAddress)
 		go monitor.StartMonitor(monitorAddress, channels, service)
 	}
 
