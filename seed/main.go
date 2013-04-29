@@ -1,6 +1,5 @@
 package main
 
-// standard packages
 import (
 	"flag"
 	"fmt"
@@ -15,27 +14,31 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"errors"
+	"log"
 )
 
-// flow:
-// - load seeds
-// - add network interface
-// - write bud to ruby
 func main() {
 	var outputdir = flag.String("o", "build",
 		"directory name to create and output the bud source")
 	var from_format = flag.String("f", "seed",
 		"format to load (seed, json)")
-	var full = flag.Bool("full", false, "when true, seed input is not limited to the subset")
+	var full = flag.Bool("full", false,
+		"when true, seed input is not limited to the subset")
 	var to_format = flag.String("t", "go",
 		"formats to write separated by spaces (bloom, dot, go, json, seed)")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces")
-	var execute = flag.Bool("execute", false, "execute the seed")
-	var sleep = flag.String("sleep", "", "how long to sleep each timestep")
-	var address = flag.String("address", ":3000", "address the bud communicator uses")
-	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
-	var communicator = flag.String("communicator", "wsjson", "which communicator to use (bud wsjson")
+	var execute = flag.Bool("execute", false,
+		"execute the seed")
+	var sleep = flag.String("sleep", "",
+		"how long to sleep each timestep")
+	var address = flag.String("address", ":3000",
+		"address the communicator uses")
+	var communicator = flag.String("communicator", "wsjson",
+		"which communicator to use (bud, wsjson")
+	var monitorAddress = flag.String("monitor", "",
+		"address the monitor uses; empty means it will not run")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input filename]\nOptions:\n")
@@ -48,32 +51,41 @@ func main() {
 		os.Exit(1)
 	}
 
-	info("Load")
+	log.Println("Load")
 	filename := flag.Arg(0)
 	filename = filepath.Clean(filename)
-	service, name := load(filename, *from_format, *full)
-
-	info("Transform")
-	for _, transformation := range strings.Fields(*transformations) {
-		service = transform(service, transformation)
+	service, err := load(filename, *from_format, *full)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
-	info("Write")
+	log.Println("Transform")
+	for _, transformation := range strings.Fields(*transformations) {
+		service, err = transform(service, transformation)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	log.Println("Write")
 	write(service, service.Name, *to_format, *outputdir)
 
 	if *execute {
-		info("Execute")
-		start(service, name, *sleep, *address, *monitorAddress, *communicator)
+		log.Println("Executing")
+		err = start(service, *sleep, *address, *monitorAddress, *communicator)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
-func load(filename, format string, full bool) (*seed.Seed, string) {
+func load(filename, format string, full bool) (*seed.Seed, error) {
 	_, name := filepath.Split(filename)
 	name = name[:len(name)-len(filepath.Ext(name))]
 
 	source, err := ioutil.ReadFile(filename)
 	if err != nil {
-		fatal(err)
+		return nil, err
 	}
 
 	var service *seed.Seed
@@ -83,34 +95,34 @@ func load(filename, format string, full bool) (*seed.Seed, string) {
 	case "json":
 		service, err = seed.FromJson(filename, source)
 	default:
-		fatal("Loading from", format, "format not supported.\n")
+		return nil, errors.New(fmt.Sprint("Loading from", format, "format not supported."))
 	}
 	if err != nil {
-		fatal(err)
+		return nil, err
 	}
 
 	service.Name = name
 
 	err = service.Validate()
 	if err != nil {
-		fatal(err)
+		return nil, err
 	}
 
 	if !full {
 		err = service.InSubset()
 		if err != nil {
-			fatal(err)
+			return nil, err
 		}
 	}
 
-	return service, name
+	return service, nil
 }
 
 func write(service *seed.Seed, name string, formats string, outputdir string) {
 	outputdir = filepath.Clean(outputdir)
 	err := os.MkdirAll(outputdir, 0755)
 	if err != nil {
-		fatal(err)
+		log.Fatalln(err)
 	}
 
 	for _, format := range strings.Fields(formats) {
@@ -133,30 +145,30 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 			extension = "seed"
 			writer = seed.ToSeed
 		default:
-			fatal("Writing to", format, "format not supported.\n")
+			log.Fatalln("Writing to", format, "format not supported.\n")
 		}
 
 		filename := filepath.Join(outputdir,
 			strings.ToLower(name)+"."+extension)
 		out, err := os.Create(filename)
 		if err != nil {
-			fatal(err)
+			log.Fatalln(err)
 		}
 
 		marshalled, err := writer(service, name)
 		if err != nil {
-			fatal("Error while converting to", format, ":", err)
+			log.Fatalln("Error while converting to", format, ":", err)
 		}
 		_, err = out.Write(marshalled)
 		if err != nil {
-			fatal(err)
+			log.Fatalln(err)
 		}
 
 		out.Close()
 	}
 }
 
-func transform(service *seed.Seed, transformation string) *seed.Seed {
+func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 	var transform func(service *seed.Seed) (*seed.Seed, error)
 	switch transformation {
 	case "network":
@@ -164,26 +176,24 @@ func transform(service *seed.Seed, transformation string) *seed.Seed {
 	case "replicate":
 		transform = examples.Add_replicated_tables
 	default:
-		fatal(transformation, "not supported.\n")
+		return nil, errors.New(transformation + " not supported.")
 	}
 
 	transformed, err := transform(service)
 	if err != nil {
-		fatal(transformation, "error:", err)
+		return nil, errors.New(fmt.Sprint(transformation, "error:", err))
 	}
 
-	return transformed
+	return transformed, nil
 }
 
-func start(service *seed.Seed, name, sleep, address, monitorAddress, communicator string) {
-	info("Starting", name)
-
+func start(service *seed.Seed, sleep, address, monitorAddress, communicator string) error {
 	var err error
 	var sleepDuration time.Duration
 	if sleep != "" {
 		sleepDuration, err = time.ParseDuration(sleep)
 		if err != nil {
-			fatal(err)
+			return err
 		}
 	}
 
@@ -192,11 +202,9 @@ func start(service *seed.Seed, name, sleep, address, monitorAddress, communicato
 		useMonitor = true
 	}
 
-	println("Starting " + service.Source.Name + " on " + address)
 	channels := executor.Execute(service, sleepDuration, address, useMonitor)
 
 	if useMonitor {
-		println("Starting monitor" + " on " + monitorAddress)
 		go monitor.StartMonitor(monitorAddress, channels, service)
 	}
 
@@ -206,6 +214,8 @@ func start(service *seed.Seed, name, sleep, address, monitorAddress, communicato
 	case "wsjson":
 		wsjson.Communicator(service, channels, address)
 	default:
-		fatal("Unknown communicator:", communicator)
+		return errors.New("Unknown communicator: " + communicator)
 	}
+
+	return nil
 }
