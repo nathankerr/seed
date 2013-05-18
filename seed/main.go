@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/nathankerr/seed"
@@ -10,12 +11,11 @@ import (
 	"github.com/nathankerr/seed/executor/monitor"
 	"github.com/nathankerr/seed/executor/wsjson"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"errors"
-	"log"
 )
 
 func main() {

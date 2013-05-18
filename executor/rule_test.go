@@ -115,19 +115,19 @@ func TestNumberOfProducts(t *testing.T) {
 	// one
 	tests = append(tests, []interface{}{
 		[]int{2}, // lengths
-		2,        // expected	
+		2,        // expected
 	})
 
 	// two
 	tests = append(tests, []interface{}{
 		[]int{2, 2}, // lengths
-		4,           // expected	
+		4,           // expected
 	})
 
 	// three
 	tests = append(tests, []interface{}{
 		[]int{1, 3, 5}, // lengths
-		15,             // expected	
+		15,             // expected
 	})
 
 	for _, test := range tests {
