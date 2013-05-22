@@ -1,0 +1,139 @@
+%{
+package seed
+
+// TODO:
+// Source
+
+import (
+  "fmt"
+)
+
+type yyinterface interface{}
+
+type yystype struct {
+	collectionType CollectionType
+	string string
+	strings []string
+	expression Expression
+	expressions []Expression
+	constraint Constraint
+	constraints []Constraint
+	mapfunction MapFunction
+	reducefunction ReduceFunction
+}
+
+%}
+
+%userstate *Seed
+%YYSTYPE yystype
+
+%noexport
+
+Seed = Statement* Eof
+  commit
+
+Statement =
+	Comment
+	 | Collection
+	 | Rule
+
+Comment = '#' <(!'\n' .)*> '\n'*
+
+Collection =
+	t:CollectionType Spaces*
+	n:Identifier Spaces*
+	k:IdentifierArray
+	(Spaces* '=>' Spaces* d:IdentifierArray)?
+	Spaces*
+	{
+		p.Collections[n.string] = &Collection{
+			Type: t.collectionType,
+			Key: k.strings,
+			Data: d.strings,
+		}
+	}
+
+CollectionType =
+	"input" { $$.collectionType = CollectionInput }
+	| "output" { $$.collectionType = CollectionOutput }
+	| "table" { $$.collectionType = CollectionTable }
+	| "channel" { $$.collectionType = CollectionChannel }
+	| "scratch" { $$.collectionType = CollectionScratch }
+
+IdentifierArray =
+	'[' { $$.strings = []string{} }
+	Spaces*
+	Identifier { $$.strings = append($$.strings, yytext) }
+	(',' Spaces* Identifier { $$.strings = append($$.strings, yytext) } )*
+	Spaces*
+	']'
+
+Rule =
+	c:Identifier Spaces*
+	o:Operation Spaces*
+	proj:Projection
+	(':' Spaces* pred:Predicate)?
+	Spaces*
+	{
+		p.Rules = append(p.Rules, &Rule{
+			Supplies: c.string,
+			Operation: o.string,
+			Projection: proj.expressions,
+			Predicate: pred.constraints,
+		})
+	}
+
+Operation = <( '<+-' | '<+' | '<-' | '<=' | '<~' )> { $$.string = yytext }
+
+Projection =
+	'[' { $$.expressions = []Expression{} } Spaces*
+	e:Expression { $$.expressions = append($$.expressions, e.expression) }
+	(',' Spaces* e:Expression { $$.expressions = append($$.expressions, e.expression) } )*
+	Spaces*
+	']'
+
+Expression = MapFunction | ReduceFunction | QualifiedColumn
+
+QualifiedColumn = collection:Identifier '.' column:Identifier
+	{ $$.expression.Value = QualifiedColumn{
+		Collection: collection.string,
+		Column: column.string,
+	}}
+
+MapFunction =
+	'('
+	Spaces*
+	n:Identifier { $$.mapfunction = MapFunction{Name: n.string }}
+	Spaces*
+	c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) }
+	Spaces*
+	(',' c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
+	')'
+	Spaces*
+	{ $$.expression.Value = $$.mapfunction }
+
+ReduceFunction =
+	'{'
+	Spaces*
+	n:Identifier { $$.reducefunction = ReduceFunction{Name: n.string }}
+	Spaces*
+	c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) }
+	Spaces*
+	(',' c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
+	'}'
+	Spaces*
+	{ $$.expression.Value = $$.reducefunction }
+
+Predicate = c:Constraint { $$.constraints = append($$.constraints, c.constraint) }
+	Spaces*
+	(',' Spaces* c:Constraint { $$.constraints = append($$.constraints, c.constraint) } Spaces*)*
+
+Constraint = l:QualifiedColumn Spaces* '=>' Spaces* r:QualifiedColumn
+	{ $$.constraint = Constraint {
+		Left: l.expression.Value.(QualifiedColumn),
+		Right: r.expression.Value.(QualifiedColumn),
+	}}
+
+Identifier = <[a-zA-Z][-a-zA-Z0-9_]+> { $$.string = yytext }
+Spaces = ' ' | '\t' | '\n' | '\r'
+Eof = !.
