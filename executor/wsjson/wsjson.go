@@ -28,6 +28,7 @@ type socket struct {
 	io.ReadWriter
 	address string
 	done    chan bool
+	localaddress string
 }
 
 func Communicator(s *seed.Seed, channels executor.Channels, address string) {
@@ -36,6 +37,7 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 	info("server started")
 
 	sockets := map[string]socket{} // address: socket
+	localAddresses := map[string]bool{} // list of addresses this communicator responds to, messages to these addresses will be dropped
 	for {
 		info("Communicator")
 		select {
@@ -107,6 +109,10 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 					if !ok {
 						// skip addresses without sockets
 						// this also drops tuples sent to the local address
+						if localAddresses[tupleAddress] {
+							continue
+						}
+
 						log("socket for address \""+tupleAddress+"\" not found", thisSocket)
 
 						ws, err := websocket.Dial(tupleAddress, "", "http://localhost:8000/")
@@ -118,6 +124,7 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 							ws,
 							tupleAddress,
 							nil,
+							"",
 						}
 
 						thisSocket.Write([]byte("\"" + tupleAddress + "\""))
@@ -156,6 +163,7 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 			// add socket to the list of known sockets
 			info("register", socket.address)
 			sockets[socket.address] = socket
+			localAddresses[socket.localaddress] = true
 		}
 	}
 }
@@ -184,7 +192,7 @@ func wsHandler(ws *websocket.Conn) {
 		log(err, string(raw[:n]))
 	}
 
-	registerSocket <- socket{ws, address, done}
+	registerSocket <- socket{ws, address, done, ws.LocalAddr().String()}
 
 	go incomingMessageReader(ws)
 
