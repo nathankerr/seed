@@ -64,8 +64,8 @@ IdentifierArray =
 	'[' { $$.strings = []string{} }
 	Spaces*
 	Identifier { $$.strings = append($$.strings, yytext) }
-	(',' Spaces* Identifier { $$.strings = append($$.strings, yytext) } )*
 	Spaces*
+	(',' Spaces* Identifier { $$.strings = append($$.strings, yytext) } Spaces* )*
 	']'
 
 Rule =
@@ -107,7 +107,7 @@ MapFunction =
 	Spaces*
 	c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) }
 	Spaces*
-	(',' c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
+	(c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
 	')'
 	Spaces*
 	{ $$.expression.Value = $$.mapfunction }
@@ -119,7 +119,7 @@ ReduceFunction =
 	Spaces*
 	c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) }
 	Spaces*
-	(',' c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
+	(c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
 	'}'
 	Spaces*
 	{ $$.expression.Value = $$.reducefunction }

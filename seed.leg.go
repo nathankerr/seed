@@ -670,7 +670,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
-		/* 5 IdentifierArray <- ('[' { yy.strings = []string{} } Spaces* Identifier { yy.strings = append(yy.strings, yytext) } (',' Spaces* Identifier { yy.strings = append(yy.strings, yytext) })* Spaces* ']') */
+		/* 5 IdentifierArray <- ('[' { yy.strings = []string{} } Spaces* Identifier { yy.strings = append(yy.strings, yytext) } Spaces* (',' Spaces* Identifier { yy.strings = append(yy.strings, yytext) } Spaces*)* ']') */
 		func() bool {
 			position0, thunkPosition0 := position, thunkPosition
 			if !matchChar('[') {
@@ -694,36 +694,46 @@ func (p *yyParser) Init() {
 		l35:
 			{
 				position36, thunkPosition36 := position, thunkPosition
-				if !matchChar(',') {
+				if !p.rules[ruleSpaces]() {
 					goto l36
 				}
-			l37:
-				{
-					position38, thunkPosition38 := position, thunkPosition
-					if !p.rules[ruleSpaces]() {
-						goto l38
-					}
-					goto l37
-				l38:
-					position, thunkPosition = position38, thunkPosition38
-				}
-				if !p.rules[ruleIdentifier]() {
-					goto l36
-				}
-				do(8)
 				goto l35
 			l36:
 				position, thunkPosition = position36, thunkPosition36
 			}
-		l39:
+		l37:
 			{
-				position40, thunkPosition40 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l40
+				position38, thunkPosition38 := position, thunkPosition
+				if !matchChar(',') {
+					goto l38
 				}
-				goto l39
-			l40:
-				position, thunkPosition = position40, thunkPosition40
+			l39:
+				{
+					position40, thunkPosition40 := position, thunkPosition
+					if !p.rules[ruleSpaces]() {
+						goto l40
+					}
+					goto l39
+				l40:
+					position, thunkPosition = position40, thunkPosition40
+				}
+				if !p.rules[ruleIdentifier]() {
+					goto l38
+				}
+				do(8)
+			l41:
+				{
+					position42, thunkPosition42 := position, thunkPosition
+					if !p.rules[ruleSpaces]() {
+						goto l42
+					}
+					goto l41
+				l42:
+					position, thunkPosition = position42, thunkPosition42
+				}
+				goto l37
+			l38:
+				position, thunkPosition = position38, thunkPosition38
 			}
 			if !matchChar(']') {
 				goto l32
@@ -745,23 +755,9 @@ func (p *yyParser) Init() {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 4)
 			if !p.rules[ruleIdentifier]() {
-				goto l41
+				goto l43
 			}
 			doarg(yySet, -1)
-		l42:
-			{
-				position43, thunkPosition43 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l43
-				}
-				goto l42
-			l43:
-				position, thunkPosition = position43, thunkPosition43
-			}
-			if !p.rules[ruleOperation]() {
-				goto l41
-			}
-			doarg(yySet, -2)
 		l44:
 			{
 				position45, thunkPosition45 := position, thunkPosition
@@ -772,48 +768,62 @@ func (p *yyParser) Init() {
 			l45:
 				position, thunkPosition = position45, thunkPosition45
 			}
+			if !p.rules[ruleOperation]() {
+				goto l43
+			}
+			doarg(yySet, -2)
+		l46:
+			{
+				position47, thunkPosition47 := position, thunkPosition
+				if !p.rules[ruleSpaces]() {
+					goto l47
+				}
+				goto l46
+			l47:
+				position, thunkPosition = position47, thunkPosition47
+			}
 			if !p.rules[ruleProjection]() {
-				goto l41
+				goto l43
 			}
 			doarg(yySet, -3)
 			{
-				position46, thunkPosition46 := position, thunkPosition
+				position48, thunkPosition48 := position, thunkPosition
 				if !matchChar(':') {
-					goto l46
-				}
-			l48:
-				{
-					position49, thunkPosition49 := position, thunkPosition
-					if !p.rules[ruleSpaces]() {
-						goto l49
-					}
 					goto l48
-				l49:
-					position, thunkPosition = position49, thunkPosition49
+				}
+			l50:
+				{
+					position51, thunkPosition51 := position, thunkPosition
+					if !p.rules[ruleSpaces]() {
+						goto l51
+					}
+					goto l50
+				l51:
+					position, thunkPosition = position51, thunkPosition51
 				}
 				if !p.rules[rulePredicate]() {
-					goto l46
+					goto l48
 				}
 				doarg(yySet, -4)
-				goto l47
-			l46:
-				position, thunkPosition = position46, thunkPosition46
+				goto l49
+			l48:
+				position, thunkPosition = position48, thunkPosition48
 			}
-		l47:
-		l50:
+		l49:
+		l52:
 			{
-				position51, thunkPosition51 := position, thunkPosition
+				position53, thunkPosition53 := position, thunkPosition
 				if !p.rules[ruleSpaces]() {
-					goto l51
+					goto l53
 				}
-				goto l50
-			l51:
-				position, thunkPosition = position51, thunkPosition51
+				goto l52
+			l53:
+				position, thunkPosition = position53, thunkPosition53
 			}
 			do(9)
 			doarg(yyPop, 4)
 			return true
-		l41:
+		l43:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -822,40 +832,40 @@ func (p *yyParser) Init() {
 			position0, thunkPosition0 := position, thunkPosition
 			begin = position
 			{
-				position53, thunkPosition53 := position, thunkPosition
+				position55, thunkPosition55 := position, thunkPosition
 				if !matchString("<+-") {
-					goto l54
-				}
-				goto l53
-			l54:
-				position, thunkPosition = position53, thunkPosition53
-				if !matchString("<+") {
-					goto l55
-				}
-				goto l53
-			l55:
-				position, thunkPosition = position53, thunkPosition53
-				if !matchString("<-") {
 					goto l56
 				}
-				goto l53
+				goto l55
 			l56:
-				position, thunkPosition = position53, thunkPosition53
-				if !matchString("<=") {
+				position, thunkPosition = position55, thunkPosition55
+				if !matchString("<+") {
 					goto l57
 				}
-				goto l53
+				goto l55
 			l57:
-				position, thunkPosition = position53, thunkPosition53
+				position, thunkPosition = position55, thunkPosition55
+				if !matchString("<-") {
+					goto l58
+				}
+				goto l55
+			l58:
+				position, thunkPosition = position55, thunkPosition55
+				if !matchString("<=") {
+					goto l59
+				}
+				goto l55
+			l59:
+				position, thunkPosition = position55, thunkPosition55
 				if !matchString("<~") {
-					goto l52
+					goto l54
 				}
 			}
-		l53:
+		l55:
 			end = position
 			do(10)
 			return true
-		l52:
+		l54:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -864,65 +874,65 @@ func (p *yyParser) Init() {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 1)
 			if !matchChar('[') {
-				goto l58
+				goto l60
 			}
 			do(11)
-		l59:
-			{
-				position60, thunkPosition60 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l60
-				}
-				goto l59
-			l60:
-				position, thunkPosition = position60, thunkPosition60
-			}
-			if !p.rules[ruleExpression]() {
-				goto l58
-			}
-			doarg(yySet, -1)
-			do(12)
 		l61:
 			{
 				position62, thunkPosition62 := position, thunkPosition
-				if !matchChar(',') {
+				if !p.rules[ruleSpaces]() {
 					goto l62
 				}
-			l63:
-				{
-					position64, thunkPosition64 := position, thunkPosition
-					if !p.rules[ruleSpaces]() {
-						goto l64
-					}
-					goto l63
-				l64:
-					position, thunkPosition = position64, thunkPosition64
-				}
-				if !p.rules[ruleExpression]() {
-					goto l62
-				}
-				doarg(yySet, -1)
-				do(13)
 				goto l61
 			l62:
 				position, thunkPosition = position62, thunkPosition62
 			}
-		l65:
+			if !p.rules[ruleExpression]() {
+				goto l60
+			}
+			doarg(yySet, -1)
+			do(12)
+		l63:
 			{
-				position66, thunkPosition66 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l66
+				position64, thunkPosition64 := position, thunkPosition
+				if !matchChar(',') {
+					goto l64
 				}
-				goto l65
-			l66:
-				position, thunkPosition = position66, thunkPosition66
+			l65:
+				{
+					position66, thunkPosition66 := position, thunkPosition
+					if !p.rules[ruleSpaces]() {
+						goto l66
+					}
+					goto l65
+				l66:
+					position, thunkPosition = position66, thunkPosition66
+				}
+				if !p.rules[ruleExpression]() {
+					goto l64
+				}
+				doarg(yySet, -1)
+				do(13)
+				goto l63
+			l64:
+				position, thunkPosition = position64, thunkPosition64
+			}
+		l67:
+			{
+				position68, thunkPosition68 := position, thunkPosition
+				if !p.rules[ruleSpaces]() {
+					goto l68
+				}
+				goto l67
+			l68:
+				position, thunkPosition = position68, thunkPosition68
 			}
 			if !matchChar(']') {
-				goto l58
+				goto l60
 			}
 			doarg(yyPop, 1)
 			return true
-		l58:
+		l60:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -930,26 +940,26 @@ func (p *yyParser) Init() {
 		func() bool {
 			position0, thunkPosition0 := position, thunkPosition
 			{
-				position68, thunkPosition68 := position, thunkPosition
+				position70, thunkPosition70 := position, thunkPosition
 				if !p.rules[ruleMapFunction]() {
+					goto l71
+				}
+				goto l70
+			l71:
+				position, thunkPosition = position70, thunkPosition70
+				if !p.rules[ruleReduceFunction]() {
+					goto l72
+				}
+				goto l70
+			l72:
+				position, thunkPosition = position70, thunkPosition70
+				if !p.rules[ruleQualifiedColumn]() {
 					goto l69
 				}
-				goto l68
-			l69:
-				position, thunkPosition = position68, thunkPosition68
-				if !p.rules[ruleReduceFunction]() {
-					goto l70
-				}
-				goto l68
-			l70:
-				position, thunkPosition = position68, thunkPosition68
-				if !p.rules[ruleQualifiedColumn]() {
-					goto l67
-				}
 			}
-		l68:
+		l70:
 			return true
-		l67:
+		l69:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -961,45 +971,30 @@ func (p *yyParser) Init() {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 2)
 			if !p.rules[ruleIdentifier]() {
-				goto l71
+				goto l73
 			}
 			doarg(yySet, -1)
 			if !matchChar('.') {
-				goto l71
+				goto l73
 			}
 			if !p.rules[ruleIdentifier]() {
-				goto l71
+				goto l73
 			}
 			doarg(yySet, -2)
 			do(14)
 			doarg(yyPop, 2)
 			return true
-		l71:
+		l73:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
-		/* 11 MapFunction <- ('(' Spaces* Identifier { yy.mapfunction = MapFunction{Name: n.string }} Spaces* QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces* (',' QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)* ')' Spaces* { yy.expression.Value = yy.mapfunction }) */
+		/* 11 MapFunction <- ('(' Spaces* Identifier { yy.mapfunction = MapFunction{Name: n.string }} Spaces* QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces* (QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)* ')' Spaces* { yy.expression.Value = yy.mapfunction }) */
 		func() bool {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 2)
 			if !matchChar('(') {
-				goto l72
+				goto l74
 			}
-		l73:
-			{
-				position74, thunkPosition74 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l74
-				}
-				goto l73
-			l74:
-				position, thunkPosition = position74, thunkPosition74
-			}
-			if !p.rules[ruleIdentifier]() {
-				goto l72
-			}
-			doarg(yySet, -1)
-			do(15)
 		l75:
 			{
 				position76, thunkPosition76 := position, thunkPosition
@@ -1010,11 +1005,11 @@ func (p *yyParser) Init() {
 			l76:
 				position, thunkPosition = position76, thunkPosition76
 			}
-			if !p.rules[ruleQualifiedColumn]() {
-				goto l72
+			if !p.rules[ruleIdentifier]() {
+				goto l74
 			}
-			doarg(yySet, -2)
-			do(16)
+			doarg(yySet, -1)
+			do(15)
 		l77:
 			{
 				position78, thunkPosition78 := position, thunkPosition
@@ -1025,73 +1020,70 @@ func (p *yyParser) Init() {
 			l78:
 				position, thunkPosition = position78, thunkPosition78
 			}
+			if !p.rules[ruleQualifiedColumn]() {
+				goto l74
+			}
+			doarg(yySet, -2)
+			do(16)
 		l79:
 			{
 				position80, thunkPosition80 := position, thunkPosition
-				if !matchChar(',') {
+				if !p.rules[ruleSpaces]() {
 					goto l80
-				}
-				if !p.rules[ruleQualifiedColumn]() {
-					goto l80
-				}
-				doarg(yySet, -2)
-				do(17)
-			l81:
-				{
-					position82, thunkPosition82 := position, thunkPosition
-					if !p.rules[ruleSpaces]() {
-						goto l82
-					}
-					goto l81
-				l82:
-					position, thunkPosition = position82, thunkPosition82
 				}
 				goto l79
 			l80:
 				position, thunkPosition = position80, thunkPosition80
 			}
-			if !matchChar(')') {
-				goto l72
-			}
-		l83:
+		l81:
 			{
-				position84, thunkPosition84 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l84
+				position82, thunkPosition82 := position, thunkPosition
+				if !p.rules[ruleQualifiedColumn]() {
+					goto l82
 				}
-				goto l83
-			l84:
-				position, thunkPosition = position84, thunkPosition84
+				doarg(yySet, -2)
+				do(17)
+			l83:
+				{
+					position84, thunkPosition84 := position, thunkPosition
+					if !p.rules[ruleSpaces]() {
+						goto l84
+					}
+					goto l83
+				l84:
+					position, thunkPosition = position84, thunkPosition84
+				}
+				goto l81
+			l82:
+				position, thunkPosition = position82, thunkPosition82
+			}
+			if !matchChar(')') {
+				goto l74
+			}
+		l85:
+			{
+				position86, thunkPosition86 := position, thunkPosition
+				if !p.rules[ruleSpaces]() {
+					goto l86
+				}
+				goto l85
+			l86:
+				position, thunkPosition = position86, thunkPosition86
 			}
 			do(18)
 			doarg(yyPop, 2)
 			return true
-		l72:
+		l74:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
-		/* 12 ReduceFunction <- ('{' Spaces* Identifier { yy.reducefunction = ReduceFunction{Name: n.string }} Spaces* QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces* (',' QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)* '}' Spaces* { yy.expression.Value = yy.reducefunction }) */
+		/* 12 ReduceFunction <- ('{' Spaces* Identifier { yy.reducefunction = ReduceFunction{Name: n.string }} Spaces* QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces* (QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)* '}' Spaces* { yy.expression.Value = yy.reducefunction }) */
 		func() bool {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 2)
 			if !matchChar('{') {
-				goto l85
+				goto l87
 			}
-		l86:
-			{
-				position87, thunkPosition87 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l87
-				}
-				goto l86
-			l87:
-				position, thunkPosition = position87, thunkPosition87
-			}
-			if !p.rules[ruleIdentifier]() {
-				goto l85
-			}
-			doarg(yySet, -1)
-			do(19)
 		l88:
 			{
 				position89, thunkPosition89 := position, thunkPosition
@@ -1102,11 +1094,11 @@ func (p *yyParser) Init() {
 			l89:
 				position, thunkPosition = position89, thunkPosition89
 			}
-			if !p.rules[ruleQualifiedColumn]() {
-				goto l85
+			if !p.rules[ruleIdentifier]() {
+				goto l87
 			}
-			doarg(yySet, -2)
-			do(20)
+			doarg(yySet, -1)
+			do(19)
 		l90:
 			{
 				position91, thunkPosition91 := position, thunkPosition
@@ -1117,48 +1109,60 @@ func (p *yyParser) Init() {
 			l91:
 				position, thunkPosition = position91, thunkPosition91
 			}
+			if !p.rules[ruleQualifiedColumn]() {
+				goto l87
+			}
+			doarg(yySet, -2)
+			do(20)
 		l92:
 			{
 				position93, thunkPosition93 := position, thunkPosition
-				if !matchChar(',') {
+				if !p.rules[ruleSpaces]() {
 					goto l93
-				}
-				if !p.rules[ruleQualifiedColumn]() {
-					goto l93
-				}
-				doarg(yySet, -2)
-				do(21)
-			l94:
-				{
-					position95, thunkPosition95 := position, thunkPosition
-					if !p.rules[ruleSpaces]() {
-						goto l95
-					}
-					goto l94
-				l95:
-					position, thunkPosition = position95, thunkPosition95
 				}
 				goto l92
 			l93:
 				position, thunkPosition = position93, thunkPosition93
 			}
-			if !matchChar('}') {
-				goto l85
-			}
-		l96:
+		l94:
 			{
-				position97, thunkPosition97 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l97
+				position95, thunkPosition95 := position, thunkPosition
+				if !p.rules[ruleQualifiedColumn]() {
+					goto l95
 				}
-				goto l96
-			l97:
-				position, thunkPosition = position97, thunkPosition97
+				doarg(yySet, -2)
+				do(21)
+			l96:
+				{
+					position97, thunkPosition97 := position, thunkPosition
+					if !p.rules[ruleSpaces]() {
+						goto l97
+					}
+					goto l96
+				l97:
+					position, thunkPosition = position97, thunkPosition97
+				}
+				goto l94
+			l95:
+				position, thunkPosition = position95, thunkPosition95
+			}
+			if !matchChar('}') {
+				goto l87
+			}
+		l98:
+			{
+				position99, thunkPosition99 := position, thunkPosition
+				if !p.rules[ruleSpaces]() {
+					goto l99
+				}
+				goto l98
+			l99:
+				position, thunkPosition = position99, thunkPosition99
 			}
 			do(22)
 			doarg(yyPop, 2)
 			return true
-		l85:
+		l87:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -1167,41 +1171,26 @@ func (p *yyParser) Init() {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 1)
 			if !p.rules[ruleConstraint]() {
-				goto l98
+				goto l100
 			}
 			doarg(yySet, -1)
 			do(23)
-		l99:
-			{
-				position100, thunkPosition100 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l100
-				}
-				goto l99
-			l100:
-				position, thunkPosition = position100, thunkPosition100
-			}
 		l101:
 			{
 				position102, thunkPosition102 := position, thunkPosition
+				if !p.rules[ruleSpaces]() {
+					goto l102
+				}
+				goto l101
+			l102:
+				position, thunkPosition = position102, thunkPosition102
+			}
+		l103:
+			{
+				position104, thunkPosition104 := position, thunkPosition
 				if !matchChar(',') {
-					goto l102
+					goto l104
 				}
-			l103:
-				{
-					position104, thunkPosition104 := position, thunkPosition
-					if !p.rules[ruleSpaces]() {
-						goto l104
-					}
-					goto l103
-				l104:
-					position, thunkPosition = position104, thunkPosition104
-				}
-				if !p.rules[ruleConstraint]() {
-					goto l102
-				}
-				doarg(yySet, -1)
-				do(24)
 			l105:
 				{
 					position106, thunkPosition106 := position, thunkPosition
@@ -1212,13 +1201,28 @@ func (p *yyParser) Init() {
 				l106:
 					position, thunkPosition = position106, thunkPosition106
 				}
-				goto l101
-			l102:
-				position, thunkPosition = position102, thunkPosition102
+				if !p.rules[ruleConstraint]() {
+					goto l104
+				}
+				doarg(yySet, -1)
+				do(24)
+			l107:
+				{
+					position108, thunkPosition108 := position, thunkPosition
+					if !p.rules[ruleSpaces]() {
+						goto l108
+					}
+					goto l107
+				l108:
+					position, thunkPosition = position108, thunkPosition108
+				}
+				goto l103
+			l104:
+				position, thunkPosition = position104, thunkPosition104
 			}
 			doarg(yyPop, 1)
 			return true
-		l98:
+		l100:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -1230,22 +1234,9 @@ func (p *yyParser) Init() {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 2)
 			if !p.rules[ruleQualifiedColumn]() {
-				goto l107
+				goto l109
 			}
 			doarg(yySet, -1)
-		l108:
-			{
-				position109, thunkPosition109 := position, thunkPosition
-				if !p.rules[ruleSpaces]() {
-					goto l109
-				}
-				goto l108
-			l109:
-				position, thunkPosition = position109, thunkPosition109
-			}
-			if !matchString("=>") {
-				goto l107
-			}
 		l110:
 			{
 				position111, thunkPosition111 := position, thunkPosition
@@ -1256,14 +1247,27 @@ func (p *yyParser) Init() {
 			l111:
 				position, thunkPosition = position111, thunkPosition111
 			}
+			if !matchString("=>") {
+				goto l109
+			}
+		l112:
+			{
+				position113, thunkPosition113 := position, thunkPosition
+				if !p.rules[ruleSpaces]() {
+					goto l113
+				}
+				goto l112
+			l113:
+				position, thunkPosition = position113, thunkPosition113
+			}
 			if !p.rules[ruleQualifiedColumn]() {
-				goto l107
+				goto l109
 			}
 			doarg(yySet, -2)
 			do(25)
 			doarg(yyPop, 2)
 			return true
-		l107:
+		l109:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -1272,25 +1276,25 @@ func (p *yyParser) Init() {
 			position0, thunkPosition0 := position, thunkPosition
 			begin = position
 			if !matchClass(0) {
-				goto l112
+				goto l114
 			}
 			if !matchClass(1) {
-				goto l112
+				goto l114
 			}
-		l113:
+		l115:
 			{
-				position114, thunkPosition114 := position, thunkPosition
+				position116, thunkPosition116 := position, thunkPosition
 				if !matchClass(1) {
-					goto l114
+					goto l116
 				}
-				goto l113
-			l114:
-				position, thunkPosition = position114, thunkPosition114
+				goto l115
+			l116:
+				position, thunkPosition = position116, thunkPosition116
 			}
 			end = position
 			do(26)
 			return true
-		l112:
+		l114:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -1298,32 +1302,32 @@ func (p *yyParser) Init() {
 		func() bool {
 			position0, thunkPosition0 := position, thunkPosition
 			{
-				position116, thunkPosition116 := position, thunkPosition
+				position118, thunkPosition118 := position, thunkPosition
 				if !matchChar(' ') {
-					goto l117
-				}
-				goto l116
-			l117:
-				position, thunkPosition = position116, thunkPosition116
-				if !matchChar('\t') {
-					goto l118
-				}
-				goto l116
-			l118:
-				position, thunkPosition = position116, thunkPosition116
-				if !matchChar('\n') {
 					goto l119
 				}
-				goto l116
+				goto l118
 			l119:
-				position, thunkPosition = position116, thunkPosition116
+				position, thunkPosition = position118, thunkPosition118
+				if !matchChar('\t') {
+					goto l120
+				}
+				goto l118
+			l120:
+				position, thunkPosition = position118, thunkPosition118
+				if !matchChar('\n') {
+					goto l121
+				}
+				goto l118
+			l121:
+				position, thunkPosition = position118, thunkPosition118
 				if !matchChar('\r') {
-					goto l115
+					goto l117
 				}
 			}
-		l116:
+		l118:
 			return true
-		l115:
+		l117:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
@@ -1331,16 +1335,16 @@ func (p *yyParser) Init() {
 		func() bool {
 			position0, thunkPosition0 := position, thunkPosition
 			{
-				position121, thunkPosition121 := position, thunkPosition
+				position123, thunkPosition123 := position, thunkPosition
 				if !matchDot() {
-					goto l121
+					goto l123
 				}
-				goto l120
-			l121:
-				position, thunkPosition = position121, thunkPosition121
+				goto l122
+			l123:
+				position, thunkPosition = position123, thunkPosition123
 			}
 			return true
-		l120:
+		l122:
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
