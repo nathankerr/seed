@@ -173,6 +173,18 @@ func (p *yyParser) Init() {
 			o := yyval[yyp-2]
 			proj := yyval[yyp-3]
 			pred := yyval[yyp-4]
+			yy.constraints = []Constraint{}
+			yyval[yyp-1] = c
+			yyval[yyp-2] = o
+			yyval[yyp-3] = proj
+			yyval[yyp-4] = pred
+		},
+		/* 10 Rule */
+		func(yytext string, _ int) {
+			c := yyval[yyp-1]
+			o := yyval[yyp-2]
+			proj := yyval[yyp-3]
+			pred := yyval[yyp-4]
 
 			p.Rules = append(p.Rules, &Rule{
 				Supplies:   c.string,
@@ -186,20 +198,14 @@ func (p *yyParser) Init() {
 			yyval[yyp-3] = proj
 			yyval[yyp-4] = pred
 		},
-		/* 10 Operation */
+		/* 11 Operation */
 		func(yytext string, _ int) {
 			yy.string = yytext
-		},
-		/* 11 Projection */
-		func(yytext string, _ int) {
-			e := yyval[yyp-1]
-			yy.expressions = []Expression{}
-			yyval[yyp-1] = e
 		},
 		/* 12 Projection */
 		func(yytext string, _ int) {
 			e := yyval[yyp-1]
-			yy.expressions = append(yy.expressions, e.expression)
+			yy.expressions = []Expression{}
 			yyval[yyp-1] = e
 		},
 		/* 13 Projection */
@@ -208,7 +214,13 @@ func (p *yyParser) Init() {
 			yy.expressions = append(yy.expressions, e.expression)
 			yyval[yyp-1] = e
 		},
-		/* 14 QualifiedColumn */
+		/* 14 Projection */
+		func(yytext string, _ int) {
+			e := yyval[yyp-1]
+			yy.expressions = append(yy.expressions, e.expression)
+			yyval[yyp-1] = e
+		},
+		/* 15 QualifiedColumn */
 		func(yytext string, _ int) {
 			collection := yyval[yyp-1]
 			column := yyval[yyp-2]
@@ -219,19 +231,11 @@ func (p *yyParser) Init() {
 			yyval[yyp-1] = collection
 			yyval[yyp-2] = column
 		},
-		/* 15 MapFunction */
-		func(yytext string, _ int) {
-			n := yyval[yyp-1]
-			c := yyval[yyp-2]
-			yy.mapfunction = MapFunction{Name: n.string}
-			yyval[yyp-1] = n
-			yyval[yyp-2] = c
-		},
 		/* 16 MapFunction */
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn))
+			yy.mapfunction = MapFunction{Name: n.string}
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -247,15 +251,15 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.expression.Value = yy.mapfunction
+			yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
-		/* 19 ReduceFunction */
+		/* 19 MapFunction */
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.reducefunction = ReduceFunction{Name: n.string}
+			yy.expression.Value = yy.mapfunction
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -263,7 +267,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn))
+			yy.reducefunction = ReduceFunction{Name: n.string}
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -279,15 +283,17 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.expression.Value = yy.reducefunction
+			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
-		/* 23 Predicate */
+		/* 23 ReduceFunction */
 		func(yytext string, _ int) {
-			c := yyval[yyp-1]
-			yy.constraints = append(yy.constraints, c.constraint)
-			yyval[yyp-1] = c
+			n := yyval[yyp-1]
+			c := yyval[yyp-2]
+			yy.expression.Value = yy.reducefunction
+			yyval[yyp-1] = n
+			yyval[yyp-2] = c
 		},
 		/* 24 Predicate */
 		func(yytext string, _ int) {
@@ -295,7 +301,13 @@ func (p *yyParser) Init() {
 			yy.constraints = append(yy.constraints, c.constraint)
 			yyval[yyp-1] = c
 		},
-		/* 25 Constraint */
+		/* 25 Predicate */
+		func(yytext string, _ int) {
+			c := yyval[yyp-1]
+			yy.constraints = append(yy.constraints, c.constraint)
+			yyval[yyp-1] = c
+		},
+		/* 26 Constraint */
 		func(yytext string, _ int) {
 			l := yyval[yyp-1]
 			r := yyval[yyp-2]
@@ -306,7 +318,7 @@ func (p *yyParser) Init() {
 			yyval[yyp-1] = l
 			yyval[yyp-2] = r
 		},
-		/* 26 Identifier */
+		/* 27 Identifier */
 		func(yytext string, _ int) {
 			yy.string = yytext
 		},
@@ -330,7 +342,7 @@ func (p *yyParser) Init() {
 		},
 	}
 	const (
-		yyPush = 27 + iota
+		yyPush = 28 + iota
 		yyPop
 		yySet
 	)
@@ -743,7 +755,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return false
 		},
-		/* 6 Rule <- (Identifier Spaces* Operation Spaces* Projection (':' Spaces* Predicate)? Spaces* {
+		/* 6 Rule <- ({yy.constraints = []Constraint{} } Identifier Spaces* Operation Spaces* Projection (':' Spaces* Predicate)? Spaces* {
 			p.Rules = append(p.Rules, &Rule{
 				Supplies: c.string,
 				Operation: o.string,
@@ -754,6 +766,7 @@ func (p *yyParser) Init() {
 		func() bool {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 4)
+			do(9)
 			if !p.rules[ruleIdentifier]() {
 				goto l43
 			}
@@ -820,7 +833,7 @@ func (p *yyParser) Init() {
 			l53:
 				position, thunkPosition = position53, thunkPosition53
 			}
-			do(9)
+			do(10)
 			doarg(yyPop, 4)
 			return true
 		l43:
@@ -863,7 +876,7 @@ func (p *yyParser) Init() {
 			}
 		l55:
 			end = position
-			do(10)
+			do(11)
 			return true
 		l54:
 			position, thunkPosition = position0, thunkPosition0
@@ -876,7 +889,7 @@ func (p *yyParser) Init() {
 			if !matchChar('[') {
 				goto l60
 			}
-			do(11)
+			do(12)
 		l61:
 			{
 				position62, thunkPosition62 := position, thunkPosition
@@ -891,7 +904,7 @@ func (p *yyParser) Init() {
 				goto l60
 			}
 			doarg(yySet, -1)
-			do(12)
+			do(13)
 		l63:
 			{
 				position64, thunkPosition64 := position, thunkPosition
@@ -912,7 +925,7 @@ func (p *yyParser) Init() {
 					goto l64
 				}
 				doarg(yySet, -1)
-				do(13)
+				do(14)
 				goto l63
 			l64:
 				position, thunkPosition = position64, thunkPosition64
@@ -981,7 +994,7 @@ func (p *yyParser) Init() {
 				goto l73
 			}
 			doarg(yySet, -2)
-			do(14)
+			do(15)
 			doarg(yyPop, 2)
 			return true
 		l73:
@@ -1009,7 +1022,7 @@ func (p *yyParser) Init() {
 				goto l74
 			}
 			doarg(yySet, -1)
-			do(15)
+			do(16)
 		l77:
 			{
 				position78, thunkPosition78 := position, thunkPosition
@@ -1024,7 +1037,7 @@ func (p *yyParser) Init() {
 				goto l74
 			}
 			doarg(yySet, -2)
-			do(16)
+			do(17)
 		l79:
 			{
 				position80, thunkPosition80 := position, thunkPosition
@@ -1042,7 +1055,7 @@ func (p *yyParser) Init() {
 					goto l82
 				}
 				doarg(yySet, -2)
-				do(17)
+				do(18)
 			l83:
 				{
 					position84, thunkPosition84 := position, thunkPosition
@@ -1070,7 +1083,7 @@ func (p *yyParser) Init() {
 			l86:
 				position, thunkPosition = position86, thunkPosition86
 			}
-			do(18)
+			do(19)
 			doarg(yyPop, 2)
 			return true
 		l74:
@@ -1098,7 +1111,7 @@ func (p *yyParser) Init() {
 				goto l87
 			}
 			doarg(yySet, -1)
-			do(19)
+			do(20)
 		l90:
 			{
 				position91, thunkPosition91 := position, thunkPosition
@@ -1113,7 +1126,7 @@ func (p *yyParser) Init() {
 				goto l87
 			}
 			doarg(yySet, -2)
-			do(20)
+			do(21)
 		l92:
 			{
 				position93, thunkPosition93 := position, thunkPosition
@@ -1131,7 +1144,7 @@ func (p *yyParser) Init() {
 					goto l95
 				}
 				doarg(yySet, -2)
-				do(21)
+				do(22)
 			l96:
 				{
 					position97, thunkPosition97 := position, thunkPosition
@@ -1159,7 +1172,7 @@ func (p *yyParser) Init() {
 			l99:
 				position, thunkPosition = position99, thunkPosition99
 			}
-			do(22)
+			do(23)
 			doarg(yyPop, 2)
 			return true
 		l87:
@@ -1174,7 +1187,7 @@ func (p *yyParser) Init() {
 				goto l100
 			}
 			doarg(yySet, -1)
-			do(23)
+			do(24)
 		l101:
 			{
 				position102, thunkPosition102 := position, thunkPosition
@@ -1205,7 +1218,7 @@ func (p *yyParser) Init() {
 					goto l104
 				}
 				doarg(yySet, -1)
-				do(24)
+				do(25)
 			l107:
 				{
 					position108, thunkPosition108 := position, thunkPosition
@@ -1264,7 +1277,7 @@ func (p *yyParser) Init() {
 				goto l109
 			}
 			doarg(yySet, -2)
-			do(25)
+			do(26)
 			doarg(yyPop, 2)
 			return true
 		l109:
@@ -1292,7 +1305,7 @@ func (p *yyParser) Init() {
 				position, thunkPosition = position116, thunkPosition116
 			}
 			end = position
-			do(26)
+			do(27)
 			return true
 		l114:
 			position, thunkPosition = position0, thunkPosition0

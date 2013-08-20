@@ -68,7 +68,7 @@ IdentifierArray =
 	(',' Spaces* Identifier { $$.strings = append($$.strings, yytext) } Spaces* )*
 	']'
 
-Rule =
+Rule = {$$.constraints = []Constraint{} }
 	c:Identifier Spaces*
 	o:Operation Spaces*
 	proj:Projection
