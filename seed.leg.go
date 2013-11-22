@@ -131,7 +131,7 @@ func (p *yyParser) Init() {
 			n := yyval[yyp-2]
 			k := yyval[yyp-3]
 			d := yyval[yyp-4]
-			yy = yystype{}
+			d.strings = []string{}
 			yyval[yyp-1] = t
 			yyval[yyp-2] = n
 			yyval[yyp-3] = k
@@ -568,7 +568,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 3 Collection <- ({ yy=yystype{} } CollectionType Spaces* Identifier Spaces* IdentifierArray (Spaces* '=>' Spaces* IdentifierArray)? Spaces* {
+		/* 3 Collection <- (CollectionType Spaces* Identifier Spaces* IdentifierArray { d.strings = []string{} } (Spaces* '=>' Spaces* IdentifierArray)? Spaces* {
 			p.Collections[n.string] = &Collection{
 				Type: t.collectionType,
 				Key: k.strings,
@@ -578,7 +578,6 @@ func (p *yyParser) Init() {
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 4)
-			do(0)
 			if !p.rules[ruleCollectionType]() {
 				goto ko
 			}
@@ -611,6 +610,7 @@ func (p *yyParser) Init() {
 				goto ko
 			}
 			doarg(yySet, -3)
+			do(0)
 			{
 				position3, thunkPosition3 := position, thunkPosition
 			loop7:

@@ -39,10 +39,11 @@ Statement =
 
 Comment = '#' <(!'\n' .)*> '\n'*
 
-Collection = { $$=yystype{} }
+Collection =
 	t:CollectionType Spaces*
 	n:Identifier Spaces*
 	k:IdentifierArray
+	{ d.strings = []string{} }
 	(Spaces* '=>' Spaces* d:IdentifierArray)?
 	Spaces*
 	{
