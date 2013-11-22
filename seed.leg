@@ -39,7 +39,7 @@ Statement =
 
 Comment = '#' <(!'\n' .)*> '\n'*
 
-Collection =
+Collection = { $$=yystype{} }
 	t:CollectionType Spaces*
 	n:Identifier Spaces*
 	k:IdentifierArray
