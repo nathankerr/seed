@@ -19,6 +19,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
+
 	var outputdir = flag.String("o", "build",
 		"directory name to create and output the bud source")
 	var from_format = flag.String("f", "seed",

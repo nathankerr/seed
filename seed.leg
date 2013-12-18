@@ -6,6 +6,7 @@ package seed
 
 import (
   "fmt"
+  "io"
 )
 
 type yyinterface interface{}
