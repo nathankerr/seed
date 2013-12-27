@@ -1,0 +1,27 @@
+This is an idea on how to implement seed-style reductions in Bloom. This has NOT been done.
+
+joined <= (a * b).combos(:predicate) do |..|
+	[:keys, args...]
+end
+
+grouped1 <= joined.group([:keys], accum(:args_for_reduction_1))
+grouped2 <= joined.group([:keys], accum(:args_for_reduction_1))
+
+// use orig op
+supplies <+ (grouped1 * grouped2).combos(:keys => :keys) do |...|
+	[:modified_orig_projection]
+end
+
+
+
+// in seed
+joined <= [keys, maps, reduction_args]: orig_predicate
+
+// use orig op
+supplies <+ [modified_orig_projection]: group_keys
+// map col => joined.mapn
+// reduction => groupn.reductionn
+
+// new collections
+joined
+groupn

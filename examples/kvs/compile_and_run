@@ -1,0 +1,4 @@
+#!/bin/sh
+
+seed -t="go seed bloom" -transformations="network replicate" kvs.seed && 
+go run build/*.go -sleep=0.1s -monitor=:8000 -communicator=wsjson

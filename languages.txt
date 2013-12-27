@@ -1,0 +1,13 @@
+seed
+go
+html
+javascript
+css
+json
+bash
+ruby
+bud (bloom)
+english
+dot
+leg
+make
