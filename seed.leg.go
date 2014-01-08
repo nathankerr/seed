@@ -193,7 +193,10 @@ func (p *yyParser) Init() {
 			o := yyval[yyp-2]
 			proj := yyval[yyp-3]
 			pred := yyval[yyp-4]
-			yy.constraints = []Constraint{}
+
+			proj.expressions = []Expression{}
+			pred.constraints = []Constraint{}
+
 			yyval[yyp-1] = c
 			yyval[yyp-2] = o
 			yyval[yyp-3] = proj
@@ -318,7 +321,7 @@ func (p *yyParser) Init() {
 		/* 25 Predicate */
 		func(yytext string, _ int) {
 			c := yyval[yyp-1]
-			yy.constraints = append(yy.constraints, c.constraint)
+			yy.constraints = []Constraint{}
 			yyval[yyp-1] = c
 		},
 		/* 26 Predicate */
@@ -327,7 +330,13 @@ func (p *yyParser) Init() {
 			yy.constraints = append(yy.constraints, c.constraint)
 			yyval[yyp-1] = c
 		},
-		/* 27 Constraint */
+		/* 27 Predicate */
+		func(yytext string, _ int) {
+			c := yyval[yyp-1]
+			yy.constraints = append(yy.constraints, c.constraint)
+			yyval[yyp-1] = c
+		},
+		/* 28 Constraint */
 		func(yytext string, _ int) {
 			l := yyval[yyp-1]
 			r := yyval[yyp-2]
@@ -338,7 +347,7 @@ func (p *yyParser) Init() {
 			yyval[yyp-1] = l
 			yyval[yyp-2] = r
 		},
-		/* 28 Identifier */
+		/* 29 Identifier */
 		func(yytext string, _ int) {
 			yy.string = yytext
 		},
@@ -362,7 +371,7 @@ func (p *yyParser) Init() {
 		},
 	}
 	const (
-		yyPush = 29 + iota
+		yyPush = 30 + iota
 		yyPop
 		yySet
 	)
@@ -782,7 +791,10 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 6 Rule <- ({yy.constraints = []Constraint{} } Identifier Spaces* Operation Spaces* Projection (':' Spaces* Predicate)? Spaces* {
+		/* 6 Rule <- ({
+			proj.expressions = []Expression{}
+			pred.constraints = []Constraint{}
+		} Identifier Spaces* Operation Spaces* Projection (':' Spaces* Predicate)? Spaces* {
 			p.Rules = append(p.Rules, &Rule{
 				Supplies: c.string,
 				Operation: o.string,
@@ -1213,15 +1225,16 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 13 Predicate <- (Constraint { yy.constraints = append(yy.constraints, c.constraint) } Spaces* (',' Spaces* Constraint { yy.constraints = append(yy.constraints, c.constraint) } Spaces*)*) */
+		/* 13 Predicate <- ({yy.constraints = []Constraint{}} Constraint { yy.constraints = append(yy.constraints, c.constraint) } Spaces* (',' Spaces* Constraint { yy.constraints = append(yy.constraints, c.constraint) } Spaces*)*) */
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 1)
+			do(25)
 			if !p.rules[ruleConstraint]() {
 				goto ko
 			}
 			doarg(yySet, -1)
-			do(25)
+			do(26)
 		loop:
 			{
 				position1, thunkPosition1 := position, thunkPosition
@@ -1252,7 +1265,7 @@ func (p *yyParser) Init() {
 					goto out4
 				}
 				doarg(yySet, -1)
-				do(26)
+				do(27)
 			loop7:
 				{
 					position4, thunkPosition4 := position, thunkPosition
@@ -1312,7 +1325,7 @@ func (p *yyParser) Init() {
 				goto ko
 			}
 			doarg(yySet, -2)
-			do(27)
+			do(28)
 			doarg(yyPop, 2)
 			match = true
 			return
@@ -1341,7 +1354,7 @@ func (p *yyParser) Init() {
 				position, thunkPosition = position1, thunkPosition1
 			}
 			end = position
-			do(28)
+			do(29)
 			match = true
 			return
 		ko:

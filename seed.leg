@@ -70,7 +70,11 @@ IdentifierArray =
 	(',' Spaces* Identifier { $$.strings = append($$.strings, yytext) } Spaces* )*
 	']'
 
-Rule = {$$.constraints = []Constraint{} }
+Rule =
+	{
+		proj.expressions = []Expression{}
+		pred.constraints = []Constraint{}
+	}
 	c:Identifier Spaces*
 	o:Operation Spaces*
 	proj:Projection
@@ -126,7 +130,7 @@ ReduceFunction =
 	Spaces*
 	{ $$.expression.Value = $$.reducefunction }
 
-Predicate = c:Constraint { $$.constraints = append($$.constraints, c.constraint) }
+Predicate = {$$.constraints = []Constraint{}} c:Constraint { $$.constraints = append($$.constraints, c.constraint) }
 	Spaces*
 	(',' Spaces* c:Constraint { $$.constraints = append($$.constraints, c.constraint) } Spaces*)*
 
