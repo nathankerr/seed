@@ -26,8 +26,8 @@ var incomingMessage = make(chan executor.MessageContainer)
 
 type socket struct {
 	io.ReadWriter
-	address string
-	done    chan bool
+	address      string
+	done         chan bool
 	localaddress string
 }
 
@@ -36,7 +36,7 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 	go server(address)
 	info("server started")
 
-	sockets := map[string]socket{} // address: socket
+	sockets := map[string]socket{}      // address: socket
 	localAddresses := map[string]bool{} // list of addresses this communicator responds to, messages to these addresses will be dropped
 	for {
 		info("Communicator")
