@@ -9,3 +9,6 @@ all: seed.leg.go
 
 seed.leg.go: seed.leg
 	leg $< > $@
+
+test:
+	go test
