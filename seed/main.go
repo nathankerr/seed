@@ -175,6 +175,8 @@ func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 	switch transformation {
 	case "network":
 		transform = examples.Add_network_interface
+	case "network-graph":
+		transform = examples.Add_network_interface_graph
 	case "replicate":
 		transform = examples.Add_replicated_tables
 	default:
@@ -183,7 +185,7 @@ func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 
 	transformed, err := transform(service)
 	if err != nil {
-		return nil, errors.New(fmt.Sprint(transformation, "error:", err))
+		return nil, errors.New(fmt.Sprint(transformation, ": ", err))
 	}
 
 	return transformed, nil

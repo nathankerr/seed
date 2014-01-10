@@ -65,3 +65,11 @@ comparisons map[string]map[string] CompareFn
 each string is a qualified column, order does not matter (i.e., will check a,b and b,a for a function)
 
 during startup, check if needed comparisons are registered. If not, list the one which are missing
+
+# todo
+
+- boolean expressions for predicates
+- lattice types? How to do without type knowledge? Do the lattice types impose or imply some sort of type classing that would need to be matched or ensured by the host environement?
+- list and check for functions required by the host environment for a particular seed
+- finish cart implementation
+- change seed.Expression from a struct to an interface{}
