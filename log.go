@@ -10,9 +10,9 @@ import (
 
 // control output verbosity by toggling lexinfo, parseinfo, and info
 const (
-	logLEXINFO = false
+	logLEXINFO   = false
 	logPARSEINFO = false
-	logINFO = false
+	logINFO      = false
 )
 
 func lexinfo(args ...interface{}) {

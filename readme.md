@@ -72,4 +72,3 @@ during startup, check if needed comparisons are registered. If not, list the one
 - lattice types? How to do without type knowledge? Do the lattice types impose or imply some sort of type classing that would need to be matched or ensured by the host environement?
 - list and check for functions required by the host environment for a particular seed
 - finish cart implementation
-- change seed.Expression from a struct to an interface{}

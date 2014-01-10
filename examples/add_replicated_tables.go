@@ -65,19 +65,19 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			for _, column := range table.Key {
 				scratch_to_table.Projection = append(
 					scratch_to_table.Projection,
-					seed.Expression{Value: seed.QualifiedColumn{
+					seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					}},
+					},
 				)
 			}
 			for _, column := range table.Data {
 				scratch_to_table.Projection = append(
 					scratch_to_table.Projection,
-					seed.Expression{Value: seed.QualifiedColumn{
+					seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					}},
+					},
 				)
 			}
 			replicated.Rules = append(replicated.Rules, scratch_to_table)
@@ -87,30 +87,28 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 				Supplies:  channel_name,
 				Operation: "<~",
 				Projection: []seed.Expression{
-					seed.Expression{
-						Value: seed.QualifiedColumn{
-							Collection: replicants_name,
-							Column:     "address",
-						},
+					seed.QualifiedColumn{
+						Collection: replicants_name,
+						Column:     "address",
 					},
 				},
 			}
 			for _, column := range table.Key {
 				scratch_to_channel.Projection = append(
 					scratch_to_channel.Projection,
-					seed.Expression{Value: seed.QualifiedColumn{
+					seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					}},
+					},
 				)
 			}
 			for _, column := range table.Data {
 				scratch_to_channel.Projection = append(
 					scratch_to_channel.Projection,
-					seed.Expression{Value: seed.QualifiedColumn{
+					seed.QualifiedColumn{
 						Collection: scratch_name,
 						Column:     column,
-					}},
+					},
 				)
 			}
 			replicated.Rules = append(replicated.Rules, scratch_to_channel)
@@ -133,19 +131,19 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			for _, column := range table.Key {
 				channel_to_table.Projection = append(
 					channel_to_table.Projection,
-					seed.Expression{Value: seed.QualifiedColumn{
+					seed.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
-					}},
+					},
 				)
 			}
 			for _, column := range table.Data {
 				channel_to_table.Projection = append(
 					channel_to_table.Projection,
-					seed.Expression{Value: seed.QualifiedColumn{
+					seed.QualifiedColumn{
 						Collection: channel_name,
 						Column:     column,
-					}},
+					},
 				)
 			}
 			replicated.Rules = append(replicated.Rules, channel_to_table)

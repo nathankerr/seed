@@ -101,7 +101,7 @@ Projection =
 Expression = MapFunction | ReduceFunction | QualifiedColumn
 
 QualifiedColumn = collection:Identifier '.' column:Identifier
-	{ $$.expression.Value = QualifiedColumn{
+	{ $$.expression = QualifiedColumn{
 		Collection: collection.string,
 		Column: column.string,
 	}}
@@ -111,24 +111,24 @@ MapFunction =
 	Spaces*
 	n:Identifier { $$.mapfunction = MapFunction{Name: n.string }}
 	Spaces*
-	c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) }
+	c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.(QualifiedColumn)) }
 	Spaces*
-	(c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
+	(c:QualifiedColumn { $$.mapfunction.Arguments = append($$.mapfunction.Arguments, c.expression.(QualifiedColumn)) } Spaces*)*
 	')'
 	Spaces*
-	{ $$.expression.Value = $$.mapfunction }
+	{ $$.expression = $$.mapfunction }
 
 ReduceFunction =
 	'{'
 	Spaces*
 	n:Identifier { $$.reducefunction = ReduceFunction{Name: n.string }}
 	Spaces*
-	c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) }
+	c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.(QualifiedColumn)) }
 	Spaces*
-	(c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)*
+	(c:QualifiedColumn { $$.reducefunction.Arguments = append($$.reducefunction.Arguments, c.expression.(QualifiedColumn)) } Spaces*)*
 	'}'
 	Spaces*
-	{ $$.expression.Value = $$.reducefunction }
+	{ $$.expression = $$.reducefunction }
 
 Predicate = {$$.constraints = []Constraint{}} c:Constraint { $$.constraints = append($$.constraints, c.constraint) }
 	Spaces*
@@ -136,8 +136,8 @@ Predicate = {$$.constraints = []Constraint{}} c:Constraint { $$.constraints = ap
 
 Constraint = l:QualifiedColumn Spaces* '=>' Spaces* r:QualifiedColumn
 	{ $$.constraint = Constraint {
-		Left: l.expression.Value.(QualifiedColumn),
-		Right: r.expression.Value.(QualifiedColumn),
+		Left: l.expression.(QualifiedColumn),
+		Right: r.expression.(QualifiedColumn),
 	}}
 
 Identifier = <[a-zA-Z][-a-zA-Z0-9_]+> { $$.string = yytext }

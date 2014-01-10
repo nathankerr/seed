@@ -174,7 +174,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]seed.Tuple) []see
 			var element interface{}
 
 			// determine the element to add to the result tuple
-			switch value := expression.Value.(type) {
+			switch value := expression.(type) {
 			case seed.QualifiedColumn:
 				columnIndex := indexes[value.Collection][value.Column]
 				element = tuples[value.Collection][columnIndex]
@@ -200,7 +200,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]seed.Tuple) []see
 				}
 				localReductions[columnNumber] = arguments
 			default:
-				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression).String()))
 			}
 
 			result = append(result, element)
@@ -228,7 +228,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]seed.Tuple) []see
 	resultsSlice := make([]seed.Tuple, 0, len(results))
 	for setid, result := range results {
 		for columnNumber, reductionTuples := range reductions[setid] {
-			result[columnNumber] = rule.Projection[columnNumber].Value.(seed.ReduceFunction).Function(reductionTuples)
+			result[columnNumber] = rule.Projection[columnNumber].(seed.ReduceFunction).Function(reductionTuples)
 		}
 		resultsSlice = append(resultsSlice, result)
 	}

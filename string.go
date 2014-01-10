@@ -87,7 +87,7 @@ func (ctype CollectionType) String() string {
 func (r *Rule) String() string {
 	columns := []string{}
 	for _, expression := range r.Projection {
-		switch value := expression.Value.(type) {
+		switch value := expression.(type) {
 		case QualifiedColumn:
 			columns = append(columns,
 				fmt.Sprintf("%s", value))
@@ -108,7 +108,7 @@ func (r *Rule) String() string {
 			columns = append(columns,
 				fmt.Sprintf("{%s %s}", value.Name, strings.Join(arguments, " ")))
 		default:
-			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression).String()))
 		}
 	}
 	projection := fmt.Sprintf("[%s]",

@@ -53,7 +53,7 @@ func (r *Rule) Bloom() string {
 
 	projection := []string{}
 	for _, expression := range r.Projection {
-		switch value := expression.Value.(type) {
+		switch value := expression.(type) {
 		case QualifiedColumn:
 			projection = append(projection, fmt.Sprintf("%s.%s",
 				index[value.Collection], value.Column))
@@ -73,7 +73,7 @@ func (r *Rule) Bloom() string {
 			}
 		default:
 			panic(fmt.Sprintf("unhandled type: %v",
-				reflect.TypeOf(expression.Value).String()))
+				reflect.TypeOf(expression).String()))
 		}
 	}
 

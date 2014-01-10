@@ -29,7 +29,7 @@ func (r *Rule) Requires() []string {
 
 	// projection
 	for _, expression := range r.Projection {
-		switch value := expression.Value.(type) {
+		switch value := expression.(type) {
 		case QualifiedColumn:
 			requiresmap[value.Collection] = true
 		case MapFunction:
@@ -41,7 +41,7 @@ func (r *Rule) Requires() []string {
 				requiresmap[qc.Collection] = true
 			}
 		default:
-			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+			panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression).String()))
 		}
 	}
 

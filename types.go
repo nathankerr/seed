@@ -36,8 +36,8 @@ type Rule struct {
 // default:
 // 	panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 // }
-type Expression struct {
-	Value interface{} // QualifiedColumn, MapFunction
+type Expression interface {
+	toGo(string) string
 }
 
 type MapFunction struct {

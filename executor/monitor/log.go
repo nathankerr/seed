@@ -10,12 +10,12 @@ import (
 
 // control output verbosity by toggling the following constants
 const (
-	logMONITORINFO = false
+	logMONITORINFO  = false
 	logNETWORKERROR = true
-	logFLOWINFO = false
-	logINFO = false
-	logTIMEINFO = false
-	logCONTROLINFO = false
+	logFLOWINFO     = false
+	logINFO         = false
+	logTIMEINFO     = false
+	logCONTROLINFO  = false
 )
 
 // centralized monitoring info

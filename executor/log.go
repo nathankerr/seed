@@ -11,9 +11,9 @@ import (
 // control output verbosity by toggling the following constants
 const (
 	logNETWORKERROR = true
-	logFLOWINFO = false
-	logINFO = true
-	logCONTROLINFO = false
+	logFLOWINFO     = false
+	logINFO         = true
+	logCONTROLINFO  = false
 )
 
 func networkerror(id interface{}, args ...interface{}) {

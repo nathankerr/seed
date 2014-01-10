@@ -2,7 +2,6 @@ package seed
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -190,23 +189,6 @@ func (c Constraint) toGo(indent string) string {
 		indent = indent[:len(indent)-1]
 	}
 	str = fmt.Sprintf("%s%s}", str, indent)
-	return str
-}
-
-func (expression Expression) toGo(indent string) string {
-	str := "seed.Expression{ Value:"
-	switch value := expression.Value.(type) {
-	case QualifiedColumn:
-		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
-	case MapFunction:
-		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
-	case ReduceFunction:
-		str = fmt.Sprintf("%s %v", str, value.toGo(indent+"\t\t"))
-	default:
-		panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
-	}
-	str += "}"
-
 	return str
 }
 

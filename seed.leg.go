@@ -247,7 +247,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			collection := yyval[yyp-1]
 			column := yyval[yyp-2]
-			yy.expression.Value = QualifiedColumn{
+			yy.expression = QualifiedColumn{
 				Collection: collection.string,
 				Column:     column.string,
 			}
@@ -266,7 +266,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn))
+			yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -274,7 +274,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn))
+			yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -282,7 +282,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.expression.Value = yy.mapfunction
+			yy.expression = yy.mapfunction
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -298,7 +298,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn))
+			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -306,7 +306,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn))
+			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -314,7 +314,7 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
-			yy.expression.Value = yy.reducefunction
+			yy.expression = yy.reducefunction
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
 		},
@@ -341,8 +341,8 @@ func (p *yyParser) Init() {
 			l := yyval[yyp-1]
 			r := yyval[yyp-2]
 			yy.constraint = Constraint{
-				Left:  l.expression.Value.(QualifiedColumn),
-				Right: r.expression.Value.(QualifiedColumn),
+				Left:  l.expression.(QualifiedColumn),
+				Right: r.expression.(QualifiedColumn),
 			}
 			yyval[yyp-1] = l
 			yyval[yyp-2] = r
@@ -1019,7 +1019,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 10 QualifiedColumn <- (Identifier '.' Identifier { yy.expression.Value = QualifiedColumn{
+		/* 10 QualifiedColumn <- (Identifier '.' Identifier { yy.expression = QualifiedColumn{
 			Collection: collection.string,
 			Column: column.string,
 		}}) */
@@ -1045,7 +1045,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 11 MapFunction <- ('(' Spaces* Identifier { yy.mapfunction = MapFunction{Name: n.string }} Spaces* QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces* (QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)* ')' Spaces* { yy.expression.Value = yy.mapfunction }) */
+		/* 11 MapFunction <- ('(' Spaces* Identifier { yy.mapfunction = MapFunction{Name: n.string }} Spaces* QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.(QualifiedColumn)) } Spaces* (QualifiedColumn { yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.(QualifiedColumn)) } Spaces*)* ')' Spaces* { yy.expression = yy.mapfunction }) */
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 2)
@@ -1135,7 +1135,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 12 ReduceFunction <- ('{' Spaces* Identifier { yy.reducefunction = ReduceFunction{Name: n.string }} Spaces* QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces* (QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.Value.(QualifiedColumn)) } Spaces*)* '}' Spaces* { yy.expression.Value = yy.reducefunction }) */
+		/* 12 ReduceFunction <- ('{' Spaces* Identifier { yy.reducefunction = ReduceFunction{Name: n.string }} Spaces* QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.(QualifiedColumn)) } Spaces* (QualifiedColumn { yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.(QualifiedColumn)) } Spaces*)* '}' Spaces* { yy.expression = yy.reducefunction }) */
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 2)
@@ -1288,8 +1288,8 @@ func (p *yyParser) Init() {
 			return
 		},
 		/* 14 Constraint <- (QualifiedColumn Spaces* '=>' Spaces* QualifiedColumn { yy.constraint = Constraint {
-			Left: l.expression.Value.(QualifiedColumn),
-			Right: r.expression.Value.(QualifiedColumn),
+			Left: l.expression.(QualifiedColumn),
+			Right: r.expression.(QualifiedColumn),
 		}}) */
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition

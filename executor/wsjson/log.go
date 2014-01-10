@@ -11,7 +11,7 @@ import (
 // control output verbosity by toggling the following constants
 const (
 	logINFO = false
-	logLOG = true
+	logLOG  = true
 )
 
 func info(args ...interface{}) {

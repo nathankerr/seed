@@ -197,9 +197,10 @@ func add_interface(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Se
 			// add correlation data to projection
 			projection := []seed.Expression{}
 			if len(inputs) > 0 {
-				projection = append(projection, seed.Expression{Value: seed.QualifiedColumn{
+				projection = append(projection, seed.QualifiedColumn{
 					Collection: inputs[0],
-					Column:     rule.Supplies + "_addr"}})
+					Column:     rule.Supplies + "_addr",
+				})
 			}
 			for _, o := range rule.Projection {
 				projection = append(projection, o)

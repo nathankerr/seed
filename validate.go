@@ -49,7 +49,7 @@ func (s *Seed) Validate() error {
 
 		// the projection should be valid
 		for _, expression := range rule.Projection {
-			switch value := expression.Value.(type) {
+			switch value := expression.(type) {
 			case QualifiedColumn:
 				err := s.validateQualifiedColumn(value, rule)
 				if err != nil {
@@ -70,7 +70,7 @@ func (s *Seed) Validate() error {
 					}
 				}
 			default:
-				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
+				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression).String()))
 			}
 		}
 

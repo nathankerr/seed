@@ -62,7 +62,7 @@ func Add_network_interface_graph(orig *seed.Seed) (*seed.Seed, error) {
 				case seedGraph.RuleNode:
 					exists := false
 					for _, expression := range node.Rule.Projection {
-						switch expression := expression.Value.(type) {
+						switch expression := expression.(type) {
 						case seed.QualifiedColumn:
 							if expression.Column == outputAddress {
 								// if a reference to the outputAddress already exists (i.e., from being added by another flow)
@@ -84,10 +84,10 @@ func Add_network_interface_graph(orig *seed.Seed) (*seed.Seed, error) {
 					}
 					if !exists {
 						// add to the projection
-						node.Rule.Projection = append(node.Rule.Projection, seed.Expression{Value: seed.QualifiedColumn{
+						node.Rule.Projection = append(node.Rule.Projection, seed.QualifiedColumn{
 							Collection: previousCollection,
 							Column:     outputAddress,
-						}})
+						})
 					}
 				default:
 					panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(node).String()))

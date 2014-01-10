@@ -10,14 +10,13 @@ import (
 
 // control output verbosity by toggling the following constants
 const (
-	logMONTIORINFO = false
+	logMONTIORINFO  = false
 	logNETWORKERROR = true
-	logFLOWINFO = false
-	logINFO = true
-	logTIMEINFO = false
-	logCONTROLINFO = false
+	logFLOWINFO     = false
+	logINFO         = true
+	logTIMEINFO     = false
+	logCONTROLINFO  = false
 )
-
 
 // centralized monitoring info
 func monitorinfo(id interface{}, args ...interface{}) {
