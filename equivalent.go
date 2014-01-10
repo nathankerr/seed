@@ -41,12 +41,6 @@ func (this *Seed) EquivalentTo(that *Seed) error {
 		}
 	}
 
-	// Source
-	err := this.Source.EquivalentTo(&that.Source)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -61,13 +55,5 @@ func (this *Rule) EquivalentTo(that *Rule) error {
 	if !reflect.DeepEqual(this, that) {
 		return fmt.Errorf("Rules are not equivalent: expected\n%#v\n, got\n%#v", this, that)
 	}
-	return nil
-}
-
-func (this *Source) EquivalentTo(that *Source) error {
-	if !reflect.DeepEqual(this, that) {
-		return fmt.Errorf("Sources are not equivalent: expected %#v, got %#v", this, that)
-	}
-
 	return nil
 }

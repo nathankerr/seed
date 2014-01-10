@@ -9,7 +9,6 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 	replicated := &seed.Seed{
 		Name:        orig.Name,
 		Collections: make(map[string]*seed.Collection),
-		Source:      orig.Source,
 	}
 
 	// add helper tables, rules
@@ -22,9 +21,8 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 		// create the table for replicants of this table
 		replicants_name := fmt.Sprintf("%s_replicants", tname)
 		replicated.Collections[replicants_name] = &seed.Collection{
-			Type:   seed.CollectionTable,
-			Key:    []string{"address"},
-			Source: table.Source,
+			Type: seed.CollectionTable,
+			Key:  []string{"address"},
 		}
 
 		// add collections needed to handle each operation type
@@ -32,19 +30,17 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			// scratch used to intercept the table operation
 			scratch_name := fmt.Sprintf("%s_%s", tname, operation)
 			replicated.Collections[scratch_name] = &seed.Collection{
-				Type:   seed.CollectionScratch,
-				Key:    table.Key,
-				Data:   table.Data,
-				Source: table.Source,
+				Type: seed.CollectionScratch,
+				Key:  table.Key,
+				Data: table.Data,
 			}
 
 			// channel used for inter-replicant communication
 			channel_name := fmt.Sprintf("%s_%s_channel", tname, operation)
 			channel := &seed.Collection{
-				Type:   seed.CollectionChannel,
-				Key:    []string{"@address"},
-				Data:   table.Data,
-				Source: table.Source,
+				Type: seed.CollectionChannel,
+				Key:  []string{"@address"},
+				Data: table.Data,
 			}
 			for _, column := range table.Key {
 				channel.Key = append(channel.Key, column)
@@ -54,7 +50,6 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			// rule to forward scratch to table
 			scratch_to_table := &seed.Rule{
 				Supplies: tname,
-				Source:   table.Source,
 			}
 			switch operation {
 			case "insert":
@@ -99,7 +94,6 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 						},
 					},
 				},
-				Source: table.Source,
 			}
 			for _, column := range table.Key {
 				scratch_to_channel.Projection = append(
@@ -124,7 +118,6 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			// rule to forward channel to table
 			channel_to_table := &seed.Rule{
 				Supplies: tname,
-				Source:   table.Source,
 			}
 			switch operation {
 			case "insert":

@@ -4,14 +4,12 @@ type Seed struct {
 	Name        string
 	Collections map[string]*Collection // string is same as collection.name
 	Rules       []*Rule
-	Source      Source
 }
 
 type Collection struct {
-	Type   CollectionType
-	Key    []string
-	Data   []string
-	Source Source
+	Type CollectionType
+	Key  []string
+	Data []string
 }
 
 type CollectionType int
@@ -29,7 +27,6 @@ type Rule struct {
 	Operation  string
 	Projection []Expression
 	Predicate  []Constraint
-	Source     Source
 }
 
 // Use something like:
@@ -68,10 +65,4 @@ type QualifiedColumn struct {
 type Constraint struct {
 	Left  QualifiedColumn
 	Right QualifiedColumn
-}
-
-type Source struct {
-	Name   string
-	Line   int
-	Column int
 }

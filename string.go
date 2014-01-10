@@ -14,10 +14,6 @@ func (c *Constraint) String() string {
 	return fmt.Sprintf("%s => %s", c.Left.String(), c.Right.String())
 }
 
-func (s Source) String() string {
-	return fmt.Sprint(s.Name, ":", s.Line)
-}
-
 func (s *Seed) String() string {
 	str := "\nCollections:"
 	for cname, collection := range s.Collections {

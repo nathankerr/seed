@@ -20,12 +20,12 @@ func ToDot(seed *Seed, name string) ([]byte, error) {
 			columns = append(columns, column)
 		}
 
-		dot = fmt.Sprintf("%s\n\t%s [shape=record,label=\"%s\\n(%s)|{%s}\"] // %s", dot, cname, cname, collection.Type, strings.Join(columns, " | "), collection.Source)
+		dot = fmt.Sprintf("%s\n\t%s [shape=record,label=\"%s\\n(%s)|{%s}\"]", dot, cname, cname, collection.Type, strings.Join(columns, " | "))
 	}
 
 	for rule_num, rule := range seed.Rules {
 		rule_name := fmt.Sprintf("rule%d", rule_num)
-		dot = fmt.Sprintf("%s\n\n\t%s [shape=diamond,label=\"rule %d\"] // %s", dot, rule_name, rule_num, rule.Source)
+		dot = fmt.Sprintf("%s\n\n\t%s [shape=diamond,label=\"rule %d\"]", dot, rule_name, rule_num)
 
 		for _, collection := range rule.Requires() {
 			dot = fmt.Sprintf("%s\n\t%s -> %s", dot, collection, rule_name)

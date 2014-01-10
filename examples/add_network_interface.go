@@ -17,7 +17,6 @@ func Add_network_interface(orig *seed.Seed) (*seed.Seed, error) {
 
 	networked := &seed.Seed{
 		Collections: make(map[string]*seed.Collection),
-		Source:      orig.Source,
 		Name:        strings.Title(orig.Name) + "Server",
 	}
 
@@ -67,7 +66,7 @@ func getGroups(sname string, service *seed.Seed) map[string]*group {
 			}
 		}
 		if groupName == "" {
-			groupName = fmt.Sprintf("%s%d", sname, rule.Source.Line)
+			groupName = fmt.Sprintf("%s%d", sname, num)
 			collections := make(map[string]seed.CollectionType)
 			groups[groupName] = &group{collections: collections}
 		}

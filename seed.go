@@ -22,7 +22,6 @@ func FromSeed(name string, input []byte) (*Seed, error) {
 	}
 
 	return p.Seed, nil
-	// return Parse(name, string(input)), nil
 }
 
 func ToSeed(seed *Seed, name string) ([]byte, error) {
@@ -30,13 +29,13 @@ func ToSeed(seed *Seed, name string) ([]byte, error) {
 	var model string
 
 	for cname, collection := range seed.Collections {
-		model = fmt.Sprintf("%s%s\t#%s\n", model, collection.String(cname), collection.Source)
+		model = fmt.Sprintf("%s%s\t\n", model, collection.String(cname))
 	}
 
 	model += "\n"
 
 	for rule_num, rule := range seed.Rules {
-		model = fmt.Sprintf("%s%s\t#%s, rule %d\n", model, rule, rule.Source, rule_num)
+		model = fmt.Sprintf("%s%s\t# rule %d\n", model, rule, rule_num)
 	}
 
 	return []byte(model), nil

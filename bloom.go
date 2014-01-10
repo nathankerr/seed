@@ -18,10 +18,9 @@ func (s *Seed) Bloom(name string) string {
 	// collections
 	str = fmt.Sprintf("%s  state do\n", str)
 	for cname, collection := range s.Collections {
-		str = fmt.Sprintf("%s    %s #%s\n",
+		str = fmt.Sprintf("%s    %s\n",
 			str,
 			collection.Bloom(cname),
-			collection.Source,
 		)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
@@ -29,10 +28,9 @@ func (s *Seed) Bloom(name string) string {
 	// rules
 	str = fmt.Sprintf("%s\n  bloom do\n", str)
 	for ruleNum, rule := range s.Rules {
-		str = fmt.Sprintf("%s    %s #%s rule %d\n",
+		str = fmt.Sprintf("%s    %s # rule %d\n",
 			str,
 			rule.Bloom(),
-			rule.Source,
 			ruleNum,
 		)
 	}

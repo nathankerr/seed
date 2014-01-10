@@ -38,9 +38,6 @@ import (
 	// Name
 	str = fmt.Sprintf("%s\n\t\tName: %#v,", str, service.Name)
 
-	// source
-	str = fmt.Sprintf("%s\n\t\tSource: %v,", str, service.Source.toGo("\t\t\t"))
-
 	// collections
 	str = fmt.Sprintf("%s\n\t\tCollections: map[string]*seed.Collection{", str)
 	for name, collection := range service.Collections {
@@ -125,9 +122,6 @@ func (c *Collection) toGo(indent string) string {
 	// data
 	str = fmt.Sprintf("%s%sData: %#v,\n", str, indent, c.Data)
 
-	// source
-	str = fmt.Sprintf("%s%sSource: %v,\n", str, indent, c.Source.toGo(indent+"\t"))
-
 	if len(indent) > 0 {
 		indent = indent[:len(indent)-1]
 	}
@@ -159,28 +153,6 @@ func (r *Rule) toGo(indent string) string {
 		}
 		str = fmt.Sprintf("%s%s},\n", str, indent)
 	}
-
-	// Source
-	str = fmt.Sprintf("%s%sSource: %v,\n", str, indent, r.Source.toGo(indent+"\t"))
-
-	if len(indent) > 0 {
-		indent = indent[:len(indent)-1]
-	}
-	str = fmt.Sprintf("%s%s}", str, indent)
-	return str
-}
-
-func (s *Source) toGo(indent string) string {
-	str := fmt.Sprintf("seed.Source{\n")
-
-	// Name
-	str = fmt.Sprintf("%s%sName:   %#v,\n", str, indent, s.Name)
-
-	// Line
-	str = fmt.Sprintf("%s%sLine:   %#v,\n", str, indent, s.Line)
-
-	// Column
-	str = fmt.Sprintf("%s%sColumn: %#v,\n", str, indent, s.Column)
 
 	if len(indent) > 0 {
 		indent = indent[:len(indent)-1]

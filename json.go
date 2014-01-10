@@ -9,7 +9,6 @@ func FromJson(name string, input []byte) (*Seed, error) {
 	info()
 
 	seed := &Seed{Collections: make(map[string]*Collection)}
-	seed.Source = Source{Name: name, Line: 1, Column: 1}
 
 	err := json.Unmarshal(input, seed)
 
