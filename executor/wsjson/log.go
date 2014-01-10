@@ -1,8 +1,5 @@
 package wsjson
 
-// control output verbosity by toggling lexinfo, parseinfo, and info on and off
-// by enabling/disabling the return statements.
-
 import (
 	"fmt"
 	"os"
@@ -11,14 +8,22 @@ import (
 	"runtime"
 )
 
+// control output verbosity by toggling the following constants
+const (
+	logINFO = false
+	logLOG = true
+)
+
 func info(args ...interface{}) {
-	return
-	printlog("wsjson", args...)
+	if logINFO {
+		printlog("wsjson", args...)
+	}
 }
 
 func log(args ...interface{}) {
-	// return
-	printlog("wsjson", args...)
+	if logLOG {
+		printlog("wsjson", args...)
+	}
 }
 
 func fatal(id interface{}, args ...interface{}) {

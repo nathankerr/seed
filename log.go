@@ -1,8 +1,5 @@
 package seed
 
-// control output verbosity by toggling lexinfo, parseinfo, and info on and off
-// by enabling/disabling the return statements.
-
 import (
 	"fmt"
 	"os"
@@ -11,19 +8,29 @@ import (
 	"runtime"
 )
 
+// control output verbosity by toggling lexinfo, parseinfo, and info
+const (
+	logLEXINFO = false
+	logPARSEINFO = false
+	logINFO = false
+)
+
 func lexinfo(args ...interface{}) {
-	return
-	printlog(args...)
+	if logLEXINFO {
+		printlog(args...)
+	}
 }
 
 func parseinfo(args ...interface{}) {
-	return
-	printlog(args...)
+	if logPARSEINFO {
+		printlog(args...)
+	}
 }
 
 func info(args ...interface{}) {
-	return
-	printlog(args...)
+	if logINFO {
+		printlog(args...)
+	}
 }
 
 func fatal(args ...interface{}) {

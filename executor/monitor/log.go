@@ -1,8 +1,5 @@
 package monitor
 
-// control output verbosity by toggling lexinfo, parseinfo, and info on and off
-// by enabling/disabling the return statements.
-
 import (
 	"fmt"
 	"os"
@@ -11,38 +8,54 @@ import (
 	"runtime"
 )
 
+// control output verbosity by toggling the following constants
+const (
+	logMONITORINFO = false
+	logNETWORKERROR = true
+	logFLOWINFO = false
+	logINFO = false
+	logTIMEINFO = false
+	logCONTROLINFO = false
+)
+
 // centralized monitoring info
 func monitorinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
+	if logMONITORINFO {
+		printlog(id, args...)
+	}
 }
 
 func networkerror(id interface{}, args ...interface{}) {
-	// return
-	printlog(id, args...)
+	if logNETWORKERROR {
+		printlog(id, args...)
+	}
 }
 
 // data sent and received between go routines
 func flowinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
+	if logFLOWINFO {
+		printlog(id, args...)
+	}
 }
 
 func info(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
+	if logINFO {
+		printlog(id, args...)
+	}
 }
 
 // timing information from executor
 func timeinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
+	if logTIMEINFO {
+		printlog(id, args...)
+	}
 }
 
 // control communication information
 func controlinfo(id interface{}, args ...interface{}) {
-	return
-	printlog(id, args...)
+	if logCONTROLINFO {
+		printlog(id, args...)
+	}
 }
 
 func fatal(id interface{}, args ...interface{}) {

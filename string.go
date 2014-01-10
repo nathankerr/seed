@@ -80,10 +80,8 @@ func (ctype CollectionType) String() string {
 		return "scratch"
 	default:
 		// shouldn't get here
-		panic(ctype)
+		panic(fmt.Sprintf("%#v", ctype))
 	}
-
-	return ""
 }
 
 func (r *Rule) String() string {

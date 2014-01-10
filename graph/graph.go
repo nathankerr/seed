@@ -96,42 +96,34 @@ func (g Graph) Successors(node graph.Node) []graph.Node {
 
 func (g Graph) IsSuccessor(node, successor graph.Node) bool {
 	panic("TODO")
-	return false
 }
 
 func (g Graph) Predecessors(node graph.Node) []graph.Node {
 	panic("TODO")
-	return nil
 }
 
 func (g Graph) IsPredecessor(node, predecessor graph.Node) bool {
 	panic("TODO")
-	return false
 }
 
 func (g Graph) IsAdjacent(node, neighbor graph.Node) bool {
 	panic("TODO")
-	return false
 }
 
 func (g Graph) NodeExists(node graph.Node) bool {
 	panic("TODO")
-	return false
 }
 
 func (g Graph) Degree(node graph.Node) int {
 	panic("TODO")
-	return 0
 }
 
 func (g Graph) EdgeList() []graph.Edge {
 	panic("TODO")
-	return nil
 }
 
 func (g Graph) NodeList() []graph.Node {
 	panic("TODO")
-	return nil
 }
 
 func (g Graph) IsDirected() bool {
