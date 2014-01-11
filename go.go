@@ -70,7 +70,7 @@ import (
 		useMonitor = true
 	}
 
-	println("Starting " + service.Source.Name + " on " + *address)
+	println("Starting  %s on " + *address)
 	channels := executor.Execute(service, sleepDuration, *address, useMonitor)
 
 	if useMonitor {
@@ -86,7 +86,7 @@ import (
 	default:
 		log.Fatalln("Unknown communicator:", *communicator)
 	}
-`, str)
+`, str, name)
 
 	// close main
 	str = fmt.Sprintf("%s\n}\n", str)
