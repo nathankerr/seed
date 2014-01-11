@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"bytes"
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"os/exec"
 	"strconv"
 )
 
@@ -70,6 +72,22 @@ func sendStartupData(s *seed.Seed, socket socket, runningState string) {
 	messages = append(messages, executor.MonitorMessage{
 		Block: "_service",
 		Data:  fmt.Sprintf("<code>%s</code>", s.String()[1:]), // skip the beginning newline in the string
+	})
+
+	// _graph block content
+	dot, err := seed.ToDot(s, s.Name)
+	if err != nil {
+		panic(err)
+	}
+	graphviz := exec.Command("dot", "-Tsvg")
+	graphviz.Stdin = bytes.NewBuffer(dot)
+	graph, err := graphviz.Output()
+	if err != nil {
+		panic(err)
+	}
+	messages = append(messages, executor.MonitorMessage{
+		Block: "_graph",
+		Data:  string(graph), // skip the beginning newline in the string
 	})
 
 	// list of collections for input control
