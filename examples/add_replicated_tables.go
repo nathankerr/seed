@@ -11,6 +11,34 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 		Collections: make(map[string]*seed.Collection),
 	}
 
+	handleInsert := false
+	handleDelete := false
+	handleUpdate := false
+
+	// rewrite and append rules from orig
+	for _, rule := range orig.Rules {
+		// rewrite rules feeding tables
+		if orig.Collections[rule.Supplies].Type == seed.CollectionTable {
+			switch rule.Operation {
+			case "<+":
+				rule.Supplies += "_insert"
+				handleInsert = true
+			case "<-":
+				rule.Supplies += "_delete"
+				handleDelete = true
+			case "<+-":
+				rule.Supplies += "_update"
+				handleUpdate = true
+			default:
+				// shouldn't get here
+				panic(rule.Operation)
+			}
+			rule.Operation = "<="
+		}
+
+		replicated.Rules = append(replicated.Rules, rule)
+	}
+
 	// add helper tables, rules
 	for tname, table := range orig.Collections {
 		replicated.Collections[tname] = table
@@ -26,7 +54,18 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 		}
 
 		// add collections needed to handle each operation type
-		for _, operation := range []string{"insert", "delete", "update"} {
+		toHandle := []string{}
+		if handleInsert {
+			toHandle = append(toHandle, "insert")
+		}
+		if handleDelete {
+			toHandle = append(toHandle, "update")
+		}
+		if handleUpdate {
+			toHandle = append(toHandle, "delete")
+		}
+
+		for _, operation := range toHandle {
 			// scratch used to intercept the table operation
 			scratch_name := fmt.Sprintf("%s_%s", tname, operation)
 			replicated.Collections[scratch_name] = &seed.Collection{
@@ -148,27 +187,6 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			}
 			replicated.Rules = append(replicated.Rules, channel_to_table)
 		}
-	}
-
-	// rewrite and append rules from orig
-	for _, rule := range orig.Rules {
-		// rewrite rules feeding tables
-		if orig.Collections[rule.Supplies].Type == seed.CollectionTable {
-			switch rule.Operation {
-			case "<+":
-				rule.Supplies += "_insert"
-			case "<-":
-				rule.Supplies += "_delete"
-			case "<+-":
-				rule.Supplies += "_update"
-			default:
-				// shouldn't get here
-				panic(rule.Operation)
-			}
-			rule.Operation = "<="
-		}
-
-		replicated.Rules = append(replicated.Rules, rule)
 	}
 
 	return replicated, nil
