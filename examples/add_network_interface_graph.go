@@ -9,17 +9,20 @@ import (
 	seedGraph "github.com/nathankerr/seed/graph"
 	"math"
 	"reflect"
+	"strings"
 )
 
 func Add_network_interface_graph(orig *seed.Seed) (*seed.Seed, error) {
 	// build graph
 	g := seedGraph.SeedAsGraph(orig)
 
+	orig.Name = strings.Title(orig.Name) + "Server"
+
 	for inputName, input := range orig.Collections {
 		if input.Type != seed.CollectionInput {
 			continue
 		}
-		input.Key = append(input.Key, "@address")
+		input.Key = append([]string{"@address"}, input.Key...)
 
 		start, ok := g.NodeFor(inputName)
 		if !ok {
@@ -51,9 +54,9 @@ func Add_network_interface_graph(orig *seed.Seed) (*seed.Seed, error) {
 					previousCollection = node.Name
 					switch node.Collection.Type {
 					case seed.CollectionInput, seed.CollectionScratch:
-						node.Collection.Key = appendIfNotExists(node.Collection.Key, outputAddress)
+						node.Collection.Key = prependIfNotExists(node.Collection.Key, outputAddress)
 					case seed.CollectionOutput:
-						node.Collection.Key = appendIfNotExists(node.Collection.Key, "@"+outputAddress)
+						node.Collection.Key = prependIfNotExists(node.Collection.Key, "@"+outputAddress)
 					case seed.CollectionChannel, seed.CollectionTable:
 						panic("should not encounter these collection types")
 					default:
@@ -84,10 +87,10 @@ func Add_network_interface_graph(orig *seed.Seed) (*seed.Seed, error) {
 					}
 					if !exists {
 						// add to the projection
-						node.Rule.Projection = append(node.Rule.Projection, seed.QualifiedColumn{
+						node.Rule.Projection = append([]seed.Expression{seed.QualifiedColumn{
 							Collection: previousCollection,
 							Column:     outputAddress,
-						})
+						}}, node.Rule.Projection...)
 					}
 				default:
 					panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(node).String()))
@@ -127,7 +130,7 @@ func cost(from graph.Node, to graph.Node) float64 {
 	return 1.0
 }
 
-func appendIfNotExists(strings []string, toAdd string) []string {
+func prependIfNotExists(strings []string, toAdd string) []string {
 	exists := false
 
 	for _, str := range strings {
@@ -137,7 +140,7 @@ func appendIfNotExists(strings []string, toAdd string) []string {
 	}
 
 	if !exists {
-		strings = append(strings, toAdd)
+		strings = append([]string{toAdd}, strings...)
 	}
 
 	return strings
