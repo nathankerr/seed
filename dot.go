@@ -10,8 +10,6 @@ func ToDot(seed *Seed, name string) ([]byte, error) {
 
 	dot := fmt.Sprintf("digraph %s {", name)
 	dot = fmt.Sprintf("%s\n\tmargin=\"0\"", dot)
-	dot = fmt.Sprintf("%s\n\tsize=\"4.5,7.1\"", dot)
-	dot = fmt.Sprintf("%s\n\tnode [fontname=\"Alegreya\" fontsize=\"9\"]", dot)
 	dot = fmt.Sprintf("%s\n", dot)
 
 	for cname, collection := range seed.Collections {
