@@ -104,6 +104,8 @@ func (s *Seed) validateQualifiedColumn(qc QualifiedColumn, rule *Rule) error {
 	for _, column := range collection.Key {
 		if column == qc.Column {
 			return nil
+		} else if column[0] == '@' && (string(column[1:]) == qc.Column) {
+			return nil
 		}
 	}
 	for _, column := range collection.Data {

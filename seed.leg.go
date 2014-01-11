@@ -466,7 +466,7 @@ func (p *yyParser) Init() {
 
 	classes := [...][32]uint8{
 		1: {0, 0, 0, 0, 0, 32, 255, 3, 254, 255, 255, 135, 254, 255, 255, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		0: {0, 0, 0, 0, 0, 0, 0, 0, 254, 255, 255, 7, 254, 255, 255, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		0: {0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 7, 254, 255, 255, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	}
 	matchClass := func(class uint) bool {
 		if (position < len(p.Buffer)) &&
@@ -1333,7 +1333,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 15 Identifier <- (< [a-zA-Z] [-a-zA-Z0-9_]+ > { yy.string = yytext }) */
+		/* 15 Identifier <- (< [a-zA-Z@] [-a-zA-Z0-9_]+ > { yy.string = yytext }) */
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition
 			begin = position
