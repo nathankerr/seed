@@ -14,15 +14,19 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 	handleInsert := false
 	handleDelete := false
 	handleUpdate := false
+	insertOperation := map[string]string{}
 
 	// rewrite and append rules from orig
 	for _, rule := range orig.Rules {
 		// rewrite rules feeding tables
 		if orig.Collections[rule.Supplies].Type == seed.CollectionTable {
 			switch rule.Operation {
-			case "<+":
+			case "<+", "<=":
 				rule.Supplies += "_insert"
 				handleInsert = true
+				if insertOperation[rule.Supplies] != "<=" {
+					insertOperation[rule.Supplies] = rule.Operation
+				}
 			case "<-":
 				rule.Supplies += "_delete"
 				handleDelete = true
@@ -92,7 +96,7 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			}
 			switch operation {
 			case "insert":
-				scratch_to_table.Operation = "<+"
+				scratch_to_table.Operation = insertOperation[scratch_to_table.Supplies]
 			case "delete":
 				scratch_to_table.Operation = "<-"
 			case "update":
