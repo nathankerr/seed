@@ -9,6 +9,7 @@ import (
 	"github.com/nathankerr/seed/executor"
 	"github.com/nathankerr/seed/executor/bud"
 	"github.com/nathankerr/seed/executor/monitor"
+	"github.com/nathankerr/seed/executor/tracer"
 	"github.com/nathankerr/seed/executor/wsjson"
 	"io/ioutil"
 	"log"
@@ -41,6 +42,8 @@ func main() {
 		"which communicator to use (bud, wsjson")
 	var monitorAddress = flag.String("monitor", "",
 		"address the monitor uses; empty means it will not run")
+	var traceFilename = flag.String("trace", "",
+		"filename to dump a trace to; empty means it will not run")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n  %s ", os.Args[0])
 		fmt.Fprintf(os.Stderr, "[options] [input filename]\nOptions:\n")
@@ -74,7 +77,7 @@ func main() {
 
 	if *execute {
 		log.Println("Executing")
-		err = start(service, *sleep, *address, *monitorAddress, *communicator)
+		err = start(service, *sleep, *address, *monitorAddress, *traceFilename, *communicator)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -191,7 +194,7 @@ func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 	return transformed, nil
 }
 
-func start(service *seed.Seed, sleep, address, monitorAddress, communicator string) error {
+func start(service *seed.Seed, sleep, address, monitorAddress, traceFilename, communicator string) error {
 	var err error
 	var sleepDuration time.Duration
 	if sleep != "" {
@@ -202,14 +205,20 @@ func start(service *seed.Seed, sleep, address, monitorAddress, communicator stri
 	}
 
 	useMonitor := false
-	if monitorAddress != "" {
+	if (monitorAddress != "") || (traceFilename != "") {
 		useMonitor = true
+	}
+
+	if (monitorAddress != "") && (traceFilename != "") {
+		log.Fatalln("cannot use both the web-based monitoring and tracing")
 	}
 
 	channels := executor.Execute(service, sleepDuration, address, useMonitor)
 
-	if useMonitor {
+	if monitorAddress != "" {
 		go monitor.StartMonitor(monitorAddress, channels, service)
+	} else if traceFilename != "" {
+		go tracer.StartTracer(traceFilename, channels.Monitor)
 	}
 
 	switch communicator {

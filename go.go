@@ -13,6 +13,7 @@ import (
 	"github.com/nathankerr/seed/executor/bud"
 	"github.com/nathankerr/seed/executor/wsjson"
 	"github.com/nathankerr/seed/executor/monitor"
+	"github.com/nathankerr/seed/executor/tracer"
 	"github.com/nathankerr/seed"
 	"time"
 	"flag"
@@ -26,7 +27,7 @@ import (
 	var communicator = flag.String("communicator", "wsjson", "which communicator to use (bud wsjson")
 	var address = flag.String("address", ":3000", "address the communicator uses")
 	var monitorAddress = flag.String("monitor", "", "address to access the debugger (http), empty means the debugger doesn't run")
-
+	var traceFilename = flag.String("trace", "", "filename to dump a trace to; empty means it will not run")
 
 	flag.Parse()
 `, str)
@@ -66,16 +67,21 @@ import (
 	}
 
 	useMonitor := false
-	if *monitorAddress != "" {
+	if (*monitorAddress != "") || (*traceFilename != "") {
 		useMonitor = true
 	}
 
-	println("Starting  %s on " + *address)
+	if (*monitorAddress != "") && (*traceFilename != "") {
+		log.Fatalln("cannot use both the web-based monitoring and tracing")
+	}
+
+	println("Starting %s on " + *address)
 	channels := executor.Execute(service, sleepDuration, *address, useMonitor)
 
-	if useMonitor {
-		println("Starting monitor" + " on " + *monitorAddress)
+	if *monitorAddress != "" {
 		go monitor.StartMonitor(*monitorAddress, channels, service)
+	} else if *traceFilename != "" {
+		go tracer.StartTracer(*traceFilename, channels.Monitor)
 	}
 
 	switch *communicator {
