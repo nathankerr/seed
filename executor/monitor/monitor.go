@@ -197,7 +197,7 @@ func renderHTML(message executor.MonitorMessage, s *seed.Seed) string {
 			collection = s.Collections[rule.Supplies]
 		} else {
 			switch message.Block {
-			case "_time", "budCommunicator", "wsjsonCommunicator":
+			case "_time", "budCommunicator", "wsjsonCommunicator", "_distributer":
 				return fmt.Sprint(message.Data)
 			case "_command":
 				switch message.Data.(string) {

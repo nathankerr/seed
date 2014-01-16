@@ -224,9 +224,16 @@ func BudCommunicator(s *seed.Seed, channels executor.Channels, address string) {
 
 	go bud.networkReader()
 
+	fromDistribution := make(chan executor.MessageContainer)
+	channels.Distribution <- executor.MessageContainer{
+		Operation:  "register",
+		Collection: "",
+		Data:       []seed.Tuple{seed.Tuple{fromDistribution}},
+	}
+
 	controlinfo("budCommunicator", "started")
 	for {
-		message := <-channels.Distribution
+		message := <-fromDistribution
 		controlinfo("budCommunicator", "received", message)
 
 		switch message.Operation {

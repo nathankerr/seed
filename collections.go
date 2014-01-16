@@ -5,6 +5,27 @@ import (
 	"reflect"
 )
 
+func (c *Collection) AddressColumn() (int, bool) {
+	addressColumn := -1
+	ok := false
+
+	if c.Type != CollectionChannel {
+		return -1, false
+	}
+
+	for index, name := range c.Key {
+		if name[0] == '@' {
+			addressColumn = index
+			break
+		}
+	}
+	if addressColumn >= 0 {
+		ok = true
+	}
+
+	return addressColumn, ok
+}
+
 func (r *Rule) Collections() []string {
 	collectionsmap := make(map[string]bool) // map only used for uniqueness
 

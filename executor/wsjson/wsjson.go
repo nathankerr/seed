@@ -36,6 +36,13 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 	go server(address)
 	info("server started")
 
+	fromDistribution := make(chan executor.MessageContainer)
+	channels.Distribution <- executor.MessageContainer{
+		Operation:  "register",
+		Collection: "",
+		Data:       []seed.Tuple{seed.Tuple{fromDistribution}},
+	}
+
 	sockets := map[string]socket{}      // address: socket
 	localAddresses := map[string]bool{} // list of addresses this communicator responds to, messages to these addresses will be dropped
 	for {
@@ -48,7 +55,7 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 				continue
 			}
 			channel <- message
-		case message := <-channels.Distribution:
+		case message := <-fromDistribution:
 			info("distribution")
 			switch message.Operation {
 			case "immediate", "deferred":

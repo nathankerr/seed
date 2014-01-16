@@ -40,6 +40,8 @@ func Execute(s *seed.Seed, sleepDuration time.Duration, address string, monitor 
 		go handleRule(ruleNumber, s, channels)
 	}
 
+	go distributer(s, channels)
+
 	// make list of all processes to be controlled
 	toControl := []chan<- MessageContainer{channels.Distribution}
 	for _, collectionChannel := range channels.Collections {
@@ -58,7 +60,12 @@ func controlLoop(monitor bool, sleepDuration time.Duration, toControl []chan<- M
 	shouldStop := false
 	shouldStep := false
 
+	loopNumber := 0
+
 	for {
+		controlinfo("executor", "START OF CONTROL LOOP------------------------------------------------------------", loopNumber)
+		loopNumber++
+
 		startTime := time.Now()
 		time.Sleep(sleepDuration)
 

@@ -6,7 +6,7 @@ import (
 
 type Channels struct {
 	Control      chan MessageContainer
-	Distribution chan MessageContainer
+	Distribution chan MessageContainer // tied to communicators through the collector
 	Collections  map[string]chan MessageContainer
 	Rules        []chan MessageContainer
 	Monitor      chan MonitorMessage

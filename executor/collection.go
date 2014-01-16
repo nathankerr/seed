@@ -48,13 +48,18 @@ func collectionHandler(collectionName string, s *seed.Seed, channels Channels) {
 	input := channels.Collections[collectionName]
 	c := s.Collections[collectionName]
 
+	inputsNeeded := 1 // start with the distributer
+	for _, rule := range s.Rules {
+		if rule.Supplies == collectionName && rule.Operation == "<=" {
+			inputsNeeded++
+		}
+	}
+	inputsReceived := 0
+
 	immediates := ruleChannels(false, collectionName, s, channels)
 	deferreds := ruleChannels(true, collectionName, s, channels)
-	if c.Type == seed.CollectionChannel {
-		deferreds = append(deferreds, channels.Distribution)
-	}
 
-	controlinfo(collectionName, "sends to", immediates, deferreds)
+	//controlinfo(collectionName, "sends to", immediates, deferreds)
 
 	data := tupleSet{
 		tuples:          map[string]seed.Tuple{},
@@ -65,19 +70,38 @@ func collectionHandler(collectionName string, s *seed.Seed, channels Channels) {
 
 	for {
 		message := <-input
-		controlinfo(collectionName, "received", message)
+		flowinfo(collectionName, "received", message)
 
 		switch message.Operation {
 		case "immediate":
-			// info(collectionName, "immediate")
+			controlinfo(collectionName, "immediate")
+
+			//get the data that has not come yet
+			flowinfo(collectionName, "have ", inputsReceived, "of ", inputsNeeded)
+			for inputsReceived < inputsNeeded {
+				message := <-input
+				switch message.Operation {
+				case "data":
+					for _, tuple := range message.Data {
+						data.add(tuple)
+					}
+					inputsReceived++
+				default:
+					fatal(collectionName, "unhandled message", message)
+				}
+				flowinfo(collectionName, "have ", inputsReceived, "of ", inputsNeeded)
+			}
+			inputsReceived = 0
+
 			dataMessage := data.message()
 			sendToAll(dataMessage, immediates)
 			dataMessage.Operation = "done"
 			channels.Control <- dataMessage
 			controlinfo(collectionName, "finished with", message)
 		case "deferred":
-			// info(collectionName, "deferred")
+			controlinfo(collectionName, "deferred")
 			controlinfo(collectionName, "sending to", deferreds)
+			inputsReceived = 0
 			dataMessage := data.message()
 			sendToAll(dataMessage, deferreds)
 			switch c.Type {
@@ -92,9 +116,11 @@ func collectionHandler(collectionName string, s *seed.Seed, channels Channels) {
 			}
 			dataMessage.Operation = "done"
 			channels.Control <- dataMessage
+			flowinfo(collectionName, "sent", dataMessage)
 			controlinfo(collectionName, "finished with", message)
 		case "data", "<~":
-			flowinfo(collectionName, "received", message.String())
+			inputsReceived++
+			flowinfo(collectionName, "received", inputsReceived, "of", inputsNeeded, ":", message.String())
 			for _, tuple := range message.Data {
 				data.add(tuple)
 			}

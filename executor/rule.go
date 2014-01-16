@@ -28,7 +28,7 @@ func handleRule(ruleNumber int, s *seed.Seed, channels Channels) {
 
 	for {
 		message := <-input
-		controlinfo(ruleNumber, "received", message)
+		flowinfo(ruleNumber, "received", message)
 
 		switch message.Operation {
 		case "immediate":
@@ -64,6 +64,7 @@ func handleRule(ruleNumber int, s *seed.Seed, channels Channels) {
 func (handler *ruleHandler) run(dataMessages []MessageContainer) MessageContainer {
 	// get the data needed to calculate the results
 	data := handler.getRequiredData(dataMessages)
+	flowinfo(handler.number, "has required data")
 
 	// calculate results
 	results := handler.calculateResults(data)
@@ -77,6 +78,8 @@ func (handler *ruleHandler) run(dataMessages []MessageContainer) MessageContaine
 	}
 	handler.channels.Collections[outputName] <- outputMessage
 	flowinfo(handler.number, "sent", outputMessage.String(), "to", outputName)
+	handler.channels.Distribution <- outputMessage
+	flowinfo(handler.number, "sent", outputMessage.String(), "to distribution")
 
 	return outputMessage
 }
