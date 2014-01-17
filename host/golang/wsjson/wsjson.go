@@ -16,7 +16,7 @@ import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"github.com/nathankerr/seed"
-	"github.com/nathankerr/seed/executor"
+	executor "github.com/nathankerr/seed/host/golang"
 	"io"
 	"net/http"
 )

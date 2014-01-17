@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/msgpack/msgpack-go"
 	"github.com/nathankerr/seed"
-	"github.com/nathankerr/seed/executor"
+	executor "github.com/nathankerr/seed/host/golang"
 	"net"
 	"reflect"
 )

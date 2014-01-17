@@ -3,7 +3,7 @@ package tracer
 
 import (
 	"encoding/json"
-	"github.com/nathankerr/seed/executor"
+	executor "github.com/nathankerr/seed/host/golang"
 	"log"
 	"os"
 )

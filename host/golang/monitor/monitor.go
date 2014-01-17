@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nathankerr/seed"
-	"github.com/nathankerr/seed/executor"
+	executor "github.com/nathankerr/seed/host/golang"
 	"html/template"
 	"io"
 	"net/http"

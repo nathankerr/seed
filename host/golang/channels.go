@@ -1,4 +1,4 @@
-package executor
+package golang
 
 import (
 	"github.com/nathankerr/seed"

@@ -1,4 +1,4 @@
-package executor
+package golang
 
 import (
 	"encoding/json"
