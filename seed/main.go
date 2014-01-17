@@ -11,6 +11,7 @@ import (
 	"github.com/nathankerr/seed/executor/monitor"
 	"github.com/nathankerr/seed/executor/tracer"
 	"github.com/nathankerr/seed/executor/wsjson"
+	"github.com/nathankerr/seed/host/bloom"
 	"io/ioutil"
 	"log"
 	"os"
@@ -136,7 +137,7 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 		switch format {
 		case "bloom":
 			extension = "rb"
-			writer = seed.ToBloom
+			writer = bloom.ToBloom
 		case "dot":
 			extension = "dot"
 			writer = seed.ToDot

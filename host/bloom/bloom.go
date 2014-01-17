@@ -1,18 +1,15 @@
-package seed
+// Package bloom exports a seed to the bloom host environment
+package bloom
 
 import (
 	"fmt"
+	"github.com/nathankerr/seed"
 	"reflect"
 	"strings"
 )
 
-func ToBloom(seed *Seed, name string) ([]byte, error) {
-	return []byte(seed.Bloom(name)), nil
-}
-
-func (s *Seed) Bloom(name string) string {
-	info()
-
+// ToBloom converts a seed into a bloom program
+func ToBloom(s *seed.Seed, name string) ([]byte, error) {
 	str := fmt.Sprintf("module %s\n", strings.Title(name))
 
 	// collections
@@ -20,7 +17,7 @@ func (s *Seed) Bloom(name string) string {
 	for cname, collection := range s.Collections {
 		str = fmt.Sprintf("%s    %s\n",
 			str,
-			collection.Bloom(cname),
+			collectionToBloom(collection, cname),
 		)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
@@ -30,16 +27,16 @@ func (s *Seed) Bloom(name string) string {
 	for ruleNum, rule := range s.Rules {
 		str = fmt.Sprintf("%s    %s # rule %d\n",
 			str,
-			rule.Bloom(),
+			ruleToBloom(rule),
 			ruleNum,
 		)
 	}
 	str = fmt.Sprintf("%s  end\n", str)
 
-	return fmt.Sprintf("%send\n", str)
+	return []byte(fmt.Sprintf("%send\n", str)), nil
 }
 
-func (r *Rule) Bloom() string {
+func ruleToBloom(r *seed.Rule) string {
 	var selecter string
 	collections := r.Requires()
 
@@ -54,10 +51,10 @@ func (r *Rule) Bloom() string {
 	projection := []string{}
 	for _, expression := range r.Projection {
 		switch value := expression.(type) {
-		case QualifiedColumn:
+		case seed.QualifiedColumn:
 			projection = append(projection, fmt.Sprintf("%s.%s",
 				index[value.Collection], value.Column))
-		case MapFunction:
+		case seed.MapFunction:
 			arguments := []string{}
 			for _, qc := range value.Arguments {
 				arguments = append(arguments, fmt.Sprintf("%s.%s",
@@ -66,7 +63,7 @@ func (r *Rule) Bloom() string {
 
 			projection = append(projection, fmt.Sprintf("%s(%s)",
 				value.Name, strings.Join(arguments, ", ")))
-		case ReduceFunction:
+		case seed.ReduceFunction:
 			for _, qc := range value.Arguments {
 				projection = append(projection, fmt.Sprintf("%s.%s",
 					index[qc.Collection], qc.Column))
@@ -101,19 +98,19 @@ func (r *Rule) Bloom() string {
 		selecter)
 }
 
-func (c *Collection) Bloom(name string) string {
+func collectionToBloom(c *seed.Collection, name string) string {
 	var declaration string
 
 	switch c.Type {
-	case CollectionInput:
+	case seed.CollectionInput:
 		declaration = "interface input,"
-	case CollectionOutput:
+	case seed.CollectionOutput:
 		declaration = "interface output,"
-	case CollectionChannel:
+	case seed.CollectionChannel:
 		declaration = "channel"
-	case CollectionTable:
+	case seed.CollectionTable:
 		declaration = "table"
-	case CollectionScratch:
+	case seed.CollectionScratch:
 		declaration = "scratch"
 	default:
 		// shouldn't get here
