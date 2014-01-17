@@ -13,6 +13,7 @@ import (
 	"github.com/nathankerr/seed/executor/wsjson"
 	"github.com/nathankerr/seed/host/bloom"
 	"github.com/nathankerr/seed/host/concurrent"
+	"github.com/nathankerr/seed/transformation/network"
 	"io/ioutil"
 	"log"
 	"os"
@@ -179,7 +180,7 @@ func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 	var transform func(service *seed.Seed) (*seed.Seed, error)
 	switch transformation {
 	case "network":
-		transform = examples.Add_network_interface
+		transform = network.Transform
 	case "network-graph":
 		transform = examples.Add_network_interface_graph
 	case "replicate":

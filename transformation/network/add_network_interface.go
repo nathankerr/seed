@@ -1,4 +1,4 @@
-package examples
+package network
 
 import (
 	"errors"
@@ -7,7 +7,8 @@ import (
 	"strings"
 )
 
-func Add_network_interface(orig *seed.Seed) (*seed.Seed, error) {
+// Transform takes a seed in the subset and changes input and output collections into channels, adding correlation information as needed.
+func Transform(orig *seed.Seed) (*seed.Seed, error) {
 	err := orig.InSubset()
 	if err != nil {
 		return nil, errors.New("Adding a network interface requires that the specified seed be in the subset. " + err.Error())
@@ -31,7 +32,7 @@ func Add_network_interface(orig *seed.Seed) (*seed.Seed, error) {
 			"110", "111", "11n", // single output
 			"1n0", "1n1", "1nn", // multiple output
 			"n10", "n11", "n1n", "nn0", "nn1", "nnn": // multiple input
-			networked = add_interface(orig, group, networked)
+			networked = addInterface(orig, group, networked)
 		default:
 			// shouldn't get here
 			panic(group.typ())
@@ -125,26 +126,26 @@ func count(i int) string {
 }
 
 // adds a network interface by adding and handling explicit correlation data
-func add_interface(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Seed {
+func addInterface(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Seed {
 
 	// name the output address columns
-	output_addrs := []string{}
-	for name, _ := range group.collections {
+	outputAddrs := []string{}
+	for name := range group.collections {
 		collection := orig.Collections[name]
 		if collection.Type == seed.CollectionOutput {
-			output_addrs = append(output_addrs, name+"_addr")
+			outputAddrs = append(outputAddrs, name+"_addr")
 		}
 	}
 
 	// Add correlation information to the collections
-	for name, _ := range group.collections {
+	for name := range group.collections {
 		collection := orig.Collections[name]
 		switch collection.Type {
 		case seed.CollectionInput:
 			// add output_addrs to the beginning of key
 			key := []string{"@address"}
-			for _, output_addr := range output_addrs {
-				key = append(key, output_addr)
+			for _, outputAddr := range outputAddrs {
+				key = append(key, outputAddr)
 			}
 			for _, ckey := range collection.Key {
 				key = append(key, ckey)
@@ -178,14 +179,14 @@ func add_interface(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Se
 
 		// The correlation data needs to be matched in the predicates
 		for i := 1; i < len(inputs); i++ {
-			for _, output_addr := range output_addrs {
+			for _, outputAddr := range outputAddrs {
 				rule.Predicate = append(rule.Predicate, seed.Constraint{
 					Left: seed.QualifiedColumn{
 						Collection: inputs[0],
-						Column:     output_addr},
+						Column:     outputAddr},
 					Right: seed.QualifiedColumn{
 						Collection: inputs[i],
-						Column:     output_addr},
+						Column:     outputAddr},
 				})
 			}
 		}
@@ -216,7 +217,7 @@ func add_interface(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Se
 		networked.Rules = append(networked.Rules, rule)
 	}
 
-	for cname, _ := range group.collections {
+	for cname := range group.collections {
 		collection := orig.Collections[cname]
 		switch collection.Type {
 		case seed.CollectionInput, seed.CollectionOutput:
@@ -237,7 +238,7 @@ func merge(orig *seed.Seed, group *group, networked *seed.Seed) *seed.Seed {
 		networked.Rules = append(networked.Rules, orig.Rules[rulenum])
 	}
 
-	for collectionName, _ := range group.collections {
+	for collectionName := range group.collections {
 		networked.Collections[collectionName] = orig.Collections[collectionName]
 	}
 
