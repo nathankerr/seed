@@ -1,4 +1,4 @@
-package examples
+package network
 
 import (
 	"github.com/nathankerr/seed"
@@ -23,31 +23,16 @@ output response [timezone, current_time]
 response <+ [request.timezone, (current_time_in request.timezone)]`,
 			expected: &seed.Seed{
 				Name: "TimeServer",
-				Source: seed.Source{
-					Name:   "time",
-					Line:   1,
-					Column: 1,
-				},
 				Collections: map[string]*seed.Collection{
 					"response": &seed.Collection{
 						Type: seed.CollectionChannel,
 						Key:  []string{"@response_addr", "timezone", "current_time"},
 						Data: []string(nil),
-						Source: seed.Source{
-							Name:   "time",
-							Line:   2,
-							Column: 8,
-						},
 					},
 					"request": &seed.Collection{
 						Type: seed.CollectionChannel,
 						Key:  []string{"@address", "response_addr", "timezone"},
 						Data: []string(nil),
-						Source: seed.Source{
-							Name:   "time",
-							Line:   1,
-							Column: 6,
-						},
 					},
 				},
 				Rules: []*seed.Rule{
@@ -55,15 +40,15 @@ response <+ [request.timezone, (current_time_in request.timezone)]`,
 						Supplies:  "response",
 						Operation: "<~",
 						Projection: []seed.Expression{
-							seed.Expression{Value: seed.QualifiedColumn{
+							seed.QualifiedColumn{
 								Collection: "request",
 								Column:     "response_addr",
-							}},
-							seed.Expression{Value: seed.QualifiedColumn{
+							},
+							seed.QualifiedColumn{
 								Collection: "request",
 								Column:     "timezone",
-							}},
-							seed.Expression{Value: seed.MapFunction{
+							},
+							seed.MapFunction{
 								Name: "current_time_in",
 								// Function: current_time_in,
 								Arguments: []seed.QualifiedColumn{
@@ -71,14 +56,9 @@ response <+ [request.timezone, (current_time_in request.timezone)]`,
 										Collection: "request",
 										Column:     "timezone",
 									}},
-							}},
+							},
 						},
-						// Predicate: []seed.Constraint{},
-						Source: seed.Source{
-							Name:   "time",
-							Line:   4,
-							Column: 1,
-						},
+						Predicate: []seed.Constraint{},
 					},
 				},
 			},
@@ -86,11 +66,14 @@ response <+ [request.timezone, (current_time_in request.timezone)]`,
 	}
 
 	for _, test := range tests {
-		input := seed.Parse(test.name, test.input)
+		input, err := seed.FromSeed(test.name, []byte(test.input))
+		if err != nil {
+			t.Fatal(err)
+		}
 		// expected := seed.Parse(test.name, test.expected, false)
 		expected := test.expected
 
-		output, err := Add_network_interface(input)
+		output, err := Transform(input)
 		if err != nil {
 			t.Errorf("%v: %v", test.name, err)
 		}
