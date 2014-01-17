@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/nathankerr/seed"
 	executor "github.com/nathankerr/seed/host/golang"
+	"github.com/nathankerr/seed/representation/dot"
 	"html/template"
 	"io"
 	"net/http"
@@ -75,7 +76,7 @@ func sendStartupData(s *seed.Seed, socket socket, runningState string) {
 	})
 
 	// _graph block content
-	dot, err := seed.ToDot(s, s.Name)
+	dot, err := dot.ToDot(s, s.Name)
 	if err != nil {
 		panic(err)
 	}

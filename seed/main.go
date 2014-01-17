@@ -12,6 +12,7 @@ import (
 	"github.com/nathankerr/seed/host/golang/monitor"
 	"github.com/nathankerr/seed/host/golang/tracer"
 	"github.com/nathankerr/seed/host/golang/wsjson"
+	"github.com/nathankerr/seed/representation/dot"
 	"github.com/nathankerr/seed/transformation/network"
 	"github.com/nathankerr/seed/transformation/networkg"
 	"github.com/nathankerr/seed/transformation/replicate"
@@ -143,7 +144,7 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 			writer = bloom.ToBloom
 		case "dot":
 			extension = "dot"
-			writer = seed.ToDot
+			writer = dot.ToDot
 		case "go":
 			extension = "go"
 			writer = golang.ToGo

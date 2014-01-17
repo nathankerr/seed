@@ -1,13 +1,12 @@
-package seed
+package dot
 
 import (
 	"fmt"
+	"github.com/nathankerr/seed"
 	"strings"
 )
 
-func ToDot(seed *Seed, name string) ([]byte, error) {
-	info()
-
+func ToDot(seed *seed.Seed, name string) ([]byte, error) {
 	dot := fmt.Sprintf("digraph %s {", name)
 	dot = fmt.Sprintf("%s\n\tmargin=\"0\"", dot)
 	dot = fmt.Sprintf("%s\n", dot)
