@@ -14,6 +14,7 @@ import (
 	"github.com/nathankerr/seed/host/bloom"
 	"github.com/nathankerr/seed/host/concurrent"
 	"github.com/nathankerr/seed/transformation/network"
+	"github.com/nathankerr/seed/transformation/networkg"
 	"io/ioutil"
 	"log"
 	"os"
@@ -34,7 +35,7 @@ func main() {
 	var to_format = flag.String("t", "go",
 		"formats to write separated by spaces (bloom, dot, go, json, seed)")
 	var transformations = flag.String("transformations", "network replicate",
-		"transformations to perform, separated by spaces")
+		"transformations to perform, separated by spaces (network networkg replicate")
 	var execute = flag.Bool("execute", false,
 		"execute the seed")
 	var sleep = flag.String("sleep", "",
@@ -181,8 +182,8 @@ func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 	switch transformation {
 	case "network":
 		transform = network.Transform
-	case "network-graph":
-		transform = examples.Add_network_interface_graph
+	case "networkg":
+		transform = networkg.Transform
 	case "replicate":
 		transform = examples.Add_replicated_tables
 	default:
