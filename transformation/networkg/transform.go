@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gonum/graph"
 	"github.com/nathankerr/seed"
-	seedGraph "github.com/nathankerr/seed/graph"
+	seedGraph "github.com/nathankerr/seed/representation/graph"
 	"math"
 	"reflect"
 	"strings"
