@@ -1,11 +1,12 @@
-package examples
+package replicate
 
 import (
 	"fmt"
 	"github.com/nathankerr/seed"
 )
 
-func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
+// Transform adds table replication using a simple mechanism
+func Transform(orig *seed.Seed) (*seed.Seed, error) {
 	replicated := &seed.Seed{
 		Name:        orig.Name,
 		Collections: make(map[string]*seed.Collection),
@@ -51,8 +52,8 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 		}
 
 		// create the table for replicants of this table
-		replicants_name := fmt.Sprintf("%s_replicants", tname)
-		replicated.Collections[replicants_name] = &seed.Collection{
+		replicantsName := fmt.Sprintf("%s_replicants", tname)
+		replicated.Collections[replicantsName] = &seed.Collection{
 			Type: seed.CollectionTable,
 			Key:  []string{"address"},
 		}
@@ -71,15 +72,15 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 
 		for _, operation := range toHandle {
 			// scratch used to intercept the table operation
-			scratch_name := fmt.Sprintf("%s_%s", tname, operation)
-			replicated.Collections[scratch_name] = &seed.Collection{
+			scratchName := fmt.Sprintf("%s_%s", tname, operation)
+			replicated.Collections[scratchName] = &seed.Collection{
 				Type: seed.CollectionScratch,
 				Key:  table.Key,
 				Data: table.Data,
 			}
 
 			// channel used for inter-replicant communication
-			channel_name := fmt.Sprintf("%s_%s_channel", tname, operation)
+			channelName := fmt.Sprintf("%s_%s_channel", tname, operation)
 			channel := &seed.Collection{
 				Type: seed.CollectionChannel,
 				Key:  []string{"@address"},
@@ -88,108 +89,108 @@ func Add_replicated_tables(orig *seed.Seed) (*seed.Seed, error) {
 			for _, column := range table.Key {
 				channel.Key = append(channel.Key, column)
 			}
-			replicated.Collections[channel_name] = channel
+			replicated.Collections[channelName] = channel
 
 			// rule to forward scratch to table
-			scratch_to_table := &seed.Rule{
+			scratchToTable := &seed.Rule{
 				Supplies: tname,
 			}
 			switch operation {
 			case "insert":
-				scratch_to_table.Operation = insertOperation[scratch_to_table.Supplies]
+				scratchToTable.Operation = insertOperation[scratchToTable.Supplies]
 			case "delete":
-				scratch_to_table.Operation = "<-"
+				scratchToTable.Operation = "<-"
 			case "update":
-				scratch_to_table.Operation = "<+-"
+				scratchToTable.Operation = "<+-"
 			default:
 				// shouldn't get here
 				panic(operation)
 			}
 			for _, column := range table.Key {
-				scratch_to_table.Projection = append(
-					scratch_to_table.Projection,
+				scratchToTable.Projection = append(
+					scratchToTable.Projection,
 					seed.QualifiedColumn{
-						Collection: scratch_name,
+						Collection: scratchName,
 						Column:     column,
 					},
 				)
 			}
 			for _, column := range table.Data {
-				scratch_to_table.Projection = append(
-					scratch_to_table.Projection,
+				scratchToTable.Projection = append(
+					scratchToTable.Projection,
 					seed.QualifiedColumn{
-						Collection: scratch_name,
+						Collection: scratchName,
 						Column:     column,
 					},
 				)
 			}
-			replicated.Rules = append(replicated.Rules, scratch_to_table)
+			replicated.Rules = append(replicated.Rules, scratchToTable)
 
 			// rule to forward scratch to channel
-			scratch_to_channel := &seed.Rule{
-				Supplies:  channel_name,
+			scratchToChannel := &seed.Rule{
+				Supplies:  channelName,
 				Operation: "<~",
 				Projection: []seed.Expression{
 					seed.QualifiedColumn{
-						Collection: replicants_name,
+						Collection: replicantsName,
 						Column:     "address",
 					},
 				},
 			}
 			for _, column := range table.Key {
-				scratch_to_channel.Projection = append(
-					scratch_to_channel.Projection,
+				scratchToChannel.Projection = append(
+					scratchToChannel.Projection,
 					seed.QualifiedColumn{
-						Collection: scratch_name,
+						Collection: scratchName,
 						Column:     column,
 					},
 				)
 			}
 			for _, column := range table.Data {
-				scratch_to_channel.Projection = append(
-					scratch_to_channel.Projection,
+				scratchToChannel.Projection = append(
+					scratchToChannel.Projection,
 					seed.QualifiedColumn{
-						Collection: scratch_name,
+						Collection: scratchName,
 						Column:     column,
 					},
 				)
 			}
-			replicated.Rules = append(replicated.Rules, scratch_to_channel)
+			replicated.Rules = append(replicated.Rules, scratchToChannel)
 
 			// rule to forward channel to table
-			channel_to_table := &seed.Rule{
+			channelToTable := &seed.Rule{
 				Supplies: tname,
 			}
 			switch operation {
 			case "insert":
-				channel_to_table.Operation = "<+"
+				channelToTable.Operation = "<+"
 			case "delete":
-				channel_to_table.Operation = "<-"
+				channelToTable.Operation = "<-"
 			case "update":
-				channel_to_table.Operation = "<+-"
+				channelToTable.Operation = "<+-"
 			default:
 				// shouldn't get here
 				panic(operation)
 			}
 			for _, column := range table.Key {
-				channel_to_table.Projection = append(
-					channel_to_table.Projection,
+				channelToTable.Projection = append(
+					channelToTable.Projection,
 					seed.QualifiedColumn{
-						Collection: channel_name,
+						Collection: channelName,
 						Column:     column,
 					},
 				)
 			}
 			for _, column := range table.Data {
-				channel_to_table.Projection = append(
-					channel_to_table.Projection,
+				channelToTable.Projection = append(
+					channelToTable.Projection,
 					seed.QualifiedColumn{
-						Collection: channel_name,
+						Collection: channelName,
 						Column:     column,
 					},
 				)
 			}
-			replicated.Rules = append(replicated.Rules, channel_to_table)
+			replicated.Rules = append(replicated.Rules, channelToTable)
 		}
 	}
 

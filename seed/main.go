@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/nathankerr/seed"
-	"github.com/nathankerr/seed/examples"
 	"github.com/nathankerr/seed/executor"
 	"github.com/nathankerr/seed/executor/bud"
 	"github.com/nathankerr/seed/executor/monitor"
@@ -15,6 +14,7 @@ import (
 	"github.com/nathankerr/seed/host/concurrent"
 	"github.com/nathankerr/seed/transformation/network"
 	"github.com/nathankerr/seed/transformation/networkg"
+	"github.com/nathankerr/seed/transformation/replicate"
 	"io/ioutil"
 	"log"
 	"os"
@@ -185,7 +185,7 @@ func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 	case "networkg":
 		transform = networkg.Transform
 	case "replicate":
-		transform = examples.Add_replicated_tables
+		transform = replicate.Transform
 	default:
 		return nil, errors.New(transformation + " not supported.")
 	}
