@@ -111,6 +111,20 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 		}
 	}
 
+	// rules supplying channels must be asynchronous
+	for _, rule := range orig.Rules {
+		collectionName := rule.Supplies
+		collection, ok := orig.Collections[collectionName]
+		if !ok {
+			// should never happen
+			panic(collectionName)
+		}
+
+		if collection.Type == seed.CollectionChannel {
+			rule.Operation = "<~"
+		}
+	}
+
 	return orig, nil
 }
 
