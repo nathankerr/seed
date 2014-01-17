@@ -36,9 +36,7 @@ type Rule struct {
 // default:
 // 	panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression.Value).String()))
 // }
-type Expression interface {
-	toGo(string) string
-}
+type Expression interface{}
 
 type MapFunction struct {
 	Name      string // the function name as a string, instead of as a function

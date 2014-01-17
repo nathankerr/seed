@@ -1,11 +1,14 @@
-package seed
+package concurrent
 
 import (
 	"fmt"
+	"github.com/nathankerr/seed"
+	"reflect"
 	"strings"
 )
 
-func ToGo(service *Seed, name string) ([]byte, error) {
+// ToGo expresses a seed as a go program using a concurrent executor
+func ToGo(service *seed.Seed, name string) ([]byte, error) {
 	str := fmt.Sprintf("package main\n")
 	str = fmt.Sprintf(`%s
 import (
@@ -41,14 +44,14 @@ import (
 	// collections
 	str = fmt.Sprintf("%s\n\t\tCollections: map[string]*seed.Collection{", str)
 	for name, collection := range service.Collections {
-		str = fmt.Sprintf("%s\n\t\t\t\"%s\": %v,", str, name, collection.toGo("\t\t\t\t"))
+		str = fmt.Sprintf("%s\n\t\t\t\"%s\": %v,", str, name, collectionToGo(collection, "\t\t\t\t"))
 	}
 	str = fmt.Sprintf("%s\n\t\t},", str)
 
 	// rules
 	str = fmt.Sprintf("%s\n\t\tRules: []*seed.Rule{", str)
 	for _, rule := range service.Rules {
-		str = fmt.Sprintf("%s\n\t\t\t%v,", str, rule.toGo("\t\t\t\t"))
+		str = fmt.Sprintf("%s\n\t\t\t%v,", str, ruleToGo(rule, "\t\t\t\t"))
 	}
 	str = fmt.Sprintf("%s\n\t\t},", str)
 
@@ -100,21 +103,21 @@ import (
 	return []byte(str), nil
 }
 
-func (c *Collection) toGo(indent string) string {
+func collectionToGo(c *seed.Collection, indent string) string {
 	str := fmt.Sprintf("&seed.Collection{\n")
 
 	// type
 	typestr := ""
 	switch c.Type {
-	case CollectionInput:
+	case seed.CollectionInput:
 		typestr = "CollectionInput"
-	case CollectionOutput:
+	case seed.CollectionOutput:
 		typestr = "CollectionOutput"
-	case CollectionTable:
+	case seed.CollectionTable:
 		typestr = "CollectionTable"
-	case CollectionScratch:
+	case seed.CollectionScratch:
 		typestr = "CollectionScratch"
-	case CollectionChannel:
+	case seed.CollectionChannel:
 		typestr = "CollectionChannel"
 	default:
 		panic(fmt.Sprintf("unhandled collection type: %d", c.Type))
@@ -134,7 +137,7 @@ func (c *Collection) toGo(indent string) string {
 	return str
 }
 
-func (r *Rule) toGo(indent string) string {
+func ruleToGo(r *seed.Rule, indent string) string {
 	str := fmt.Sprintf("&seed.Rule{\n")
 
 	// Supplies
@@ -146,7 +149,7 @@ func (r *Rule) toGo(indent string) string {
 	// Projection
 	str = fmt.Sprintf("%s%sProjection: []seed.Expression{\n", str, indent)
 	for _, expression := range r.Projection {
-		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, expression.toGo(indent+"\t\t"))
+		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, expressionToGo(expression, indent+"\t\t"))
 	}
 	str = fmt.Sprintf("%s%s},\n", str, indent)
 
@@ -154,7 +157,7 @@ func (r *Rule) toGo(indent string) string {
 	if len(r.Predicate) != 0 {
 		str = fmt.Sprintf("%s%sPredicate: []seed.Constraint{", str, indent)
 		for _, c := range r.Predicate {
-			str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, c.toGo(indent+"\t\t"))
+			str = fmt.Sprintf("%s\n%s\t%v,\n", str, indent, constraintToGo(c, indent+"\t\t"))
 		}
 		str = fmt.Sprintf("%s%s},\n", str, indent)
 	}
@@ -166,7 +169,20 @@ func (r *Rule) toGo(indent string) string {
 	return str
 }
 
-func (qc QualifiedColumn) toGo(indent string) string {
+func expressionToGo(expression seed.Expression, indent string) string {
+	switch e := expression.(type) {
+	case seed.QualifiedColumn:
+		return qualifiedColumnToGo(e, indent)
+	case seed.MapFunction:
+		return mapFunctionToGo(e, indent)
+	case seed.ReduceFunction:
+		return reduceFunctionToGo(e, indent)
+	default:
+		panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression).String()))
+	}
+}
+
+func qualifiedColumnToGo(qc seed.QualifiedColumn, indent string) string {
 	str := fmt.Sprintf("seed.QualifiedColumn{\n")
 
 	// Collection
@@ -182,14 +198,14 @@ func (qc QualifiedColumn) toGo(indent string) string {
 	return str
 }
 
-func (c Constraint) toGo(indent string) string {
+func constraintToGo(c seed.Constraint, indent string) string {
 	str := fmt.Sprintf("seed.Constraint{")
 
 	// Left
-	str = fmt.Sprintf("%s\n%sLeft: %v,\n", str, indent, c.Left.toGo(indent+"\t"))
+	str = fmt.Sprintf("%s\n%sLeft: %v,\n", str, indent, qualifiedColumnToGo(c.Left, indent+"\t"))
 
 	// Right
-	str = fmt.Sprintf("%s%sRight: %v,\n", str, indent, c.Right.toGo(indent+"\t"))
+	str = fmt.Sprintf("%s%sRight: %v,\n", str, indent, qualifiedColumnToGo(c.Right, indent+"\t"))
 
 	if len(indent) > 0 {
 		indent = indent[:len(indent)-1]
@@ -198,14 +214,14 @@ func (c Constraint) toGo(indent string) string {
 	return str
 }
 
-func (functionCall MapFunction) toGo(indent string) string {
+func mapFunctionToGo(functionCall seed.MapFunction, indent string) string {
 	str := fmt.Sprintf("seed.MapFunction{\n%s\tName: \"%s\",", indent, functionCall.Name)
 	str = fmt.Sprintf("%s\n%s\tFunction: %s,", str, indent, functionCall.Name)
 
 	arguments := []string{}
 	for _, argument := range functionCall.Arguments {
 		arguments = append(arguments,
-			fmt.Sprintf("%s", argument.toGo(indent+"\t\t")))
+			fmt.Sprintf("%s", qualifiedColumnToGo(argument, indent+"\t\t")))
 	}
 	str = fmt.Sprintf("%s\n%s\tArguments: []seed.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n"+indent+"\t"))
 
@@ -213,14 +229,14 @@ func (functionCall MapFunction) toGo(indent string) string {
 	return str
 }
 
-func (functionCall ReduceFunction) toGo(indent string) string {
+func reduceFunctionToGo(functionCall seed.ReduceFunction, indent string) string {
 	str := fmt.Sprintf("seed.ReduceFunction{\n%s\tName: \"%s\",", indent, functionCall.Name)
 	str = fmt.Sprintf("%s\n%s\tFunction: %s,", str, indent, functionCall.Name)
 
 	arguments := []string{}
 	for _, argument := range functionCall.Arguments {
 		arguments = append(arguments,
-			fmt.Sprintf("%s", argument.toGo(indent+"\t\t")))
+			fmt.Sprintf("%s", qualifiedColumnToGo(argument, indent+"\t\t")))
 	}
 	str = fmt.Sprintf("%s\n%s\tArguments: []seed.QualifiedColumn{\n\t%s%s},", str, indent, indent, strings.Join(arguments, ",\n"+indent+"\t"))
 
