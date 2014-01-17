@@ -11,7 +11,7 @@ import (
 	"github.com/nathankerr/seed/executor/tracer"
 	"github.com/nathankerr/seed/executor/wsjson"
 	"github.com/nathankerr/seed/host/bloom"
-	"github.com/nathankerr/seed/host/concurrent"
+	"github.com/nathankerr/seed/host/golang"
 	"github.com/nathankerr/seed/transformation/network"
 	"github.com/nathankerr/seed/transformation/networkg"
 	"github.com/nathankerr/seed/transformation/replicate"
@@ -146,7 +146,7 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 			writer = seed.ToDot
 		case "go":
 			extension = "go"
-			writer = concurrent.ToGo
+			writer = golang.ToGo
 		case "json":
 			extension = "json"
 			writer = seed.ToJson
