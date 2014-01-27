@@ -3,7 +3,7 @@ package networkg
 
 import (
 	"fmt"
-	"github.com/gonum/graph"
+	"github.com/nathankerr/graph"
 	"github.com/nathankerr/seed"
 	seedGraph "github.com/nathankerr/seed/representation/graph"
 	"math"

@@ -3,7 +3,7 @@ package graph
 
 import (
 	"fmt"
-	"github.com/gonum/graph"
+	"github.com/nathankerr/graph"
 	"github.com/nathankerr/seed"
 	"reflect"
 )
@@ -60,6 +60,7 @@ func (g *Graph) NodeFor(name string) (graph.Node, bool) {
 }
 
 // Gives the nodes connected by OUTBOUND edges
+// used by A*
 func (g Graph) Successors(node graph.Node) []graph.Node {
 	successors := []graph.Node{}
 
