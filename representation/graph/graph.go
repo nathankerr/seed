@@ -36,6 +36,7 @@ func SeedAsGraph(seed *seed.Seed) *Graph {
 	for ruleNumber, rule := range seed.Rules {
 		g.nodes[id] = RuleNode{
 			id:   id,
+			num:  ruleNumber,
 			Rule: rule,
 		}
 		g.nodeFor[fmt.Sprint(ruleNumber)] = id
@@ -120,11 +121,23 @@ func (g Graph) Degree(node graph.Node) int {
 }
 
 func (g Graph) EdgeList() []graph.Edge {
-	panic("TODO")
+	edges := []graph.Edge{}
+
+	for _, node := range g.NodeList() {
+		for _, successor := range g.Successors(node) {
+			edges = append(edges, Edge{
+				From: node,
+				To:   successor,
+			})
+		}
+	}
+
+	return edges
 }
 
+// for GraphToDot
 func (g Graph) NodeList() []graph.Node {
-	panic("TODO")
+	return g.nodes
 }
 
 func (g Graph) IsDirected() bool {
@@ -142,10 +155,23 @@ func (cnode CollectionNode) ID() int {
 }
 
 type RuleNode struct {
-	id int
+	id  int
+	num int
 	*seed.Rule
 }
 
 func (rnode RuleNode) ID() int {
 	return rnode.id
+}
+
+type Edge struct {
+	From, To graph.Node
+}
+
+func (edge Edge) Head() graph.Node {
+	return edge.From
+}
+
+func (edge Edge) Tail() graph.Node {
+	return edge.To
 }
