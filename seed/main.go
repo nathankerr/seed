@@ -12,6 +12,7 @@ import (
 	"github.com/nathankerr/seed/host/golang/monitor"
 	"github.com/nathankerr/seed/host/golang/tracer"
 	"github.com/nathankerr/seed/host/golang/wsjson"
+	"github.com/nathankerr/seed/representation/dedalus"
 	"github.com/nathankerr/seed/representation/dot"
 	"github.com/nathankerr/seed/representation/graph"
 	"github.com/nathankerr/seed/representation/opennet"
@@ -168,6 +169,9 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 		case "opennet":
 			extension = "opennet.dot"
 			writer = opennet.SeedToDot
+		case "dedalus":
+			extension = "dedalus"
+			writer = dedalus.SeedToDedalusFile
 		default:
 			log.Fatalln("Writing to", format, "format not supported.\n")
 		}
