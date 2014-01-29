@@ -6,8 +6,8 @@ all: seed.leg.go
 	go install ./...
 	go fmt ./...
 	go vet ./...
-	seed -t "go seed fieldgraph graph" -transformations "networkg" services/kvs/kvs.seed
-	cd build; dot -T pdf -O kvsserver.fieldgraph.dot; open kvsserver.fieldgraph.dot.pdf
+	seed -t "go seed fieldgraph graph opennet" -transformations "networkg" services/kvs/kvs.seed
+	cd build; dot -T pdf -O kvsserver.opennet.dot; open kvsserver.opennet.dot.pdf
 
 seed.leg.go: seed.leg
 	leg $< > $@

@@ -14,6 +14,7 @@ import (
 	"github.com/nathankerr/seed/host/golang/wsjson"
 	"github.com/nathankerr/seed/representation/dot"
 	"github.com/nathankerr/seed/representation/graph"
+	"github.com/nathankerr/seed/representation/opennet"
 	"github.com/nathankerr/seed/transformation/network"
 	"github.com/nathankerr/seed/transformation/networkg"
 	"github.com/nathankerr/seed/transformation/replicate"
@@ -35,7 +36,7 @@ func main() {
 	var full = flag.Bool("full", false,
 		"when true, seed input is not limited to the subset")
 	var to_format = flag.String("t", "go",
-		"formats to write separated by spaces (bloom, dot, go, json, seed, graph, fieldgraph)")
+		"formats to write separated by spaces (bloom, dot, go, json, seed, graph, fieldgraph, owfn, opennet)")
 	var transformations = flag.String("transformations", "network replicate",
 		"transformations to perform, separated by spaces (network networkg replicate")
 	var execute = flag.Bool("execute", false,
@@ -161,6 +162,12 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 		case "fieldgraph":
 			extension = "fieldgraph.dot"
 			writer = graph.ToFieldGraph
+		case "owfn":
+			extension = "owfn"
+			writer = opennet.SeedToOWFN
+		case "opennet":
+			extension = "opennet.dot"
+			writer = opennet.SeedToDot
 		default:
 			log.Fatalln("Writing to", format, "format not supported.\n")
 		}
