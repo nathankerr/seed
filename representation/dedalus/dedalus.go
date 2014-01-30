@@ -74,6 +74,7 @@ func SeedToDedalusFile(s *seed.Seed, name string) ([]byte, error) {
 			equivalents[constraint.Right.String()] = constraint.Left
 		}
 
+		// deal with qualified columns
 		for i, expression := range rule.Projection {
 			switch expression := expression.(type) {
 			case seed.QualifiedColumn:
@@ -83,17 +84,51 @@ func SeedToDedalusFile(s *seed.Seed, name string) ([]byte, error) {
 				if ok {
 					predicates[equivalent.Collection][columnNumbers[equivalent.Collection][equivalent.Column]] = supplies[i]
 				}
-			case seed.MapFunction:
-				println("MapFunction: TODO")
-			case seed.ReduceFunction:
-				println("ReduceFunction: TODO")
-				// arguments := []string{}
-				// for _, arguments := range expression.Arguments {
-				// 	arguments = append(arguments, )
-				// }
+			case seed.MapFunction, seed.ReduceFunction:
+				// defer handling so that name creation is (slightly) easier
 			default:
 				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression).String()))
 			}
+		}
+
+		// deal with map and reduce functions
+		for i, expression := range rule.Projection {
+			var functionName string
+			arguments := []seed.QualifiedColumn{}
+			switch expression := expression.(type) {
+			case seed.QualifiedColumn:
+				// already handled
+				continue
+			case seed.MapFunction:
+				functionName = expression.Name
+				arguments = expression.Arguments
+			case seed.ReduceFunction:
+				functionName = expression.Name
+				arguments = expression.Arguments
+			default:
+				panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(expression).String()))
+			}
+
+			namedArguments := make([]string, len(arguments))
+			for argumentNumber, argument := range arguments {
+				argumentName := predicates[argument.Collection][columnNumbers[argument.Collection][argument.Column]]
+
+				if argumentName == "_" {
+					// named not already assigned, check equivalents
+					equivalent, ok := equivalents[argument.String()]
+					if ok {
+						argumentName = predicates[equivalent.Collection][columnNumbers[equivalent.Collection][equivalent.Column]]
+					} else {
+						// there is not an equivalent, make something up
+						argumentName = fmt.Sprintf("%s_%s", argument.Collection, argument.Column)
+						predicates[argument.Collection][columnNumbers[argument.Collection][argument.Column]] = argumentName
+					}
+				}
+
+				namedArguments[argumentNumber] = argumentName
+			}
+
+			supplies[i] = fmt.Sprintf("%s(%s)", functionName, strings.Join(namedArguments, ", "))
 		}
 
 		predicate := []string{}
