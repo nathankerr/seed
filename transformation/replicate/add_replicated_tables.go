@@ -64,10 +64,10 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 			toHandle = append(toHandle, "insert")
 		}
 		if handleDelete {
-			toHandle = append(toHandle, "update")
+			toHandle = append(toHandle, "delete")
 		}
 		if handleUpdate {
-			toHandle = append(toHandle, "delete")
+			toHandle = append(toHandle, "update")
 		}
 
 		for _, operation := range toHandle {
