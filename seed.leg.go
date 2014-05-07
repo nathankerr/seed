@@ -1,7 +1,6 @@
 package seed
 
-// TODO:
-// Source
+// uses github.com/knieriem/peg/cmd/leg
 
 import (
 	"fmt"
@@ -31,7 +30,7 @@ const (
 	ruleIdentifierArray
 	ruleRule
 	ruleOperation
-	ruleProjection
+	ruleIntension
 	ruleExpression
 	ruleQualifiedColumn
 	ruleMapFunction
@@ -210,10 +209,10 @@ func (p *yyParser) Init() {
 			pred := yyval[yyp-4]
 
 			p.Rules = append(p.Rules, &Rule{
-				Supplies:   c.string,
-				Operation:  o.string,
-				Projection: proj.expressions,
-				Predicate:  pred.constraints,
+				Supplies:  c.string,
+				Operation: o.string,
+				Intension: proj.expressions,
+				Predicate: pred.constraints,
 			})
 
 			yyval[yyp-1] = c
@@ -225,19 +224,19 @@ func (p *yyParser) Init() {
 		func(yytext string, _ int) {
 			yy.string = yytext
 		},
-		/* 13 Projection */
+		/* 13 Intension */
 		func(yytext string, _ int) {
 			e := yyval[yyp-1]
 			yy.expressions = []Expression{}
 			yyval[yyp-1] = e
 		},
-		/* 14 Projection */
+		/* 14 Intension */
 		func(yytext string, _ int) {
 			e := yyval[yyp-1]
 			yy.expressions = append(yy.expressions, e.expression)
 			yyval[yyp-1] = e
 		},
-		/* 15 Projection */
+		/* 15 Intension */
 		func(yytext string, _ int) {
 			e := yyval[yyp-1]
 			yy.expressions = append(yy.expressions, e.expression)
@@ -794,11 +793,11 @@ func (p *yyParser) Init() {
 		/* 6 Rule <- ({
 			proj.expressions = []Expression{}
 			pred.constraints = []Constraint{}
-		} Identifier Spaces* Operation Spaces* Projection (':' Spaces* Predicate)? Spaces* {
+		} Identifier Spaces* Operation Spaces* Intension (':' Spaces* Predicate)? Spaces* {
 			p.Rules = append(p.Rules, &Rule{
 				Supplies: c.string,
 				Operation: o.string,
-				Projection: proj.expressions,
+				Intension: proj.expressions,
 				Predicate: pred.constraints,
 			})
 		}) */
@@ -834,7 +833,7 @@ func (p *yyParser) Init() {
 			out4:
 				position, thunkPosition = position2, thunkPosition2
 			}
-			if !p.rules[ruleProjection]() {
+			if !p.rules[ruleIntension]() {
 				goto ko
 			}
 			doarg(yySet, -3)
@@ -923,7 +922,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 8 Projection <- ('[' { yy.expressions = []Expression{} } Spaces* Expression { yy.expressions = append(yy.expressions, e.expression) } (',' Spaces* Expression { yy.expressions = append(yy.expressions, e.expression) })* Spaces* ']') */
+		/* 8 Intension <- ('[' { yy.expressions = []Expression{} } Spaces* Expression { yy.expressions = append(yy.expressions, e.expression) } (',' Spaces* Expression { yy.expressions = append(yy.expressions, e.expression) })* Spaces* ']') */
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition
 			doarg(yyPush, 1)

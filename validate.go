@@ -47,8 +47,8 @@ func (s *Seed) Validate() error {
 			return rule_error_messagef(rule, "Unknown operation: %s", rule.Operation)
 		}
 
-		// the projection should be valid
-		for _, expression := range rule.Projection {
+		// the intension should be valid
+		for _, expression := range rule.Intension {
 			switch value := expression.(type) {
 			case QualifiedColumn:
 				err := s.validateQualifiedColumn(value, rule)

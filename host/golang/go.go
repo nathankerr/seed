@@ -12,11 +12,11 @@ func ToGo(service *seed.Seed, name string) ([]byte, error) {
 	str := fmt.Sprintf("package main\n")
 	str = fmt.Sprintf(`%s
 import (
-	"github.com/nathankerr/seed/executor"
-	"github.com/nathankerr/seed/executor/bud"
-	"github.com/nathankerr/seed/executor/wsjson"
-	"github.com/nathankerr/seed/executor/monitor"
-	"github.com/nathankerr/seed/executor/tracer"
+	executor "github.com/nathankerr/seed/host/golang"
+	"github.com/nathankerr/seed/host/golang/bud"
+	"github.com/nathankerr/seed/host/golang/wsjson"
+	"github.com/nathankerr/seed/host/golang/monitor"
+	"github.com/nathankerr/seed/host/golang/tracer"
 	"github.com/nathankerr/seed"
 	"time"
 	"flag"
@@ -147,8 +147,8 @@ func ruleToGo(r *seed.Rule, indent string) string {
 	str = fmt.Sprintf("%s%sOperation: %#v,\n", str, indent, r.Operation)
 
 	// Projection
-	str = fmt.Sprintf("%s%sProjection: []seed.Expression{\n", str, indent)
-	for _, expression := range r.Projection {
+	str = fmt.Sprintf("%s%sIntension: []seed.Expression{\n", str, indent)
+	for _, expression := range r.Intension {
 		str = fmt.Sprintf("%s%s\t%v,\n", str, indent, expressionToGo(expression, indent+"\t\t"))
 	}
 	str = fmt.Sprintf("%s%s},\n", str, indent)

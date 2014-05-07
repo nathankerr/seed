@@ -48,8 +48,8 @@ func (r *Rule) Collections() []string {
 func (r *Rule) Requires() []string {
 	requiresmap := make(map[string]bool) // map only used for uniqueness
 
-	// projection
-	for _, expression := range r.Projection {
+	// intension
+	for _, expression := range r.Intension {
 		switch value := expression.(type) {
 		case QualifiedColumn:
 			requiresmap[value.Collection] = true

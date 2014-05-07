@@ -173,7 +173,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]seed.Tuple) []see
 		// generate the result row and add to the set of results
 		result := seed.Tuple{}
 		localReductions := map[int]seed.Tuple{} // column number: arguments
-		for columnNumber, expression := range rule.Projection {
+		for columnNumber, expression := range rule.Intension {
 			var element interface{}
 
 			// determine the element to add to the result tuple
@@ -231,7 +231,7 @@ func (handler *ruleHandler) calculateResults(data map[string][]seed.Tuple) []see
 	resultsSlice := make([]seed.Tuple, 0, len(results))
 	for setid, result := range results {
 		for columnNumber, reductionTuples := range reductions[setid] {
-			result[columnNumber] = rule.Projection[columnNumber].(seed.ReduceFunction).Function(reductionTuples)
+			result[columnNumber] = rule.Intension[columnNumber].(seed.ReduceFunction).Function(reductionTuples)
 		}
 		resultsSlice = append(resultsSlice, result)
 	}

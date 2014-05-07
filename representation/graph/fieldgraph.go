@@ -95,7 +95,7 @@ func (g FieldGraph) EdgeList() []graph.Edge {
 			equivalentFields[constraint.Right] = constraint.Left
 		}
 
-		for columnNumber, expression := range rule.Projection {
+		for columnNumber, expression := range rule.Intension {
 			switch expression := expression.(type) {
 			case seed.QualifiedColumn:
 				arcs[expression] = g.qcFor(ruleNumber, columnNumber)

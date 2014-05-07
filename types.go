@@ -23,10 +23,10 @@ const (
 )
 
 type Rule struct {
-	Supplies   string
-	Operation  string
-	Projection []Expression
-	Predicate  []Constraint
+	Supplies  string
+	Operation string
+	Intension []Expression
+	Predicate []Constraint
 }
 
 // Use something like:

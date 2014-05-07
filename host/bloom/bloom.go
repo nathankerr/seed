@@ -48,11 +48,11 @@ func ruleToBloom(r *seed.Rule) string {
 		names = append(names, name)
 	}
 
-	projection := []string{}
-	for _, expression := range r.Projection {
+	intension := []string{}
+	for _, expression := range r.Intension {
 		switch value := expression.(type) {
 		case seed.QualifiedColumn:
-			projection = append(projection, fmt.Sprintf("%s.%s",
+			intension = append(intension, fmt.Sprintf("%s.%s",
 				index[value.Collection], value.Column))
 		case seed.MapFunction:
 			arguments := []string{}
@@ -61,11 +61,11 @@ func ruleToBloom(r *seed.Rule) string {
 					index[qc.Collection], qc.Column))
 			}
 
-			projection = append(projection, fmt.Sprintf("%s(%s)",
+			intension = append(intension, fmt.Sprintf("%s(%s)",
 				value.Name, strings.Join(arguments, ", ")))
 		case seed.ReduceFunction:
 			for _, qc := range value.Arguments {
-				projection = append(projection, fmt.Sprintf("%s.%s",
+				intension = append(intension, fmt.Sprintf("%s.%s",
 					index[qc.Collection], qc.Column))
 			}
 		default:
@@ -78,7 +78,7 @@ func ruleToBloom(r *seed.Rule) string {
 		selecter = fmt.Sprintf("%s do |%s|\n      [%s]\n    end",
 			collections[0],
 			strings.Join(names, ", "),
-			strings.Join(projection, ", "))
+			strings.Join(intension, ", "))
 	} else {
 		predicates := []string{}
 		for _, p := range r.Predicate {
@@ -89,7 +89,7 @@ func ruleToBloom(r *seed.Rule) string {
 			strings.Join(collections, " * "),
 			strings.Join(predicates, ", "),
 			strings.Join(names, ", "),
-			strings.Join(projection, ", "))
+			strings.Join(intension, ", "))
 	}
 
 	return fmt.Sprintf("%s %s %s",

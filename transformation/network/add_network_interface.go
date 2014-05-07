@@ -203,10 +203,10 @@ func addInterface(orig *seed.Seed, group *group, networked *seed.Seed) *seed.See
 					Column:     rule.Supplies + "_addr",
 				})
 			}
-			for _, o := range rule.Projection {
+			for _, o := range rule.Intension {
 				projection = append(projection, o)
 			}
-			rule.Projection = projection
+			rule.Intension = projection
 		case seed.CollectionTable:
 			// no-op
 		default:

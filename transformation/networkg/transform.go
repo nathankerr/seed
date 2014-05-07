@@ -64,7 +64,7 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 					}
 				case seedGraph.RuleNode:
 					exists := false
-					for _, expression := range node.Rule.Projection {
+					for _, expression := range node.Rule.Intension {
 						switch expression := expression.(type) {
 						case seed.QualifiedColumn:
 							if expression.Column == outputAddress {
@@ -87,10 +87,10 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 					}
 					if !exists {
 						// add to the projection
-						node.Rule.Projection = append([]seed.Expression{seed.QualifiedColumn{
+						node.Rule.Intension = append([]seed.Expression{seed.QualifiedColumn{
 							Collection: previousCollection,
 							Column:     outputAddress,
-						}}, node.Rule.Projection...)
+						}}, node.Rule.Intension...)
 					}
 				default:
 					panic(fmt.Sprintf("unhandled type: %v", reflect.TypeOf(node).String()))
