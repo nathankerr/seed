@@ -75,7 +75,7 @@ func SeedToDedalusFile(s *seed.Seed, name string) ([]byte, error) {
 		}
 
 		// deal with qualified columns
-		for i, expression := range rule.Projection {
+		for i, expression := range rule.Intension {
 			switch expression := expression.(type) {
 			case seed.QualifiedColumn:
 				predicates[expression.Collection][columnNumbers[expression.Collection][expression.Column]] = supplies[i]
@@ -92,7 +92,7 @@ func SeedToDedalusFile(s *seed.Seed, name string) ([]byte, error) {
 		}
 
 		// deal with map and reduce functions
-		for i, expression := range rule.Projection {
+		for i, expression := range rule.Intension {
 			var functionName string
 			arguments := []seed.QualifiedColumn{}
 			switch expression := expression.(type) {

@@ -86,7 +86,7 @@ func (ctype CollectionType) String() string {
 
 func (r *Rule) String() string {
 	columns := []string{}
-	for _, expression := range r.Projection {
+	for _, expression := range r.Intension {
 		switch value := expression.(type) {
 		case QualifiedColumn:
 			columns = append(columns,

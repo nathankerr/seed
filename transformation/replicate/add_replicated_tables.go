@@ -107,8 +107,8 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 				panic(operation)
 			}
 			for _, column := range table.Key {
-				scratchToTable.Projection = append(
-					scratchToTable.Projection,
+				scratchToTable.Intension = append(
+					scratchToTable.Intension,
 					seed.QualifiedColumn{
 						Collection: scratchName,
 						Column:     column,
@@ -116,8 +116,8 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 				)
 			}
 			for _, column := range table.Data {
-				scratchToTable.Projection = append(
-					scratchToTable.Projection,
+				scratchToTable.Intension = append(
+					scratchToTable.Intension,
 					seed.QualifiedColumn{
 						Collection: scratchName,
 						Column:     column,
@@ -130,7 +130,7 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 			scratchToChannel := &seed.Rule{
 				Supplies:  channelName,
 				Operation: "<~",
-				Projection: []seed.Expression{
+				Intension: []seed.Expression{
 					seed.QualifiedColumn{
 						Collection: replicantsName,
 						Column:     "address",
@@ -138,8 +138,8 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 				},
 			}
 			for _, column := range table.Key {
-				scratchToChannel.Projection = append(
-					scratchToChannel.Projection,
+				scratchToChannel.Intension = append(
+					scratchToChannel.Intension,
 					seed.QualifiedColumn{
 						Collection: scratchName,
 						Column:     column,
@@ -147,8 +147,8 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 				)
 			}
 			for _, column := range table.Data {
-				scratchToChannel.Projection = append(
-					scratchToChannel.Projection,
+				scratchToChannel.Intension = append(
+					scratchToChannel.Intension,
 					seed.QualifiedColumn{
 						Collection: scratchName,
 						Column:     column,
@@ -173,8 +173,8 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 				panic(operation)
 			}
 			for _, column := range table.Key {
-				channelToTable.Projection = append(
-					channelToTable.Projection,
+				channelToTable.Intension = append(
+					channelToTable.Intension,
 					seed.QualifiedColumn{
 						Collection: channelName,
 						Column:     column,
@@ -182,8 +182,8 @@ func Transform(orig *seed.Seed) (*seed.Seed, error) {
 				)
 			}
 			for _, column := range table.Data {
-				channelToTable.Projection = append(
-					channelToTable.Projection,
+				channelToTable.Intension = append(
+					channelToTable.Intension,
 					seed.QualifiedColumn{
 						Collection: channelName,
 						Column:     column,
