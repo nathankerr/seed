@@ -5,6 +5,7 @@ import (
 	"reflect"
 )
 
+// AddressColumn determines which column is used for addresses.
 func (c *Collection) AddressColumn() (int, bool) {
 	addressColumn := -1
 	ok := false
@@ -26,6 +27,7 @@ func (c *Collection) AddressColumn() (int, bool) {
 	return addressColumn, ok
 }
 
+// Collections returns the list of collections interacted with by the rule.
 func (r *Rule) Collections() []string {
 	collectionsmap := make(map[string]bool) // map only used for uniqueness
 
@@ -38,13 +40,14 @@ func (r *Rule) Collections() []string {
 
 	// convert map to []string
 	collections := []string{}
-	for collection, _ := range collectionsmap {
+	for collection := range collectionsmap {
 		collections = append(collections, collection)
 	}
 
 	return collections
 }
 
+// Requires returns the set of collections that the rule gets data from.
 func (r *Rule) Requires() []string {
 	requiresmap := make(map[string]bool) // map only used for uniqueness
 
@@ -74,7 +77,7 @@ func (r *Rule) Requires() []string {
 
 	// convert map to []string
 	requires := []string{}
-	for collection, _ := range requiresmap {
+	for collection := range requiresmap {
 		requires = append(requires, collection)
 	}
 

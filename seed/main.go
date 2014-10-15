@@ -106,7 +106,7 @@ func load(filename, format string, full bool) (*seed.Seed, error) {
 	case "seed":
 		service, err = seed.FromSeed(filename, source)
 	case "json":
-		service, err = seed.FromJson(filename, source)
+		service, err = seed.FromJSON(filename, source)
 	default:
 		return nil, errors.New(fmt.Sprint("Loading from", format, "format not supported."))
 	}
@@ -153,7 +153,7 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 			writer = golang.ToGo
 		case "json":
 			extension = "json"
-			writer = seed.ToJson
+			writer = seed.ToJSON
 		case "seed":
 			extension = "seed"
 			writer = seed.ToSeed

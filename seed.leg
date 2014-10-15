@@ -29,7 +29,7 @@ type yystype struct {
 
 %noexport
 
-Seed = Statement* Eof
+Seed = Statement* EOF
   commit
 
 Statement =
@@ -141,4 +141,4 @@ Constraint = l:QualifiedColumn Spaces* '=>' Spaces* r:QualifiedColumn
 
 Identifier = <[a-zA-Z@][-a-zA-Z0-9_]+> { $$.string = yytext }
 Spaces = ' ' | '\t' | '\n' | '\r'
-Eof = !.
+EOF = !.

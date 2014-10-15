@@ -5,7 +5,9 @@ import (
 	"errors"
 )
 
-func FromJson(name string, input []byte) (*Seed, error) {
+// FromJSON unmarshalls a Seed with the supplied name from the
+// JSON encoded input.
+func FromJSON(name string, input []byte) (*Seed, error) {
 	info()
 
 	seed := &Seed{Collections: make(map[string]*Collection)}
@@ -15,15 +17,19 @@ func FromJson(name string, input []byte) (*Seed, error) {
 	return seed, err
 }
 
-func ToJson(seed *Seed, name string) ([]byte, error) {
+// ToJSON converts a Seed to its JSON encoding.
+// Errors are from the JSON encoder.
+func ToJSON(seed *Seed, name string) ([]byte, error) {
 	info()
 	return json.MarshalIndent(seed, "", "\t")
 }
 
+// MarshalJSON is a custom JSON marshaller for CollectionType.
 func (ct CollectionType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ct.String())
 }
 
+// UnmarshalJSON is a custom JSON unmarshaller for CollectionType.
 func (ct CollectionType) UnmarshalJSON(input []byte) error {
 	// check for "" at beginning and end
 	if input[0] != '"' && input[len(input)-1] != '"' {

@@ -39,7 +39,7 @@ const (
 	ruleConstraint
 	ruleIdentifier
 	ruleSpaces
-	ruleEof
+	ruleEOF
 )
 
 type yyParser struct {
@@ -131,17 +131,17 @@ func (p *yyParser) Init() {
 			k := yyval[yyp-3]
 			d := yyval[yyp-4]
 			d.strings = []string{}
-			yyval[yyp-1] = t
 			yyval[yyp-2] = n
 			yyval[yyp-3] = k
 			yyval[yyp-4] = d
+			yyval[yyp-1] = t
 		},
 		/* 1 Collection */
 		func(yytext string, _ int) {
-			t := yyval[yyp-1]
-			n := yyval[yyp-2]
 			k := yyval[yyp-3]
 			d := yyval[yyp-4]
+			t := yyval[yyp-1]
+			n := yyval[yyp-2]
 
 			p.Collections[n.string] = &Collection{
 				Type: t.collectionType,
@@ -263,8 +263,8 @@ func (p *yyParser) Init() {
 		},
 		/* 18 MapFunction */
 		func(yytext string, _ int) {
-			n := yyval[yyp-1]
 			c := yyval[yyp-2]
+			n := yyval[yyp-1]
 			yy.mapfunction.Arguments = append(yy.mapfunction.Arguments, c.expression.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
@@ -279,8 +279,8 @@ func (p *yyParser) Init() {
 		},
 		/* 20 MapFunction */
 		func(yytext string, _ int) {
-			n := yyval[yyp-1]
 			c := yyval[yyp-2]
+			n := yyval[yyp-1]
 			yy.expression = yy.mapfunction
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
@@ -295,8 +295,8 @@ func (p *yyParser) Init() {
 		},
 		/* 22 ReduceFunction */
 		func(yytext string, _ int) {
-			n := yyval[yyp-1]
 			c := yyval[yyp-2]
+			n := yyval[yyp-1]
 			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.(QualifiedColumn))
 			yyval[yyp-1] = n
 			yyval[yyp-2] = c
@@ -306,8 +306,8 @@ func (p *yyParser) Init() {
 			n := yyval[yyp-1]
 			c := yyval[yyp-2]
 			yy.reducefunction.Arguments = append(yy.reducefunction.Arguments, c.expression.(QualifiedColumn))
-			yyval[yyp-1] = n
 			yyval[yyp-2] = c
+			yyval[yyp-1] = n
 		},
 		/* 24 ReduceFunction */
 		func(yytext string, _ int) {
@@ -480,7 +480,7 @@ func (p *yyParser) Init() {
 
 	p.rules = [...]func() bool{
 
-		/* 0 Seed <- (Statement* Eof commit) */
+		/* 0 Seed <- (Statement* EOF commit) */
 		func() (match bool) {
 			position0, thunkPosition0 := position, thunkPosition
 		loop:
@@ -493,7 +493,7 @@ func (p *yyParser) Init() {
 			out:
 				position, thunkPosition = position1, thunkPosition1
 			}
-			if !p.rules[ruleEof]() {
+			if !p.rules[ruleEOF]() {
 				goto ko
 			}
 			if !(p.commit(thunkPosition0)) {
@@ -1394,7 +1394,7 @@ func (p *yyParser) Init() {
 			position, thunkPosition = position0, thunkPosition0
 			return
 		},
-		/* 17 Eof <- !. */
+		/* 17 EOF <- !. */
 		func() (match bool) {
 			{
 				position1, thunkPosition1 := position, thunkPosition

@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// FromSeed loads a Seed in the Seed format from the input.
 func FromSeed(name string, input []byte) (*Seed, error) {
 	info()
 
@@ -24,6 +25,7 @@ func FromSeed(name string, input []byte) (*Seed, error) {
 	return p.Seed, nil
 }
 
+// ToSeed encodes a Seed in the Seed format.
 func ToSeed(seed *Seed, name string) ([]byte, error) {
 	info()
 	var model string
@@ -34,8 +36,8 @@ func ToSeed(seed *Seed, name string) ([]byte, error) {
 
 	model += "\n"
 
-	for rule_num, rule := range seed.Rules {
-		model = fmt.Sprintf("%s%s\t# rule %d\n", model, rule, rule_num)
+	for ruleNum, rule := range seed.Rules {
+		model = fmt.Sprintf("%s%s\t# rule %d\n", model, rule, ruleNum)
 	}
 
 	return []byte(model), nil

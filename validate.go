@@ -6,21 +6,22 @@ import (
 	"reflect"
 )
 
-func collection_error_messagef(collection *Collection, format string, args ...interface{}) error {
+func collectionErrorMessagef(collection *Collection, format string, args ...interface{}) error {
 	format = fmt.Sprintf("Error for collection:\n\t%s\n%s\n", collection, format)
-	return error_messagef(format, args...)
+	return errorMessagef(format, args...)
 }
 
-func rule_error_messagef(rule *Rule, format string, args ...interface{}) error {
+func ruleErrorMessagef(rule *Rule, format string, args ...interface{}) error {
 	format = fmt.Sprintf("Error for rule:\n\t%s\n%s\n", rule, format)
-	return error_messagef(format, args...)
+	return errorMessagef(format, args...)
 }
 
-func error_messagef(format string, args ...interface{}) error {
+func errorMessagef(format string, args ...interface{}) error {
 	message := fmt.Sprintf(format, args...)
 	return errors.New(message)
 }
 
+// Validate validates the Seed. Any error will be returned.
 func (s *Seed) Validate() error {
 	for _, collection := range s.Collections {
 		// Type should be known
@@ -28,7 +29,7 @@ func (s *Seed) Validate() error {
 		case CollectionInput, CollectionOutput, CollectionTable, CollectionScratch, CollectionChannel:
 			// known collection types
 		default:
-			return collection_error_messagef(collection, "Unknown collection type %d", collection.Type)
+			return collectionErrorMessagef(collection, "Unknown collection type %d", collection.Type)
 		}
 	}
 
@@ -36,7 +37,7 @@ func (s *Seed) Validate() error {
 		// supplies must be a valid collection
 		_, ok := s.Collections[rule.Supplies]
 		if !ok {
-			return rule_error_messagef(rule, "%s is not a known collection.", rule.Supplies)
+			return ruleErrorMessagef(rule, "%s is not a known collection.", rule.Supplies)
 		}
 
 		// operation must be known
@@ -44,7 +45,7 @@ func (s *Seed) Validate() error {
 		case "<+", "<-", "<+-", "<~", "<=":
 			// known operations
 		default:
-			return rule_error_messagef(rule, "Unknown operation: %s", rule.Operation)
+			return ruleErrorMessagef(rule, "Unknown operation: %s", rule.Operation)
 		}
 
 		// the intension should be valid
@@ -97,7 +98,7 @@ func (s *Seed) validateQualifiedColumn(qc QualifiedColumn, rule *Rule) error {
 	// collection should exist
 	collection, ok := s.Collections[qc.Collection]
 	if !ok {
-		return rule_error_messagef(rule, "%s is not a known collection.", qc.Collection)
+		return ruleErrorMessagef(rule, "%s is not a known collection.", qc.Collection)
 	}
 
 	// column name should exist in the collection
@@ -114,9 +115,10 @@ func (s *Seed) validateQualifiedColumn(qc QualifiedColumn, rule *Rule) error {
 		}
 	}
 
-	return rule_error_messagef(rule, "%s does not refer to an existing column", qc)
+	return ruleErrorMessagef(rule, "%s does not refer to an existing column", qc)
 }
 
+// InSubset determines if the the Seed is in the subset.
 func (s *Seed) InSubset() error {
 	// check collection types
 	for _, collection := range s.Collections {
@@ -124,9 +126,9 @@ func (s *Seed) InSubset() error {
 		case CollectionInput, CollectionOutput, CollectionTable:
 			// in subset
 		case CollectionScratch, CollectionChannel:
-			return collection_error_messagef(collection, "Collection type %s not allowed in subset", collection.Type.String())
+			return collectionErrorMessagef(collection, "Collection type %s not allowed in subset", collection.Type.String())
 		default:
-			return collection_error_messagef(collection, "Unknown collection type %d", collection.Type)
+			return collectionErrorMessagef(collection, "Unknown collection type %d", collection.Type)
 		}
 	}
 
@@ -136,9 +138,9 @@ func (s *Seed) InSubset() error {
 		case "<+", "<-", "<+-":
 			// in subset
 		case "<~", "<=":
-			return rule_error_messagef(rule, "%s operation not allowed in subset", rule.Operation)
+			return ruleErrorMessagef(rule, "%s operation not allowed in subset", rule.Operation)
 		default:
-			return rule_error_messagef(rule, "Unknown operation: %s", rule.Operation)
+			return ruleErrorMessagef(rule, "Unknown operation: %s", rule.Operation)
 		}
 	}
 
