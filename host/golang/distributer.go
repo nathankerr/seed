@@ -122,6 +122,6 @@ func extractChannel(message MessageContainer) (chan<- MessageContainer, bool) {
 		return nil, false
 	}
 
-	channel, ok := tuple[0].(chan<- MessageContainer)
+	channel, ok := tuple[0].(chan MessageContainer)
 	return channel, ok
 }
