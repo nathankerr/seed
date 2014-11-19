@@ -2,12 +2,12 @@ package monitor
 
 import (
 	"bytes"
-	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
 	"github.com/nathankerr/seed"
 	executor "github.com/nathankerr/seed/host/golang"
 	"github.com/nathankerr/seed/representation/dot"
+	"golang.org/x/net/websocket"
 	"html/template"
 	"io"
 	"net/http"
