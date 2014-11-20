@@ -1,0 +1,4 @@
+table kvstate [key] => [value]
+
+input kvput [key] => [value]
+kvstate <+- [kvput.key, kvput.value]
