@@ -14,6 +14,7 @@ package wsjson
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/nathankerr/seed"
 	executor "github.com/nathankerr/seed/host/golang"
 	"golang.org/x/net/websocket"
@@ -122,7 +123,7 @@ func Communicator(s *seed.Seed, channels executor.Channels, address string) {
 
 						log("socket for address \""+tupleAddress+"\" not found", thisSocket)
 
-						ws, err := websocket.Dial(tupleAddress, "", "http://localhost:8000/")
+						ws, err := websocket.Dial(fmt.Sprintf("ws://%s/wsjson", tupleAddress), "", "http://locahost:3000")
 						if err != nil {
 							log(err)
 						}
