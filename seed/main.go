@@ -16,7 +16,7 @@ import (
 	"github.com/nathankerr/seed/representation/dot"
 	"github.com/nathankerr/seed/representation/graph"
 	"github.com/nathankerr/seed/representation/opennet"
-	"github.com/nathankerr/seed/transformation/networkg"
+	"github.com/nathankerr/seed/transformation/network"
 	"github.com/nathankerr/seed/transformation/replicate"
 	"io/ioutil"
 	"log"
@@ -38,7 +38,7 @@ func main() {
 	var to_format = flag.String("t", "",
 		"formats to write separated by spaces (bloom, dot, go, json, seed, graph, fieldgraph, owfn, opennet)")
 	var transformations = flag.String("transformations", "",
-		"transformations to perform, separated by spaces (networkg replicate")
+		"transformations to perform, separated by spaces (network replicate")
 	var execute = flag.Bool("execute", false,
 		"execute the seed")
 	var sleep = flag.String("sleep", "",
@@ -198,8 +198,8 @@ func write(service *seed.Seed, name string, formats string, outputdir string) {
 func transform(service *seed.Seed, transformation string) (*seed.Seed, error) {
 	var transform func(service *seed.Seed) (*seed.Seed, error)
 	switch transformation {
-	case "networkg":
-		transform = networkg.Transform
+	case "network":
+		transform = network.Transform
 	case "replicate":
 		transform = replicate.Transform
 	default:

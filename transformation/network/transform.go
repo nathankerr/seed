@@ -1,5 +1,5 @@
-// Package networkg uses graphs to add network interfaces to full (non-subset) Seed programs
-package networkg
+// Package networkg uses graphs to add network interfaces to Seed programs
+package network
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// Transform uses graphs to add network interfaces to full (non-subset) Seeds
+// Transform uses graphs to add network interfaces to Seeds
 func Transform(orig *seed.Seed) (*seed.Seed, error) {
 	// build graph
 	g := seedGraph.SeedAsGraph(orig)

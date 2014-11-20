@@ -158,7 +158,7 @@ The server is the same as the previous section:
 When starting the service, add the network interface by using the \code{networkg} transformation:
 
 \begin{cli}
-seed -sleep 0.5s -monitor :8000 -execute -transformations networkg kvs.seed
+seed -sleep 0.5s -monitor :8000 -execute -transformations network kvs.seed
 \end{cli}
 
 The client is a static web page (\code{index.html}):
@@ -180,7 +180,7 @@ go run server.go
 Start the first replica:
 
 \begin{cli}
-seed -sleep 0.5s -monitor :8000 -execute -transformations "networkg  replicate" -address :3000 kvs.seed
+seed -sleep 0.5s -monitor :8000 -execute -transformations "network  replicate" -address :3000 kvs.seed
 \end{cli}
 
 Insert \code{[["127.0.0.1:3001"]]} into \code{:8000}'s \code{kvstate_replicants}
@@ -192,7 +192,7 @@ Also, set up the views as follows:
 Start the second replica:
 
 \begin{cli}
-seed -sleep 0.5s -monitor :8001 -execute -transformations "networkg  replicate" -address :3001 kvs.seed
+seed -sleep 0.5s -monitor :8001 -execute -transformations "network  replicate" -address :3001 kvs.seed
 \end{cli}
 
 Insert \code{[["127.0.0.1:3000"]]} into \code{:8001}'s \code{kvstate_replicants}

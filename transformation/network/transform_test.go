@@ -1,4 +1,4 @@
-package networkg
+package network
 
 import (
 	"github.com/nathankerr/seed"
