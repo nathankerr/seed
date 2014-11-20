@@ -101,6 +101,8 @@ Create a file, \code{kvs.seed}, with the following contents (don't include the l
 
 This file defines the core of a key-value store service. Line~1 describes a table called \code{kvstate} with a single key column called \code{key} and a single value column called \code{value}.
 
+\section{Starting the Service}
+
 Start the service by running:
 
 \begin{cli}
@@ -112,6 +114,8 @@ seed -sleep 0.5s -monitor :8000 -execute kvs.seed
 \code{-monitor :8000} starts the debugging monitor on port 8000. To restrict access to localhost, use \code{-monitor localhost:8000}.
 
 \code{-execute} starts the service using the built in interpreter.
+
+\section{The Monitor}
 
 The monitor can be accessed at \url{http://localhost:8000} using your favorite web browser:
 
@@ -139,31 +143,45 @@ The rest of the monitor area is for the views. Click on the name of the view to 
 
 Views not beginning with underscores correspond to collections (e.g., tables, inputs, outputs) in the service.
 
+You can use the monitor to insert data into \code{kvstate}. The displayed order of rows for \code{kvstate} might fluctuate. This is due to the unordered nature of collections\footnote{Collections are implemented using Go's map datatype. When Go maps contain a small number of keys, the order is randomized when accessing all the keys so that developers will not accidentally depend on the implementation's natural ordering of this unordered dataset.}.
+
 \section{KVS Put Operation}
 
+Update \code{kvs.seed} to match:
+
 \lstinputlisting{put/kvs.seed}
+
+Line~3 defines an input called \code{kvput} that contains two columns: \code{key} and \code{value}. Like all collections, inputs have key and data columns. Input and output collections define the flow of data into and out of a service. These collection types are not network accessible.
+
+Line~4 is a rule which projects the columns in \code{kvput} and then upserts (\code{<+-}) the resulting set into \code{kvstate}.
 
 \begin{cli}
 seed -sleep 0.5s -monitor :8000 -execute kvs.seed
 \end{cli}
 
-Insert stuff into kvput and watch how it flows to kvstate.
+Insert stuff into kvput and watch how it flows to kvstate. Try using various values to see how things work. Also look at the \code{_service} and \code{_graph} views to see how they relate. Note that no transformations have been applied (we will transform the service in later steps).
 
 \section{Put Client}
 
-The server is the same as the previous section:
-
-\lstinputlisting{client/kvs.seed}
-
-When starting the service, add the network interface by using the \code{networkg} transformation:
+We will now build a client for the service. When starting the service, add the network interface by using the \code{network} transformation:
 
 \begin{cli}
 seed -sleep 0.5s -monitor :8000 -execute -transformations network kvs.seed
 \end{cli}
 
-The client is a static web page (\code{index.html}):
+Check the service's \code{_service} and \code{_graph} views to see the results of the transformation.
+
+The client will use a custom json over webservices protocol. This protocol was implemented to allow web browser based clients.
+
+The client is implemented as a static web page (\code{index.html}):
 
 \lstinputlisting{client/index.html}
+
+The client is initialized with the init function on Lines~26-48 this is ran on load (Line~50). A websocket connection is setup in Lines~32-35. A pseudorandom address is then created and sent to the server. This address will be used as the client address for Channel based communication and lasts as long as the websocket.
+
+When initialization is completed, the connection indicator (Line~54) is turned green. When the websocket is closed, the connection will turn red (Line~35, Lines~10-12).
+
+When the put button in the form is pressed (or the form is otherwise submitted), the send function in Lines~14-24 is executed. This function simply builds, serializes, and sends the data over the websocket to the server.
 
 Because web browsers don't like allowing websocket access from pages loaded from the local file system, we need a simple web server:
 
@@ -175,7 +193,13 @@ Start the client web server by:
 go run server.go
 \end{cli}
 
+And then open your browser to \url{http://localhost:4000}. As usual, the server will bind to all your computer's network interfaces. To restrict it, change \code{ADDR} on Line~8 to \code{localhost:4000}.
+
+To see a more advanced client that also handles results, look at the time service client's implementation.
+
 \section{Replication}
+
+We will now setup and run a replicated kvs. No changes to any code are needed to do this.
 
 Start the first replica:
 
@@ -183,7 +207,7 @@ Start the first replica:
 seed -sleep 0.5s -monitor :8000 -execute -transformations "network  replicate" -address :3000 kvs.seed
 \end{cli}
 
-Insert \code{[["127.0.0.1:3001"]]} into \code{:8000}'s \code{kvstate_replicants}
+Insert \code{[["127.0.0.1:3001"]]} into \code{:8000}'s \code{kvstate_replicants} using the monitor.
 
 Also, set up the views as follows:
 
@@ -195,7 +219,7 @@ Start the second replica:
 seed -sleep 0.5s -monitor :8001 -execute -transformations "network  replicate" -address :3001 kvs.seed
 \end{cli}
 
-Insert \code{[["127.0.0.1:3000"]]} into \code{:8001}'s \code{kvstate_replicants}
+Insert \code{[["127.0.0.1:3000"]]} into \code{:8001}'s \code{kvstate_replicants} using the monitor.
 
 Also, set up the views as follows:
 
@@ -206,6 +230,8 @@ Start a client (will connect to \code{:3000}):
 \begin{cli}
 go run server.go
 \end{cli}
+
+If you have the two replica monitors and the client in different windows, you can watch the entire progression.
 
 Put some value into the client and watch as it first hits the first replia and then the second.
 
