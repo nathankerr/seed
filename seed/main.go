@@ -36,9 +36,9 @@ func main() {
 		"format to load (seed, json)")
 	var full = flag.Bool("full", false,
 		"when true, seed input is not limited to the subset")
-	var to_format = flag.String("t", "go",
+	var to_format = flag.String("t", "",
 		"formats to write separated by spaces (bloom, dot, go, json, seed, graph, fieldgraph, owfn, opennet)")
-	var transformations = flag.String("transformations", "network replicate",
+	var transformations = flag.String("transformations", "",
 		"transformations to perform, separated by spaces (network networkg replicate")
 	var execute = flag.Bool("execute", false,
 		"execute the seed")
