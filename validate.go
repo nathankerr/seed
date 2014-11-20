@@ -117,32 +117,3 @@ func (s *Seed) validateQualifiedColumn(qc QualifiedColumn, rule *Rule) error {
 
 	return ruleErrorMessagef(rule, "%s does not refer to an existing column", qc)
 }
-
-// InSubset determines if the the Seed is in the subset.
-func (s *Seed) InSubset() error {
-	// check collection types
-	for _, collection := range s.Collections {
-		switch collection.Type {
-		case CollectionInput, CollectionOutput, CollectionTable:
-			// in subset
-		case CollectionScratch, CollectionChannel:
-			return collectionErrorMessagef(collection, "Collection type %s not allowed in subset", collection.Type.String())
-		default:
-			return collectionErrorMessagef(collection, "Unknown collection type %d", collection.Type)
-		}
-	}
-
-	// check operations
-	for _, rule := range s.Rules {
-		switch rule.Operation {
-		case "<+", "<-", "<+-":
-			// in subset
-		case "<~", "<=":
-			return ruleErrorMessagef(rule, "%s operation not allowed in subset", rule.Operation)
-		default:
-			return ruleErrorMessagef(rule, "Unknown operation: %s", rule.Operation)
-		}
-	}
-
-	return nil
-}

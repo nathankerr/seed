@@ -33,8 +33,6 @@ func main() {
 		"directory name to create and output the bud source")
 	var from_format = flag.String("f", "seed",
 		"format to load (seed, json)")
-	var full = flag.Bool("full", false,
-		"when true, seed input is not limited to the subset")
 	var to_format = flag.String("t", "",
 		"formats to write separated by spaces (bloom, dot, go, json, seed, graph, fieldgraph, owfn, opennet)")
 	var transformations = flag.String("transformations", "",
@@ -66,7 +64,7 @@ func main() {
 	log.Println("Load")
 	filename := flag.Arg(0)
 	filename = filepath.Clean(filename)
-	service, err := load(filename, *from_format, *full)
+	service, err := load(filename, *from_format)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -91,7 +89,7 @@ func main() {
 	}
 }
 
-func load(filename, format string, full bool) (*seed.Seed, error) {
+func load(filename, format string) (*seed.Seed, error) {
 	_, name := filepath.Split(filename)
 	name = name[:len(name)-len(filepath.Ext(name))]
 
@@ -118,13 +116,6 @@ func load(filename, format string, full bool) (*seed.Seed, error) {
 	err = service.Validate()
 	if err != nil {
 		return nil, err
-	}
-
-	if !full {
-		err = service.InSubset()
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return service, nil
