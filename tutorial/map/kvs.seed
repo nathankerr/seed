@@ -1,0 +1,7 @@
+table kvstate [key] => [value]
+
+input kvput [key] => [value]
+kvstate <+- [kvput.key, kvput.value]
+
+table upper [key] => [value]
+upper <+- [kvput.key, (upper kvput.value)]

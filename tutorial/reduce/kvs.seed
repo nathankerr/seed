@@ -1,0 +1,7 @@
+table kvstate [key] => [value]
+
+input kvput [key] => [value]
+kvstate <+- [kvput.key, kvput.value]
+
+scratch count [value] => [count]
+count <= [kvstate.value, {count kvstate.key}]

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Put Client</title>
+<meta charset="utf-8" />
+<script>
+	var websocket, address, connected, server
+	var key, value
+
+	function onClose() {
+		connected.style.backgroundColor = "red"
+	}
+
+	function send() {
+		try {
+			websocket.send(JSON.stringify({
+				Operation: "<~",
+				Collection: "kvput",
+				Data: [[server, key.value, value.value]]
+			}))
+		} catch (e) {
+			alert(e)
+		}
+	}
+
+	function init() {
+		connected = document.getElementById("connected")
+
+		key = document.getElementById("key")
+		value = document.getElementById("value")
+
+		// connect to the monitor server
+		server = "ws://" + window.location.hostname + ":3000/wsjson"
+		websocket = new WebSocket(server);
+		websocket.onclose = onClose;
+		
+		// set uniq id (address)
+		websocket.onopen = function() {
+			address = Math.random().toString(36).substr(2)
+			try {
+				websocket.send(JSON.stringify(address))
+			} catch (e) {
+				alert(e)
+			}
+
+			connected.style.backgroundColor = "green"
+		}
+	}
+
+	window.addEventListener("load", init, false)
+</script>
+</head>
+<body>
+<div id="connected" style="width:20px; height:20px; background-color:red">&nbsp;</div>
+<div>
+	<form onsubmit="return false;">
+		<input type="text" id="key" value="Key" />
+		<input type="text" id="value" value="Value" />
+		<input type="submit" value="Put" onclick="send()"/>
+	</form>
+</div>
+</body>
+</html>

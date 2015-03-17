@@ -77,19 +77,25 @@
 	\sf\Huge Seed Tutorial
 \end{center}
 
+This tutorial will introduce you to Seed and its prototype. You will learn how to build services, use the service monitor, apply transformations, write a browser-based client, and write map and reduce functions. The working example for this tutorial is a key-value store (kvs).
+
 \section{Prerequisites}
+
+Several things are needed before we can get started.
 
 \begin{itemize}
 \item Go \url{http://golang.org}
 \item Gnuplot
 \item Seed \url{https://github.com/nathankerr/seed}
 \item A web browser (tested in Safari, Chrome, and Firefox)
-\item Some knowledge of command lines, go, javascript, html, and services.
+\item Some knowledge of command lines, go, javascript, html, websockets, json, and services.
 \end{itemize}
+
+Seed will work on Windows, OS X, and Linux. The command line instructions are geared toward OS X and Linux. If you are using Windows, please use \code{cmd} or write \code{\%--} before command line arguments (if using PowerShell). Also, change \code{/} to \code{\\}.
 
 \section{Getting Started}
 
-Make a new directory to work in:
+Start by making a new directory to work in:
 
 \begin{cli}
 mkdir seed-tutorial; cd seed-tutorial
@@ -117,7 +123,7 @@ seed -sleep 0.5s -monitor :8000 -execute kvs.seed
 
 \section{The Monitor}
 
-The monitor can be accessed at \url{http://localhost:8000} using your favorite web browser:
+The Seed prototype includes a monitor that allows you to see what is happening in your service. Now that the service has been started, the monitor can be accessed at \url{http://localhost:8000} using your favorite web browser:
 
 \includegraphics{start/monitor.png}
 
@@ -145,7 +151,11 @@ Views not beginning with underscores correspond to collections (e.g., tables, in
 
 You can use the monitor to insert data into \code{kvstate}. The displayed order of rows for \code{kvstate} might fluctuate. This is due to the unordered nature of collections\footnote{Collections are implemented using Go's map datatype. When Go maps contain a small number of keys, the order is randomized when accessing all the keys so that developers will not accidentally depend on the implementation's natural ordering of this unordered dataset.}.
 
+You can stop the service at any time by pressing ctrl-C in the command line.
+
 \section{KVS Put Operation}
+
+We will now expand the core of our kvs service by adding a put operation. Put inserts key-value pairs into kvstate.
 
 Update \code{kvs.seed} to match:
 
@@ -155,6 +165,8 @@ Line~3 defines an input called \code{kvput} that contains two columns: \code{key
 
 Line~4 is a rule which projects the columns in \code{kvput} and then upserts (\code{<+-}) the resulting set into \code{kvstate}.
 
+Start the service with:
+
 \begin{cli}
 seed -sleep 0.5s -monitor :8000 -execute kvs.seed
 \end{cli}
@@ -163,7 +175,7 @@ Insert stuff into kvput and watch how it flows to kvstate. Try using various val
 
 \section{Put Client}
 
-We will now build a client for the service. When starting the service, add the network interface by using the \code{network} transformation:
+We will now build a client for the service. First the service needs a network interface. When starting the service, the network interface is added by using the \code{network} transformation:
 
 \begin{cli}
 seed -sleep 0.5s -monitor :8000 -execute -transformations network kvs.seed
@@ -193,7 +205,7 @@ Start the client web server by:
 go run server.go
 \end{cli}
 
-And then open your browser to \url{http://localhost:4000}. As usual, the server will bind to all your computer's network interfaces. To restrict it, change \code{ADDR} on Line~8 to \code{localhost:4000}.
+And then open your browser to \url{http://localhost:4000}. As usual, the server will bind to all your computer's network interfaces. To restrict it, change \code{addr} on Line~8 to \code{localhost:4000}.
 
 To see a more advanced client that also handles results, look at the time service client's implementation.
 
@@ -204,7 +216,7 @@ We will now setup and run a replicated kvs. No changes to any code are needed to
 Start the first replica:
 
 \begin{cli}
-seed -sleep 0.5s -monitor :8000 -execute -transformations "network  replicate" -address :3000 kvs.seed
+seed -sleep 0.5s -monitor :8000 -execute -transformations "network replicate" -address :3000 kvs.seed
 \end{cli}
 
 Insert \code{[["127.0.0.1:3001"]]} into \code{:8000}'s \code{kvstate_replicants} using the monitor.
@@ -216,7 +228,7 @@ Also, set up the views as follows:
 Start the second replica:
 
 \begin{cli}
-seed -sleep 0.5s -monitor :8001 -execute -transformations "network  replicate" -address :3001 kvs.seed
+seed -sleep 0.5s -monitor :8001 -execute -transformations "network replicate" -address :3001 kvs.seed
 \end{cli}
 
 Insert \code{[["127.0.0.1:3000"]]} into \code{:8001}'s \code{kvstate_replicants} using the monitor.
@@ -225,7 +237,7 @@ Also, set up the views as follows:
 
 \includegraphics{replicate/second.png}
 
-Start a client (will connect to \code{:3000}):
+Start the client (will connect to \code{:3000}):
 
 \begin{cli}
 go run server.go
@@ -233,8 +245,106 @@ go run server.go
 
 If you have the two replica monitors and the client in different windows, you can watch the entire progression.
 
-Put some value into the client and watch as it first hits the first replia and then the second.
+Put some value into the client and watch as it first hits the first replica and then the second.
 
 Note that due to the transformations, no changes were needed to \code{kvs.seed} or the client to enable replication. However, while the client will only connect to one of the replicas, this could be resolved by using a load balancer.
+
+\section{Compiling Services}
+
+Up to this point the services have been interpreted by the \code{seed} tool. Now we will compile the service. This is done in two steps:
+
+\begin{enumerate}
+\item Use the \code{seed} tool to perform desired transformations and output \code{go} source code for the service.
+\item Use \code{go} to compile the resulting code.
+\end{enumerate}
+
+This process will be done for the replicated kvs. First,
+
+\begin{cli}
+seed -transformations "network replicate" -t go kvs.seed
+\end{cli}
+
+applies the network and replicate transformations a before. However, all execution options have been removed and replaced with \code{-t go}, which tells \code{seed} to output \code{go} source code. By default this is done is a directory called \code{build}. To compile your replicated kvs:
+
+\begin{cli}
+cd build
+go build -o kvs
+\end{cli}
+
+This first moves to the build directory and then uses \code{go build} to build all the \code{go} files in that directory and name the resulting executable \code{kvs} (the default is the name of the directory).
+
+The service can then be started with:
+
+\begin{cli}
+./kvs -sleep 0.5s -monitor :8000 -address :3000
+\end{cli}
+
+The same execution options (e.g., sleep, monitor, address) can be used as before.
+
+\section{Map}
+
+We will now extend the service by using a map function. Map functions are not implemented in Seed, but in the host language (in this case, \code{go}). As the function is implemented in the host language, it can do any things the host language can.
+
+The map function we will build converts a string to upper-case characters. First modify \code{kvs.seed} to:
+
+\lstinputlisting{map/kvs.seed}
+
+Line~6 defines a new table where we will keep the key, uppercased-value pairs. Line~7 take values from \code{kvput} like we did on Line~4, but instead of using the raw \code{kvput.value}, it runs a map function \code{upper} with a single argument \code{kvput.value}. Map functions and their arguments are surrounded by \code{( )}. Arguments are space delimited.
+
+Define the map function in \code{upper.go}:
+
+\lstinputlisting{map/upper.go}
+
+Line~1 declares the contents of the file to be part of the main package. Lines~3-7 import the two packages we will use to define the map function. We will use \code{strings.ToUpper} to uppercase \code{kvput.value}. The seed package is used to access the types needed by a map function. A map function is defined as \code{func(Tuple) Element}. A \code{Tuple} is \code{[]interface\{\}} and will contain the arguments to the map function for that row. An \code{Element} is \code{interface\{\}} and will be used in the place of the map call.
+
+The function itself is deceptively simple. \code{input[0]} grabs the first value in the input tuple. In this case, there should only be one value, as we only specified one argument to \code{upper}. If there were more arguments, they would appear in \code{input}.
+
+\code{input[0].(string)} asserts that \code{input[0]} is a string. This is needed because a \code{Tuple} can contain any type. The actual type is dependent on the data sent to the server (JSON over websockets) and the type the JSON unmarshaller uses for that data. If some data that is not unmarshalled as a string, such a number, is there, the server will panic. Thus a better implementation would need to handle those cases.
+
+Finally, \code{strings.ToUpper} converts that value to its upper case value, which is then returned. The executor uses the returned value to fill the map function's place in the result tuple before inserting it into \code{upper}.
+
+The whole build and run process can be done as follows:
+
+\begin{cli}
+seed -t go -transformations network kvs.seed
+cp upper.go build/
+cd build
+go build -o kvs
+./kvs -sleep 0.5s -monitor :8000
+\end{cli}
+
+Use the monitor (and the client if you like) to see that the map function is called and its results.
+
+\section{Reduce}
+
+We will now use a reduce function. Reduce functions are similar to map functions, except they take an array of tuples instead of a single tuple as input.
+
+The example we will build counts the number of keys that have the same value.
+
+First modify \code{kvs.seed}:
+
+\lstinputlisting{reduce/kvs.seed}
+
+Lines~6-7 define our new collection and rule. A scratch collection is used so that other operations on \code{kvstate} such a removing tuples will not cause incorrect values in our count collection.
+
+The syntax for the reduce function \code{count} is similar to that of a map function, except that \code{\{ \}} are used instead of \code{( )}. Fields in the intension other than the reduce function group\footnote{Similar to how GROUP BY is used in combination with an aggregate function in SQL.} the rows passed to the function. In this case, all the \code{kvstate.key}s that have the same \code{kvstate.value} are passed to the \code{count} reduce function. \code{count} is called for each unique \code{kvstate.value}.
+
+The reduce function is implemented in \code{count.go}:
+
+\lstinputlisting{reduce/count.go}
+
+A reduce function is a \code{func([]Tuple) Element}. Lines~5-7 implement \code{count}. In this example we don't have to worry about the data in the slice of tuples, as we just want its length (count). Line~6 returns the length of the input slice.
+
+Building and running the service can be done as follows:
+
+\begin{cli}
+seed -t go -transformations network kvs.seed
+cp count.go build/
+cd build
+go build -o kvs
+./kvs -sleep 0.5s -monitor :8000 -address :3000
+\end{cli}
+
+Use the monitor (and the client if you like) to explore the behavior of the reduce function.
 
 \end{document}
