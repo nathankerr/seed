@@ -134,7 +134,7 @@ The debug monitor presents a view of the state of the service instance. The cont
 \begin{enumerate}
 \item Green shows the monitor is connected; red disconnected.
 \item Access to available views. Select the desired view and press open.
-\item Insert data into a collection. Data is encoded in JSON as an array of arrays. \code{"server"} and \code{"address"} are special values that are translated into the server and client addresses respectfully.
+\item Control to insert data into a collection. Data is encoded in JSON as an array of arrays. \code{"server"} and \code{"address"} are special values that are translated into the server and client addresses respectfully.
 \item Execution control. Start and stop the service, and step through the parts of the time step.
 \end{enumerate}
 
@@ -207,7 +207,7 @@ go run server.go
 
 And then open your browser to \url{http://localhost:4000}. As usual, the server will bind to all your computer's network interfaces. To restrict it, change \code{addr} on Line~8 to \code{localhost:4000}.
 
-To see a more advanced client that also handles results, look at the time service client's implementation.
+To see a more advanced client that also handles results, look at the example time service client's implementation \footnote{\url{services/time} in the seed repository}.
 
 \section{Replication}
 
@@ -281,11 +281,13 @@ The service can then be started with:
 
 The same execution options (e.g., sleep, monitor, address) can be used as before.
 
-\section{Map}
+\section{Using Map Functions}
 
-We will now extend the service by using a map function. Map functions are not implemented in Seed, but in the host language (in this case, \code{go}). As the function is implemented in the host language, it can do any things the host language can.
+To learn how to use map functions in Seed, we will extend the kvs service. The map function we will build converts a string to upper-case characters.
 
-The map function we will build converts a string to upper-case characters. First modify \code{kvs.seed} to:
+Map functions are not implemented in Seed, but in the host language (in this case, \code{go}). As the function is implemented in the host language, it can do any things the host language can.
+
+First modify \code{kvs.seed} to:
 
 \lstinputlisting{map/kvs.seed}
 
@@ -315,7 +317,7 @@ go build -o kvs
 
 Use the monitor (and the client if you like) to see that the map function is called and its results.
 
-\section{Reduce}
+\section{Using Reduce Functions}
 
 We will now use a reduce function. Reduce functions are similar to map functions, except they take an array of tuples instead of a single tuple as input.
 
